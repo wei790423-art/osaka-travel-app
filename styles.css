@@ -26,7 +26,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -121,9 +122,49 @@ h1 {
 
 .toolbar,
 .dashboard,
-.content-grid {
+.content-grid,
+.tab-nav,
+.wide-panel {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
+}
+
+.tab-nav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+  padding: 12px 0;
+  margin-top: -62px;
+  overflow-x: auto;
+}
+
+.tab-button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(26, 32, 39, 0.08);
+}
+
+.tab-button.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.is-active {
+  display: block;
 }
 
 .toolbar {
@@ -132,7 +173,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-top: -54px;
+  margin-top: 8px;
   padding: 14px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.92);
@@ -188,7 +229,10 @@ h1 {
 
 .day-form button,
 .quick-actions button,
-.icon-button {
+.icon-button,
+.import-actions button,
+.history-actions button,
+#saveHistoryTop {
   min-height: 42px;
   border: 0;
   border-radius: 8px;
@@ -199,10 +243,99 @@ h1 {
 }
 
 .quick-actions button:nth-child(2),
-.icon-button {
+.quick-actions button:nth-child(4),
+.icon-button,
+.history-actions button:nth-child(2) {
   background: #eef1f0;
   color: var(--ink);
   border: 1px solid var(--line);
+}
+
+.wide-panel {
+  margin-top: 24px;
+  margin-bottom: 48px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 10px 26px rgba(26, 32, 39, 0.08);
+}
+
+.import-box {
+  width: 100%;
+  min-height: 300px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.import-actions button,
+#saveHistoryTop {
+  padding: 0 16px;
+}
+
+.import-preview {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.preview-day,
+.history-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9faf8;
+}
+
+.preview-day {
+  display: grid;
+}
+
+.preview-day span,
+.history-card p,
+.history-card span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.history-card h3,
+.history-card p {
+  margin-bottom: 6px;
+}
+
+.history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: start;
+}
+
+.history-actions button {
+  padding: 0 14px;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .dashboard {
@@ -473,7 +606,9 @@ h1 {
 
   .toolbar,
   .dashboard,
-  .content-grid {
+  .content-grid,
+  .tab-nav,
+  .wide-panel {
     width: min(100% - 24px, 1120px);
   }
 
@@ -481,7 +616,8 @@ h1 {
   .planner-form,
   .dashboard,
   .content-grid,
-  .summary-grid {
+  .summary-grid,
+  .tools-grid {
     grid-template-columns: 1fr;
   }
 
@@ -514,7 +650,11 @@ h1 {
   }
 
   .toolbar {
-    margin-top: -74px;
+    margin-top: 8px;
+  }
+
+  .tab-nav {
+    margin-top: -72px;
   }
 
   .day-card {
@@ -527,5 +667,9 @@ h1 {
 
   .timeline li {
     grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .history-card {
+    display: grid;
   }
 }
