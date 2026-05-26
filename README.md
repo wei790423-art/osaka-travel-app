@@ -24,10 +24,9 @@ http://127.0.0.1:4177
 
 ## GitHub Pages
 
-這是純 HTML/CSS/JavaScript 專案，推到 GitHub 後可直接用 GitHub Pages 部署。
+這是純 HTML/CSS/JavaScript 專案，已包含 GitHub Pages Actions workflow。
 
 建議設定：
 
-- Source: Deploy from a branch
-- Branch: `main`
-- Folder: `/ (root)`
+- Source: GitHub Actions
+- Workflow: `Deploy to GitHub Pages`
