@@ -3,64 +3,69 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>大阪 8 天 7 夜旅遊 App</title>
+    <title>全球旅行規劃 App</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell">
-      <section class="hero" aria-label="大阪旅行總覽">
-        <img src="assets/osaka-hero.png" alt="大阪夜景與運河燈光" class="hero__image" />
+      <section class="hero" aria-label="旅行規劃總覽">
+        <img src="assets/global-travel-hero.png" alt="世界旅行規劃桌面" class="hero__image" />
         <div class="hero__overlay"></div>
         <div class="hero__content">
-          <p class="eyebrow">Japan Trip Planner</p>
-          <h1>大阪 8 天 7 夜</h1>
-          <p class="hero__copy">從梅田、難波、環球影城到京都與奈良一日遊，把行程、預算、交通和打包清單收在同一個地方。</p>
+          <p class="eyebrow">Global Trip Planner</p>
+          <h1 id="heroTitle">我的旅行計畫</h1>
+          <p class="hero__copy" id="heroCopy">選擇任何國家與城市，自己建立天數、行程、預算、交通與打包清單。</p>
           <div class="hero__stats" aria-label="旅行重點">
-            <span><strong>8</strong> 天</span>
-            <span><strong>7</strong> 夜</span>
-            <span><strong>6</strong> 區域</span>
-            <span><strong>1</strong> 個 App</span>
+            <span><strong id="statDays">0</strong> 天</span>
+            <span><strong id="statStops">0</strong> 城市/區域</span>
+            <span><strong id="statBudget">0</strong> 預算</span>
+            <span><strong id="statCurrency">TWD</strong> 幣別</span>
           </div>
         </div>
       </section>
 
-      <section class="toolbar" aria-label="行程控制">
+      <section class="toolbar planner-form" aria-label="旅行設定">
+        <div class="field">
+          <label for="tripName">旅行名稱</label>
+          <input id="tripName" type="text" placeholder="例如：歐洲蜜月、韓國自由行" />
+        </div>
+        <div class="field">
+          <label for="country">國家</label>
+          <input id="country" type="text" placeholder="例如：日本、法國、泰國" />
+        </div>
+        <div class="field">
+          <label for="baseCity">主要城市</label>
+          <input id="baseCity" type="text" placeholder="例如：東京、巴黎、曼谷" />
+        </div>
+        <div class="field">
+          <label for="currency">當地幣別</label>
+          <input id="currency" type="text" maxlength="3" placeholder="JPY" />
+        </div>
+        <div class="field">
+          <label for="rate">換算台幣匯率</label>
+          <input id="rate" type="number" min="0" step="0.001" value="1" />
+        </div>
         <div class="field">
           <label for="pace">旅行步調</label>
           <select id="pace">
-            <option value="balanced">剛剛好</option>
             <option value="relaxed">慢慢玩</option>
+            <option value="balanced">剛剛好</option>
             <option value="packed">排滿一點</option>
           </select>
         </div>
-        <div class="field">
-          <label for="areaFilter">區域</label>
-          <select id="areaFilter">
-            <option value="all">全部區域</option>
-            <option value="osaka">大阪市區</option>
-            <option value="usj">環球影城</option>
-            <option value="kyoto">京都</option>
-            <option value="nara">奈良</option>
-            <option value="kobe">神戶</option>
-          </select>
-        </div>
-        <div class="field field--inline">
-          <label for="yenRate">日圓匯率</label>
-          <input id="yenRate" type="number" min="0.1" max="1" step="0.001" value="0.22" />
-        </div>
       </section>
 
-      <section class="dashboard" aria-label="旅遊摘要">
+      <section class="dashboard" aria-label="旅行摘要">
         <article class="summary-panel">
-          <h2>今日摘要</h2>
+          <h2>預算摘要</h2>
           <div class="summary-grid">
             <div>
-              <span class="metric" id="visibleDays">8</span>
-              <span class="metric-label">符合條件天數</span>
+              <span class="metric" id="visibleDays">0</span>
+              <span class="metric-label">行程天數</span>
             </div>
             <div>
-              <span class="metric" id="totalYen">¥0</span>
-              <span class="metric-label">預估花費</span>
+              <span class="metric" id="totalLocal">0</span>
+              <span class="metric-label">當地花費</span>
             </div>
             <div>
               <span class="metric" id="totalTwd">NT$0</span>
@@ -70,8 +75,15 @@
         </article>
 
         <article class="summary-panel">
-          <h2>票券建議</h2>
-          <div class="pass-list" id="passList"></div>
+          <h2>新增一天</h2>
+          <form class="day-form" id="dayForm">
+            <input id="dayTitle" type="text" placeholder="標題，例如：市區散步與美食" required />
+            <input id="dayPlace" type="text" placeholder="城市/區域，例如：巴黎左岸" required />
+            <input id="dayRoute" type="text" placeholder="交通動線，例如：飯店 -> 博物館 -> 市集" />
+            <input id="dayBudget" type="number" min="0" step="1" placeholder="預估花費" required />
+            <textarea id="dayItems" rows="3" placeholder="每行一個行程，例如：09:00 早餐&#10;11:00 博物館&#10;18:00 晚餐"></textarea>
+            <button type="submit">新增行程</button>
+          </form>
         </article>
       </section>
 
@@ -79,23 +91,30 @@
         <section class="itinerary" aria-label="每日行程">
           <div class="section-heading">
             <h2>每日行程</h2>
-            <p id="paceHint">景點密度適中，保留吃飯、移動和臨時逛街時間。</p>
+            <p id="paceHint">把重要行程放進來，剩下的時間留給移動、吃飯和臨時發現。</p>
           </div>
           <div class="day-list" id="dayList"></div>
         </section>
 
         <aside class="side-panel" aria-label="旅行工具">
           <section class="tool-panel">
+            <h2>旅行工具</h2>
+            <div class="quick-actions">
+              <button id="addSample" type="button">加入範例</button>
+              <button id="clearTrip" type="button">清空行程</button>
+            </div>
+          </section>
+          <section class="tool-panel">
             <h2>打包清單</h2>
             <div class="checklist" id="checklist"></div>
           </section>
           <section class="tool-panel">
-            <h2>小提醒</h2>
+            <h2>規劃提醒</h2>
             <ul class="tips">
-              <li>住宿建議選難波、心齋橋或梅田，晚上回飯店比較省力。</li>
-              <li>京都與奈良日請提早出門，熱門景點上午人潮較舒服。</li>
-              <li>環球影城日不要再排大型夜間行程，留體力給排隊與表演。</li>
-              <li>餐廳收藏以「必吃 3 間、備案 6 間」最實用。</li>
+              <li>先決定住宿區域，再把每天景點集中在同一方向。</li>
+              <li>每天最多排 2 個主要景點，其他當備案會比較舒服。</li>
+              <li>跨城市移動日要把交通、寄放行李和入住時間算進去。</li>
+              <li>餐廳、門票、交通票券可在備註欄直接寫進當天行程。</li>
             </ul>
           </section>
         </aside>
