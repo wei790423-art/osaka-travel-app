@@ -8,6 +8,7 @@ const osakaTrip = {
   name: "大阪 8 天 7 夜",
   country: "日本",
   baseCity: "大阪",
+  startDate: "2026-05-27",
   flightNo: "BR132",
   flightDeparture: "08:30 TPE",
   flightArrival: "12:10 KIX",
@@ -131,6 +132,7 @@ const fields = {
   tripName: document.querySelector("#tripName"),
   country: document.querySelector("#country"),
   baseCity: document.querySelector("#baseCity"),
+  startDate: document.querySelector("#startDate"),
   flightNo: document.querySelector("#flightNo"),
   flightDeparture: document.querySelector("#flightDeparture"),
   flightArrival: document.querySelector("#flightArrival"),
@@ -287,6 +289,14 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function todayDateValue() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function loadTrip() {
   try {
     const saved = JSON.parse(localStorage.getItem(TRIP_KEY));
@@ -330,6 +340,7 @@ function normalizeTrip(source) {
     name: source.name || "我的旅行計畫",
     country: source.country || "自選國家",
     baseCity: source.baseCity || "自選城市",
+    startDate: source.startDate || todayDateValue(),
     flightNo: source.flightNo || "",
     flightDeparture: source.flightDeparture || "",
     flightArrival: source.flightArrival || "",
@@ -405,6 +416,42 @@ function formatLocal(value) {
 
 function formatTwd(value) {
   return new Intl.NumberFormat("zh-TW", { style: "currency", currency: "TWD", maximumFractionDigits: 0 }).format(value);
+}
+
+function parseDateValue(value) {
+  const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+function dateForDay(index) {
+  const start = parseDateValue(trip.startDate);
+  if (!start) return null;
+  const date = new Date(start);
+  date.setDate(start.getDate() + index);
+  return date;
+}
+
+function formatTripDate(date) {
+  if (!date) return "未設定日期";
+  return new Intl.DateTimeFormat("zh-TW", {
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  }).format(date);
+}
+
+function tripDateRangeText() {
+  const start = dateForDay(0);
+  if (!start) return "尚未設定出發日期";
+  const end = dateForDay(Math.max(trip.days.length - 1, 0));
+  const formatter = new Intl.DateTimeFormat("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  });
+  return trip.days.length > 1 ? `${formatter.format(start)} - ${formatter.format(end)}` : formatter.format(start);
 }
 
 function escapeHtml(value) {
@@ -532,6 +579,7 @@ function syncFields() {
   fields.tripName.value = trip.name;
   fields.country.value = trip.country;
   fields.baseCity.value = trip.baseCity;
+  fields.startDate.value = trip.startDate || todayDateValue();
   fields.flightNo.value = trip.flightNo || "";
   fields.flightDeparture.value = trip.flightDeparture || "";
   fields.flightArrival.value = trip.flightArrival || "";
@@ -544,6 +592,7 @@ function updateTripFromFields() {
   trip.name = fields.tripName.value.trim() || "我的旅行計畫";
   trip.country = fields.country.value.trim() || "自選國家";
   trip.baseCity = fields.baseCity.value.trim() || "自選城市";
+  trip.startDate = fields.startDate.value || todayDateValue();
   trip.flightNo = fields.flightNo.value.trim();
   trip.flightDeparture = fields.flightDeparture.value.trim();
   trip.flightArrival = fields.flightArrival.value.trim();
@@ -559,7 +608,7 @@ function render() {
   const stops = uniqueStops();
   const flightText = [trip.flightNo, trip.flightDeparture && `起飛 ${trip.flightDeparture}`, trip.flightArrival && `抵達 ${trip.flightArrival}`].filter(Boolean).join("｜") || "尚未填航班";
   nodes.heroTitle.textContent = trip.name;
-  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，航班 ${flightText}，目前規劃 ${trip.days.length} 天。每日住宿可在行程卡中個別填寫。`;
+  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，${tripDateRangeText()}，航班 ${flightText}，目前規劃 ${trip.days.length} 天。每日住宿可在行程卡中個別填寫。`;
   nodes.statDays.textContent = trip.days.length;
   nodes.statStops.textContent = stops;
   nodes.statBudget.textContent = Math.round(total).toLocaleString("zh-TW");
@@ -609,6 +658,7 @@ function renderDay(day, index) {
   const mealPlan = normalizeMealPlan(day);
   const landmarks = dayLandmarks(day);
   const selectedLandmark = primaryLandmark(day);
+  const dayDateText = formatTripDate(dateForDay(index));
   return `
     <article class="day-card booklet-page">
       <div class="day-number"><span>Day</span>${index + 1}</div>
@@ -616,6 +666,7 @@ function renderDay(day, index) {
         <div class="card-title-row">
           <div>
             <p class="booklet-kicker">${escapeHtml(trip.country)} ${escapeHtml(trip.baseCity)} 行程本</p>
+            <p class="day-date">${escapeHtml(dayDateText)}</p>
             <h3>${escapeHtml(day.title)}</h3>
           </div>
           <div class="card-actions">
@@ -625,6 +676,7 @@ function renderDay(day, index) {
         </div>
         ${day.photoUrl ? `<img class="day-photo" src="${escapeHtml(day.photoUrl)}" alt="${escapeHtml(day.title)} 照片" loading="lazy" />` : ""}
         <div class="day-meta">
+          <span class="tag">${escapeHtml(dayDateText)}</span>
           <span class="tag">${escapeHtml(day.place)}</span>
           ${day.hotelName ? `<span class="tag">${escapeHtml(day.hotelName)}</span>` : ""}
           ${day.transportMode ? `<span class="tag">${escapeHtml(day.transportMode)}</span>` : ""}
@@ -694,12 +746,16 @@ function updateLandmarkMap(select) {
 }
 
 function renderDayEditor(day, index) {
+  const dayDateText = formatTripDate(dateForDay(index));
   return `
     <article class="day-card day-card--editing">
       <div class="day-number"><span>Day</span>${index + 1}</div>
       <form class="edit-day-form" data-save-day="${index}">
         <div class="card-title-row">
-          <h3>編輯第 ${index + 1} 天</h3>
+          <div>
+            <p class="day-date">${escapeHtml(dayDateText)}</p>
+            <h3>編輯第 ${index + 1} 天</h3>
+          </div>
           <button class="icon-button" type="button" data-cancel-edit="${index}">取消</button>
         </div>
         <input name="title" type="text" value="${escapeHtml(day.title)}" placeholder="標題" required />
@@ -735,7 +791,7 @@ function renderHistory() {
             <article class="history-card">
               <div>
                 <h3>${escapeHtml(entry.trip.name)}</h3>
-                <p>${escapeHtml(entry.trip.country)}・${escapeHtml(entry.trip.baseCity)}｜${entry.trip.days.length} 天｜${escapeHtml(entry.trip.flightNo || "未填航班")}｜${escapeHtml(entry.trip.flightDeparture || "未填起飛")} -> ${escapeHtml(entry.trip.flightArrival || "未填抵達")}｜${formatHistoryBudget(entry.trip)}</p>
+                <p>${escapeHtml(entry.trip.country)}・${escapeHtml(entry.trip.baseCity)}｜${escapeHtml(historyDateRange(entry.trip))}｜${entry.trip.days.length} 天｜${escapeHtml(entry.trip.flightNo || "未填航班")}｜${escapeHtml(entry.trip.flightDeparture || "未填起飛")} -> ${escapeHtml(entry.trip.flightArrival || "未填抵達")}｜${formatHistoryBudget(entry.trip)}</p>
                 <span>${new Date(entry.savedAt).toLocaleString("zh-TW")}</span>
               </div>
               <div class="history-actions">
@@ -771,6 +827,20 @@ function formatHistoryBudget(savedTrip) {
   const total = totalBudget(savedTrip.days);
   const currency = normalizeCurrency(savedTrip.currency);
   return `${currency} ${Math.round(total).toLocaleString("zh-TW")}`;
+}
+
+function historyDateRange(savedTrip) {
+  const start = parseDateValue(savedTrip.startDate);
+  if (!start) return "未填出發日期";
+  const end = new Date(start);
+  end.setDate(start.getDate() + Math.max((savedTrip.days || []).length - 1, 0));
+  const formatter = new Intl.DateTimeFormat("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  });
+  return (savedTrip.days || []).length > 1 ? `${formatter.format(start)} - ${formatter.format(end)}` : formatter.format(start);
 }
 
 function addDay(event) {
@@ -1052,7 +1122,7 @@ document.querySelectorAll("[data-tab-target]").forEach((button) => {
   button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
 });
 
-[fields.tripName, fields.country, fields.baseCity, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.currency, fields.rate, fields.pace].forEach((field) => {
+[fields.tripName, fields.country, fields.baseCity, fields.startDate, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.currency, fields.rate, fields.pace].forEach((field) => {
   field.addEventListener("input", updateTripFromFields);
 });
 
