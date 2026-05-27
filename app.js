@@ -511,13 +511,11 @@ function travelModeParam(mode = "") {
 
 function landmarkDirectionsUrl(landmark, day) {
   const destination = landmarkQuery(landmark, day);
-  const origin = day.hotelName || day.place || trip.baseCity || "";
   const mode = travelModeParam(day.transportMode);
   const params = new URLSearchParams({
     api: "1",
     destination
   });
-  if (origin) params.set("origin", origin);
   if (mode) params.set("travelmode", mode);
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
@@ -683,7 +681,7 @@ function renderDay(day, index) {
               </select>
             </label>
             <div class="map-actions">
-              <a data-landmark-directions="${index}" href="${selectedLandmark ? landmarkDirectionsUrl(selectedLandmark, day) : "#"}" target="_blank" rel="noreferrer">開始導航</a>
+              <a data-landmark-directions="${index}" href="${selectedLandmark ? landmarkDirectionsUrl(selectedLandmark, day) : "#"}" target="_blank" rel="noreferrer">目前位置導航</a>
             </div>
           </div>
         </div>
