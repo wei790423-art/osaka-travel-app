@@ -951,6 +951,10 @@ function registerServiceWorker() {
   window.addEventListener("load", async () => {
     try {
       const registration = await navigator.serviceWorker.register("service-worker.js");
+      await registration.update();
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
       updateOfflineStatus(registration.active ? "離線功能已啟用，可安裝到手機主畫面。" : "離線功能正在準備中，重新開啟後即可使用。");
     } catch {
       updateOfflineStatus("離線功能暫時無法啟用，線上使用不受影響。");

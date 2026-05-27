@@ -1,9 +1,9 @@
-const CACHE_NAME = "global-trip-planner-v3";
+const CACHE_NAME = "global-trip-planner-v4";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css",
-  "./app.js",
+  "./styles.css?v=20260527-navonly",
+  "./app.js?v=20260527-navonly",
   "./manifest.webmanifest",
   "./assets/app-icon.svg",
   "./assets/global-travel-hero.png",
@@ -26,12 +26,19 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
   if (url.pathname.endsWith("/README.md")) return;
+  const isVersionedAppAsset = url.origin === self.location.origin && ["app.js", "styles.css"].some((file) => url.pathname.endsWith(`/${file}`));
 
   if (request.mode === "navigate") {
     event.respondWith(
@@ -42,6 +49,21 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  if (isVersionedAppAsset) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
