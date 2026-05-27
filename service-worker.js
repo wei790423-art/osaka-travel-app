@@ -1,9 +1,9 @@
-const CACHE_NAME = "global-trip-planner-v5";
+const CACHE_NAME = "global-trip-planner-v6";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260527-currentnav",
-  "./app.js?v=20260527-currentnav",
+  "./styles.css?v=20260527-mapfood",
+  "./app.js?v=20260527-mapfood",
   "./manifest.webmanifest",
   "./assets/app-icon.svg",
   "./assets/global-travel-hero.png",
@@ -38,6 +38,27 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.pathname.endsWith("/README.md")) return;
+
+  const isCdnOrTile = url.hostname === "unpkg.com"
+    || url.hostname.endsWith("tile.openstreetmap.org")
+    || url.hostname === "nominatim.openstreetmap.org";
+
+  if (isCdnOrTile) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        }).catch(() => cached || new Response("", { status: 503 }));
+      })
+    );
+    return;
+  }
+
   const isVersionedAppAsset = url.origin === self.location.origin && ["app.js", "styles.css"].some((file) => url.pathname.endsWith(`/${file}`));
 
   if (request.mode === "navigate") {

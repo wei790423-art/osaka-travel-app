@@ -186,7 +186,13 @@ const nodes = {
   guideDestination: document.querySelector("#guideDestination"),
   guideIntent: document.querySelector("#guideIntent"),
   guideRecommendations: document.querySelector("#guideRecommendations"),
-  guideGrid: document.querySelector("#guideGrid")
+  guideGrid: document.querySelector("#guideGrid"),
+  tripMap: document.querySelector("#tripMap"),
+  foodForm: document.querySelector("#foodForm"),
+  foodDestination: document.querySelector("#foodDestination"),
+  foodCategory: document.querySelector("#foodCategory"),
+  foodQuickLinks: document.querySelector("#foodQuickLinks"),
+  foodGrid: document.querySelector("#foodGrid")
 };
 
 const guidePlatforms = [
@@ -630,6 +636,19 @@ function render() {
   document.querySelectorAll("[data-landmark-select]").forEach((select) => {
     select.addEventListener("change", () => updateLandmarkMap(select));
   });
+
+  document.querySelectorAll("[data-toggle-daymap]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const idx = Number(button.dataset.toggleDaymap);
+      const container = document.getElementById(`dayMap-${idx}`);
+      const willExpand = container?.dataset.expanded !== "true";
+      button.textContent = willExpand ? "載入中..." : "展開景點地圖";
+      await toggleDayMap(idx);
+      button.textContent = container?.dataset.expanded === "true" ? "收合地圖" : "展開景點地圖";
+    });
+  });
+
+  renderTripMap();
 }
 
 function renderDay(day, index) {
@@ -667,6 +686,9 @@ function renderDay(day, index) {
           <div><span>午餐</span><strong>${escapeHtml(mealPlan.lunch || "尚未填店名")}</strong></div>
           <div><span>晚餐</span><strong>${escapeHtml(mealPlan.dinner || "尚未填店名")}</strong></div>
         </div>
+        <div class="day-food-link">
+          <a href="https://www.google.com/maps/search/${encodeURIComponent(`${day.place || trip.baseCity} ${trip.country} restaurant`)}" target="_blank" rel="noreferrer">搜尋 ${escapeHtml(day.place || trip.baseCity)} 附近餐廳</a>
+        </div>
         <dl class="detail-list">
           <div><dt>住宿飯店</dt><dd>${escapeHtml(day.hotelName || "尚未填住宿飯店")}</dd></div>
           <div><dt>移動方式</dt><dd>${escapeHtml(day.transportMode || "尚未選擇")}</dd></div>
@@ -684,6 +706,10 @@ function renderDay(day, index) {
               <a data-landmark-directions="${index}" href="${selectedLandmark ? landmarkDirectionsUrl(selectedLandmark, day) : "#"}" target="_blank" rel="noreferrer">目前位置導航</a>
             </div>
           </div>
+        </div>
+        <div class="day-map-section">
+          <button class="day-map-toggle" type="button" data-toggle-daymap="${index}">展開景點地圖</button>
+          <div id="dayMap-${index}" class="day-map-container" data-expanded="false" style="display:none;"></div>
         </div>
         <ul class="timeline">
           ${items.map((item) => `<li><time>•</time><span>${escapeHtml(item)}</span></li>`).join("")}
@@ -1151,6 +1177,296 @@ function renderGuideLinks(event) {
     .join("");
 }
 
+// ========== Geocoding ==========
+const GEO_CACHE_KEY = "trip-geocache-v1";
+let geoCache;
+try { geoCache = JSON.parse(localStorage.getItem(GEO_CACHE_KEY)) || {}; } catch { geoCache = {}; }
+
+function saveGeoCache() {
+  try { localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(geoCache)); } catch {}
+}
+
+let lastGeoTime = 0;
+async function geocode(query) {
+  if (!query?.trim()) return null;
+  const key = query.trim().toLowerCase();
+  if (geoCache[key]) return geoCache[key];
+
+  const wait = Math.max(0, 1100 - (Date.now() - lastGeoTime));
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  lastGeoTime = Date.now();
+
+  try {
+    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=zh-TW`);
+    const data = await resp.json();
+    if (data.length) {
+      const result = { lat: +data[0].lat, lng: +data[0].lon, display: data[0].display_name };
+      geoCache[key] = result;
+      saveGeoCache();
+      return result;
+    }
+  } catch {}
+  return null;
+}
+
+// ========== Trip Overview Map ==========
+let tripMapInstance = null;
+let tripMapRenderedKey = "";
+
+function tripMapKey() {
+  return trip.days.map(d => `${d.place}|${trip.country}`).join(";;");
+}
+
+function createNumberedIcon(num, color) {
+  if (typeof L === "undefined") return null;
+  return L.divIcon({
+    className: "numbered-marker",
+    html: `<div style="background:${color};color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${num}</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -18]
+  });
+}
+
+const mapColors = ["#c7352a", "#006b6f", "#d1972a", "#6b4fa0", "#2a7dc7", "#c73e6b", "#3ba55c", "#e67e22"];
+
+async function renderTripMap() {
+  const container = document.getElementById("tripMap");
+  if (!container || typeof L === "undefined") return;
+
+  const key = tripMapKey();
+  if (key === tripMapRenderedKey && tripMapInstance) return;
+
+  if (tripMapInstance) {
+    tripMapInstance.remove();
+    tripMapInstance = null;
+  }
+
+  if (!trip.days.length) {
+    container.innerHTML = '<div class="map-empty">新增行程後，地圖會自動顯示所有地點。</div>';
+    tripMapRenderedKey = key;
+    return;
+  }
+
+  container.innerHTML = '<div class="map-loading">正在定位行程地點...</div>';
+
+  const points = [];
+  for (let i = 0; i < trip.days.length; i++) {
+    const day = trip.days[i];
+    const query = [day.place, trip.baseCity, trip.country].filter(Boolean).join(", ");
+    const geo = await geocode(query);
+    if (geo) points.push({ ...geo, index: i });
+  }
+
+  if (!points.length) {
+    container.innerHTML = '<div class="map-empty">無法取得地點座標，請確認地名是否正確。</div>';
+    tripMapRenderedKey = key;
+    return;
+  }
+
+  container.innerHTML = "";
+
+  const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
+  tripMapInstance = L.map(container, { scrollWheelZoom: true, tap: true });
+
+  if (points.length === 1) {
+    tripMapInstance.setView([points[0].lat, points[0].lng], 12);
+  } else {
+    tripMapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+  }
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(tripMapInstance);
+
+  points.forEach(p => {
+    const day = trip.days[p.index];
+    const color = mapColors[p.index % mapColors.length];
+    const marker = L.marker([p.lat, p.lng], { icon: createNumberedIcon(p.index + 1, color) }).addTo(tripMapInstance);
+    const dateText = formatTripDate(dateForDay(p.index));
+    marker.bindPopup(`<div style="min-width:160px"><strong>Day ${p.index + 1}</strong><br><span style="color:#666">${escapeHtml(dateText)}</span><br>${escapeHtml(day.title)}<br>${escapeHtml(day.place)}</div>`);
+  });
+
+  if (points.length > 1) {
+    L.polyline(points.map(p => [p.lat, p.lng]), {
+      color: "#c7352a",
+      weight: 2.5,
+      opacity: 0.6,
+      dashArray: "8 6"
+    }).addTo(tripMapInstance);
+  }
+
+  tripMapRenderedKey = key;
+}
+
+// ========== Day Detail Maps ==========
+const dayMapInstances = {};
+
+async function toggleDayMap(index) {
+  const container = document.getElementById(`dayMap-${index}`);
+  if (!container || typeof L === "undefined") return;
+
+  if (container.dataset.expanded === "true") {
+    container.style.display = "none";
+    container.dataset.expanded = "false";
+    if (dayMapInstances[index]) {
+      dayMapInstances[index].remove();
+      delete dayMapInstances[index];
+    }
+    return;
+  }
+
+  container.style.display = "block";
+  container.dataset.expanded = "true";
+  container.innerHTML = '<div class="map-loading">正在載入景點地圖...</div>';
+
+  const day = trip.days[index];
+  if (!day) return;
+
+  const landmarks = dayLandmarks(day);
+  const points = [];
+
+  for (const lm of landmarks) {
+    const query = landmarkQuery(lm, day);
+    const geo = await geocode(query);
+    if (geo) points.push({ ...geo, name: lm });
+  }
+
+  if (!points.length) {
+    const fallbackQuery = [day.place, trip.baseCity, trip.country].filter(Boolean).join(", ");
+    const fallback = await geocode(fallbackQuery);
+    if (fallback) points.push({ ...fallback, name: day.place });
+  }
+
+  if (!points.length) {
+    container.innerHTML = '<div class="map-empty">無法定位此天的景點。</div>';
+    return;
+  }
+
+  container.innerHTML = "";
+
+  const map = L.map(container, { scrollWheelZoom: false, tap: true });
+  dayMapInstances[index] = map;
+
+  if (points.length === 1) {
+    map.setView([points[0].lat, points[0].lng], 14);
+  } else {
+    map.fitBounds(L.latLngBounds(points.map(p => [p.lat, p.lng])), { padding: [30, 30], maxZoom: 15 });
+  }
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(map);
+
+  const color = mapColors[index % mapColors.length];
+  points.forEach((p, i) => {
+    const marker = L.marker([p.lat, p.lng], { icon: createNumberedIcon(i + 1, color) }).addTo(map);
+    marker.bindPopup(`<strong>${escapeHtml(p.name)}</strong>`);
+  });
+
+  if (points.length > 1) {
+    L.polyline(points.map(p => [p.lat, p.lng]), {
+      color: "#006b6f",
+      weight: 2,
+      opacity: 0.7,
+      dashArray: "6 4"
+    }).addTo(map);
+  }
+}
+
+// ========== Food Explorer ==========
+function foodCategoryKeyword(cat) {
+  const keywords = {
+    all: "",
+    local: "local cuisine traditional",
+    street: "street food night market",
+    fine: "fine dining",
+    cafe: "cafe dessert bakery coffee",
+    vegetarian: "vegetarian vegan",
+    breakfast: "breakfast brunch",
+    bar: "bar pub",
+    market: "market food hall"
+  };
+  return keywords[cat] || "";
+}
+
+const foodSearchPlatforms = [
+  {
+    name: "Google Maps 餐廳",
+    type: "地圖搜尋",
+    note: "查看附近餐廳位置、評分、照片與營業時間。",
+    buildUrl: (q, cat) => `https://www.google.com/maps/search/${encodeURIComponent(`${q} ${foodCategoryKeyword(cat)} restaurant`.trim())}`
+  },
+  {
+    name: "Tripadvisor 美食",
+    type: "旅人評價",
+    note: "全球旅人推薦的餐廳排行與真實評價。",
+    buildUrl: (q, cat) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(`${q} ${foodCategoryKeyword(cat)} restaurant`.trim())}`
+  },
+  {
+    name: "Yelp",
+    type: "在地推薦",
+    note: "在地人愛去的餐廳、小吃店與隱藏版美食。",
+    buildUrl: (q, cat) => `https://www.yelp.com/search?find_desc=${encodeURIComponent(`${foodCategoryKeyword(cat)} restaurant`.trim())}&find_loc=${encodeURIComponent(q)}`
+  },
+  {
+    name: "Google 美食攻略",
+    type: "文章推薦",
+    note: "搜尋部落客的美食懶人包與在地人推薦清單。",
+    buildUrl: (q, cat) => `https://www.google.com/search?q=${encodeURIComponent(`${q} 美食 推薦 必吃 ${foodCategoryKeyword(cat)}`.trim())}`
+  },
+  {
+    name: "YouTube 美食影片",
+    type: "影片推薦",
+    note: "看實際用餐環境、菜色與排隊狀況。",
+    buildUrl: (q, cat) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`${q} 美食 必吃 ${foodCategoryKeyword(cat)}`.trim())}`
+  },
+  {
+    name: "Instagram 美食",
+    type: "社群打卡",
+    note: "找熱門打卡餐廳與最新美食趨勢。",
+    buildUrl: (q) => `https://www.google.com/search?q=${encodeURIComponent(`site:instagram.com ${q} food restaurant`)}`
+  }
+];
+
+function renderFoodSearch(event) {
+  if (event) event.preventDefault();
+  const destination = nodes.foodDestination.value.trim() || trip.baseCity || trip.country || "美食";
+  const category = nodes.foodCategory.value;
+  nodes.foodDestination.value = destination;
+
+  const quickLinksHtml = trip.days.length ? `
+    <div class="food-day-chips">
+      <h3>快速搜尋每日行程地點的美食</h3>
+      <div class="chip-grid">
+        ${trip.days.map((day, i) => {
+          const place = day.place || trip.baseCity;
+          const url = `https://www.google.com/maps/search/${encodeURIComponent(`${place} ${trip.country} restaurant`)}`;
+          return `<a href="${url}" target="_blank" rel="noreferrer" class="food-chip">Day ${i + 1}：${escapeHtml(place)}</a>`;
+        }).join("")}
+      </div>
+    </div>
+  ` : "";
+
+  nodes.foodQuickLinks.innerHTML = quickLinksHtml;
+
+  nodes.foodGrid.innerHTML = foodSearchPlatforms.map(platform => {
+    const url = platform.buildUrl(destination, category);
+    return `
+      <article class="food-card">
+        <div>
+          <span>${escapeHtml(platform.type)}</span>
+          <h3>${escapeHtml(platform.name)}</h3>
+          <p>${escapeHtml(platform.note)}</p>
+        </div>
+        <a href="${url}" target="_blank" rel="noreferrer">搜尋</a>
+      </article>
+    `;
+  }).join("");
+}
+
 nodes.dayForm.addEventListener("submit", addDay);
 nodes.addSample.addEventListener("click", addSampleDay);
 nodes.clearTrip.addEventListener("click", clearTrip);
@@ -1162,11 +1478,13 @@ nodes.previewImport.addEventListener("click", previewImport);
 nodes.applyImport.addEventListener("click", applyImport);
 nodes.themeToggle.addEventListener("click", toggleTheme);
 nodes.guideForm.addEventListener("submit", renderGuideLinks);
+nodes.foodForm.addEventListener("submit", renderFoodSearch);
 
 applyTheme();
 applySharedTripFromUrl();
 syncFields();
 renderChecklist();
 renderGuideLinks();
+renderFoodSearch();
 render();
 registerServiceWorker();

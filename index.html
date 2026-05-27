@@ -7,7 +7,8 @@
     <title>旅行行程規劃 App</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="styles.css?v=20260527-currentnav" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css?v=20260527-mapfood" />
   </head>
   <body>
     <main class="app-shell">
@@ -30,6 +31,7 @@
       <nav class="tab-nav" aria-label="功能選單">
         <button class="tab-button is-active" type="button" data-tab-target="planner">行程規劃</button>
         <button class="tab-button" type="button" data-tab-target="guides">攻略平台</button>
+        <button class="tab-button" type="button" data-tab-target="food">美食探索</button>
         <button class="tab-button" type="button" data-tab-target="import">匯入行程</button>
         <button class="tab-button" type="button" data-tab-target="history">歷史行程</button>
         <button class="tab-button" type="button" data-tab-target="tools">工具清單</button>
@@ -134,6 +136,16 @@
           </article>
         </section>
 
+        <section class="map-overview-wrap" aria-label="行程地圖總覽">
+          <div class="section-heading">
+            <div>
+              <h2>行程地圖總覽</h2>
+              <p>所有天數的主要地點一覽，點擊標記可查看行程摘要。</p>
+            </div>
+          </div>
+          <div id="tripMap" class="trip-map"></div>
+        </section>
+
         <section class="content-grid">
           <section class="itinerary" aria-label="每日行程">
             <div class="section-heading">
@@ -196,6 +208,34 @@
         </section>
       </section>
 
+      <section class="tab-panel" id="food" aria-label="美食探索">
+        <section class="wide-panel">
+          <div class="section-heading">
+            <div>
+              <h2>美食探索</h2>
+              <p>輸入城市或地區，快速搜尋當地美食、餐廳與在地小吃。支援全球任何目的地。</p>
+            </div>
+          </div>
+          <form class="food-search" id="foodForm">
+            <input id="foodDestination" type="text" placeholder="例如：東京、巴黎、曼谷、紐約" />
+            <select id="foodCategory">
+              <option value="all">所有美食</option>
+              <option value="local">在地特色料理</option>
+              <option value="street">街頭小吃 / 夜市</option>
+              <option value="fine">精緻餐廳</option>
+              <option value="cafe">咖啡廳 / 甜點</option>
+              <option value="vegetarian">素食 / 蔬食</option>
+              <option value="breakfast">早餐 / 早午餐</option>
+              <option value="bar">酒吧 / 居酒屋</option>
+              <option value="market">傳統市場</option>
+            </select>
+            <button type="submit">搜尋美食</button>
+          </form>
+          <div class="food-quick-links" id="foodQuickLinks"></div>
+          <div class="food-grid" id="foodGrid"></div>
+        </section>
+      </section>
+
       <section class="tab-panel" id="import" aria-label="匯入行程">
         <section class="wide-panel">
           <div class="section-heading">
@@ -248,6 +288,7 @@
       </section>
     </main>
 
-    <script src="app.js?v=20260527-currentnav"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js?v=20260527-mapfood"></script>
   </body>
 </html>
