@@ -347,6 +347,94 @@ h1 {
   gap: 12px;
 }
 
+.guide-recommendations {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.guide-heading {
+  padding: 14px 16px;
+  border: 1px solid #eadcc4;
+  border-radius: 8px;
+  background: var(--paper-warm);
+}
+
+.guide-heading h3 {
+  margin: 0 0 6px;
+}
+
+.guide-heading p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.recommendation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.recommendation-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.recommendation-rank {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 900;
+}
+
+.recommendation-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.recommendation-card h4 {
+  margin: 0 0 6px;
+}
+
+.recommendation-card p,
+.recommendation-card strong {
+  display: block;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.recommendation-card strong {
+  margin-top: 6px;
+  color: var(--ink);
+}
+
+.recommendation-card a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #eef5f3;
+  color: var(--teal);
+  font-weight: 850;
+  text-decoration: none;
+}
+
 .guide-card {
   display: flex;
   justify-content: space-between;
@@ -420,7 +508,8 @@ h1 {
 
 :root[data-theme="dark"] .preview-day,
 :root[data-theme="dark"] .history-card,
-:root[data-theme="dark"] .guide-card {
+:root[data-theme="dark"] .guide-card,
+:root[data-theme="dark"] .recommendation-card {
   background: #161a1e;
 }
 
@@ -687,6 +776,10 @@ h1 {
   background: #15191d;
 }
 
+:root[data-theme="dark"] .guide-heading {
+  background: #242018;
+}
+
 .detail-list dt {
   color: var(--accent-dark);
   font-weight: 850;
@@ -758,7 +851,8 @@ h1 {
 }
 
 :root[data-theme="dark"] .map-card a,
-:root[data-theme="dark"] .tag {
+:root[data-theme="dark"] .tag,
+:root[data-theme="dark"] .recommendation-card a {
   background: #102c2e;
 }
 
@@ -995,5 +1089,9 @@ h1 {
 
   .history-card {
     display: grid;
+  }
+
+  .recommendation-card {
+    grid-template-columns: 1fr;
   }
 }

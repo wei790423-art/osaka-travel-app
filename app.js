@@ -169,6 +169,7 @@ const nodes = {
   guideForm: document.querySelector("#guideForm"),
   guideDestination: document.querySelector("#guideDestination"),
   guideIntent: document.querySelector("#guideIntent"),
+  guideRecommendations: document.querySelector("#guideRecommendations"),
   guideGrid: document.querySelector("#guideGrid")
 };
 
@@ -220,6 +221,51 @@ const guidePlatforms = [
     type: "官方資訊",
     note: "查簽證、交通、節慶、天氣與觀光局建議。",
     buildUrl: (q) => `https://www.google.com/search?q=${encodeURIComponent(`${q} 官方 旅遊 網站 tourism official`)}`
+  }
+];
+
+const guideRecommendationTemplates = [
+  {
+    title: "先看官方旅遊資訊",
+    category: "安全有效",
+    reason: "官方網站通常最適合確認簽證、交通、活動日期、季節限制和最新公告。",
+    action: "把交通規則、營業時間和季節活動抄到每日行程備註。",
+    query: (q) => `${q} 官方 旅遊 景點 交通`
+  },
+  {
+    title: "建立 Google Maps 收藏清單",
+    category: "動線規劃",
+    reason: "地圖能快速看出景點彼此距離，避免同一天排到不同方向。",
+    action: "把想去景點存成清單，再依區域分配到不同天。",
+    query: (q) => `${q} 必去景點 美食 地圖`
+  },
+  {
+    title: "看 1 到 2 支近期 YouTube 行程影片",
+    category: "現場感",
+    reason: "影片能看到實際街景、人潮、交通轉乘難度與餐廳排隊狀況。",
+    action: "把影片中出現的景點、餐廳和交通方式填進每日卡片。",
+    query: (q) => `${q} 自由行 行程 交通 美食`
+  },
+  {
+    title: "比對 Klook / KKday 票券與交通 Pass",
+    category: "省錢與預約",
+    reason: "票券平台適合確認熱門門票、一日遊、交通 pass、包車與體驗活動。",
+    action: "只把需要預約或可能省錢的票券加入預算，不要看到全部都買。",
+    query: (q) => `${q} 票券 一日遊 交通 pass`
+  },
+  {
+    title: "用 Tripadvisor 交叉檢查餐廳與景點評價",
+    category: "避雷",
+    reason: "旅人評價能補足部落格或影片沒有提到的缺點，例如排隊、服務、價格和交通。",
+    action: "把評價穩定的餐廳填到早餐、午餐、晚餐欄位。",
+    query: (q) => `${q} restaurants attractions reviews`
+  },
+  {
+    title: "查住宿區域攻略",
+    category: "住宿決策",
+    reason: "住宿地點會影響每天移動成本，尤其多城市或親子旅行差很多。",
+    action: "把每天飯店分別填入每日行程，換飯店日安排輕鬆一點。",
+    query: (q) => `${q} 住宿 區域 推薦 交通方便`
   }
 ];
 
@@ -808,6 +854,31 @@ function renderGuideLinks(event) {
   const destination = nodes.guideDestination.value.trim() || trip.baseCity || trip.country || "大阪";
   const intent = nodes.guideIntent.value;
   nodes.guideDestination.value = destination;
+  nodes.guideRecommendations.innerHTML = `
+    <div class="guide-heading">
+      <h3>${escapeHtml(destination)} 推薦攻略清單</h3>
+      <p>依照「先確認資訊、再排動線、最後訂票券」的順序整理，適合直接拿來規劃行程。</p>
+    </div>
+    <div class="recommendation-list">
+      ${guideRecommendationTemplates
+        .map((item, index) => {
+          const url = `https://www.google.com/search?q=${encodeURIComponent(item.query(destination))}`;
+          return `
+            <article class="recommendation-card">
+              <div class="recommendation-rank">${index + 1}</div>
+              <div>
+                <span>${item.category}</span>
+                <h4>${item.title}</h4>
+                <p>${item.reason}</p>
+                <strong>${item.action}</strong>
+              </div>
+              <a href="${url}" target="_blank" rel="noreferrer">查攻略</a>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
   nodes.guideGrid.innerHTML = guidePlatforms
     .map((platform) => {
       const url = platform.buildUrl(destination, intent);
