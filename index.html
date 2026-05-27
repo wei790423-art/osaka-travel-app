@@ -47,12 +47,16 @@
             <input id="baseCity" type="text" placeholder="例如：大阪、巴黎、曼谷" />
           </div>
           <div class="field">
-            <label for="hotelName">住宿飯店</label>
-            <input id="hotelName" type="text" placeholder="例如：難波東方飯店" />
-          </div>
-          <div class="field">
             <label for="flightNo">航班號</label>
             <input id="flightNo" type="text" placeholder="例如：BR132 / JL816" />
+          </div>
+          <div class="field">
+            <label for="flightDeparture">起飛時間</label>
+            <input id="flightDeparture" type="text" placeholder="例如：08:30 TPE" />
+          </div>
+          <div class="field">
+            <label for="flightArrival">抵達時間</label>
+            <input id="flightArrival" type="text" placeholder="例如：12:10 KIX" />
           </div>
           <div class="field">
             <label for="currency">當地幣別</label>
@@ -96,6 +100,7 @@
             <form class="day-form" id="dayForm">
               <input id="dayTitle" type="text" placeholder="標題，例如：市區散步與美食" required />
               <input id="dayPlace" type="text" placeholder="城市/區域，例如：大阪難波" required />
+              <input id="dayHotelName" type="text" placeholder="當晚住宿飯店，例如：難波東方飯店" />
               <select id="dayTransportMode">
                 <option value="">選擇移動方式</option>
                 <option value="步行">步行</option>
@@ -156,7 +161,7 @@
           <div class="section-heading">
             <div>
               <h2>貼上行程，直接導入</h2>
-              <p>可以貼 ChatGPT 產生的行程、朋友傳來的文字，或自己打的草稿。支援「第 1 天 / Day 1」、地點、交通、預算等文字。</p>
+              <p>可以貼 ChatGPT 產生的行程、朋友傳來的文字，或自己打的草稿。支援「第 1 天 / Day 1」、地點、住宿飯店、交通、預算等文字。</p>
             </div>
           </div>
           <textarea id="importText" class="import-box" rows="14" placeholder="範例：&#10;第 1 天：抵達大阪，難波暖身&#10;地點：大阪難波&#10;交通：關西機場 -> 難波 -> 道頓堀&#10;預算：7600&#10;14:00 抵達關西機場&#10;18:00 道頓堀晚餐&#10;&#10;第 2 天：大阪城與梅田夜景&#10;地點：大阪市區&#10;預算：9200&#10;09:00 大阪城公園&#10;18:30 空中庭園夜景"></textarea>

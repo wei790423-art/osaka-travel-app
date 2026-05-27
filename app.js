@@ -6,8 +6,9 @@ const osakaTrip = {
   name: "大阪 8 天 7 夜",
   country: "日本",
   baseCity: "大阪",
-  hotelName: "大阪難波周邊飯店",
-  flightNo: "請填入航班號",
+  flightNo: "BR132",
+  flightDeparture: "08:30 TPE",
+  flightArrival: "12:10 KIX",
   currency: "JPY",
   rate: 0.22,
   pace: "balanced",
@@ -15,6 +16,7 @@ const osakaTrip = {
     {
       title: "抵達關西機場，難波暖身",
       place: "大阪難波",
+      hotelName: "大阪難波周邊飯店",
       route: "關西機場 -> 南海電鐵 -> 難波",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "機上或機場簡餐", lunch: "關西機場美食街", dinner: "道頓堀御好燒" },
@@ -25,6 +27,7 @@ const osakaTrip = {
     {
       title: "大阪城、梅田與夜景",
       place: "大阪市區",
+      hotelName: "大阪難波周邊飯店",
       route: "谷町四丁目 -> 大阪城 -> 梅田",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "京橋商店街", dinner: "梅田地下街餐廳" },
@@ -35,6 +38,7 @@ const osakaTrip = {
     {
       title: "日本環球影城整天",
       place: "環球影城",
+      hotelName: "大阪難波周邊飯店",
       route: "難波 -> 西九條 -> 環球城",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "便利商店早餐", lunch: "USJ 園區餐廳", dinner: "環球城市食堂" },
@@ -45,6 +49,7 @@ const osakaTrip = {
     {
       title: "京都伏見稻荷與清水寺",
       place: "京都",
+      hotelName: "大阪難波周邊飯店",
       route: "大阪 -> 京都 -> 伏見稻荷 -> 清水五條",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "祇園周邊餐廳", dinner: "大阪車站便餐" },
@@ -55,6 +60,7 @@ const osakaTrip = {
     {
       title: "奈良公園與通天閣夜晚",
       place: "奈良",
+      hotelName: "大阪難波周邊飯店",
       route: "大阪難波 -> 近鐵奈良 -> 新世界",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "奈良町町家餐廳", dinner: "新世界串炸" },
@@ -65,6 +71,7 @@ const osakaTrip = {
     {
       title: "神戶港、北野異人館與牛排",
       place: "神戶",
+      hotelName: "大阪梅田周邊飯店",
       route: "大阪梅田 -> 三宮 -> 神戶港",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "神戶牛排餐廳", dinner: "神戶港咖啡或輕食" },
@@ -75,6 +82,7 @@ const osakaTrip = {
     {
       title: "黑門市場、天王寺與最後採買",
       place: "大阪市區",
+      hotelName: "大阪難波周邊飯店",
       route: "日本橋 -> 天王寺 -> 阿倍野",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "黑門市場海鮮小吃", lunch: "天王寺百貨餐廳", dinner: "心齋橋燒肉" },
@@ -85,6 +93,7 @@ const osakaTrip = {
     {
       title: "退房，機場伴手禮",
       place: "大阪 / 關西機場",
+      hotelName: "退房日",
       route: "飯店 -> 關西機場",
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "難波咖啡店", dinner: "機場餐廳或機上餐" },
@@ -112,13 +121,15 @@ const fields = {
   tripName: document.querySelector("#tripName"),
   country: document.querySelector("#country"),
   baseCity: document.querySelector("#baseCity"),
-  hotelName: document.querySelector("#hotelName"),
   flightNo: document.querySelector("#flightNo"),
+  flightDeparture: document.querySelector("#flightDeparture"),
+  flightArrival: document.querySelector("#flightArrival"),
   currency: document.querySelector("#currency"),
   rate: document.querySelector("#rate"),
   pace: document.querySelector("#pace"),
   dayTitle: document.querySelector("#dayTitle"),
   dayPlace: document.querySelector("#dayPlace"),
+  dayHotelName: document.querySelector("#dayHotelName"),
   dayTransportMode: document.querySelector("#dayTransportMode"),
   dayRoute: document.querySelector("#dayRoute"),
   dayBudget: document.querySelector("#dayBudget"),
@@ -192,8 +203,9 @@ function normalizeTrip(source) {
     name: source.name || "我的旅行計畫",
     country: source.country || "自選國家",
     baseCity: source.baseCity || "自選城市",
-    hotelName: source.hotelName || "",
     flightNo: source.flightNo || "",
+    flightDeparture: source.flightDeparture || "",
+    flightArrival: source.flightArrival || "",
     currency: source.currency || "TWD",
     rate: Number(source.rate || 1),
     pace: source.pace || "balanced",
@@ -206,6 +218,7 @@ function normalizeDay(day) {
   return {
     title: day.title || "未命名行程",
     place: day.place || "",
+    hotelName: day.hotelName || day.accommodation || "",
     route: day.route || "",
     transportMode: day.transportMode || "",
     mealPlan,
@@ -297,8 +310,9 @@ function syncFields() {
   fields.tripName.value = trip.name;
   fields.country.value = trip.country;
   fields.baseCity.value = trip.baseCity;
-  fields.hotelName.value = trip.hotelName || "";
   fields.flightNo.value = trip.flightNo || "";
+  fields.flightDeparture.value = trip.flightDeparture || "";
+  fields.flightArrival.value = trip.flightArrival || "";
   fields.currency.value = normalizeCurrency(trip.currency);
   fields.rate.value = trip.rate;
   fields.pace.value = trip.pace;
@@ -308,8 +322,9 @@ function updateTripFromFields() {
   trip.name = fields.tripName.value.trim() || "我的旅行計畫";
   trip.country = fields.country.value.trim() || "自選國家";
   trip.baseCity = fields.baseCity.value.trim() || "自選城市";
-  trip.hotelName = fields.hotelName.value.trim();
   trip.flightNo = fields.flightNo.value.trim();
+  trip.flightDeparture = fields.flightDeparture.value.trim();
+  trip.flightArrival = fields.flightArrival.value.trim();
   trip.currency = normalizeCurrency(fields.currency.value);
   trip.rate = Number(fields.rate.value) || 1;
   trip.pace = fields.pace.value;
@@ -320,8 +335,9 @@ function updateTripFromFields() {
 function render() {
   const total = totalBudget();
   const stops = uniqueStops();
+  const flightText = [trip.flightNo, trip.flightDeparture && `起飛 ${trip.flightDeparture}`, trip.flightArrival && `抵達 ${trip.flightArrival}`].filter(Boolean).join("｜") || "尚未填航班";
   nodes.heroTitle.textContent = trip.name;
-  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，住宿 ${trip.hotelName || "尚未填飯店"}，航班 ${trip.flightNo || "尚未填航班"}，目前規劃 ${trip.days.length} 天。`;
+  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，航班 ${flightText}，目前規劃 ${trip.days.length} 天。每日住宿可在行程卡中個別填寫。`;
   nodes.statDays.textContent = trip.days.length;
   nodes.statStops.textContent = stops;
   nodes.statBudget.textContent = Math.round(total).toLocaleString("zh-TW");
@@ -382,6 +398,7 @@ function renderDay(day, index) {
         ${day.photoUrl ? `<img class="day-photo" src="${escapeHtml(day.photoUrl)}" alt="${escapeHtml(day.title)} 照片" loading="lazy" />` : ""}
         <div class="day-meta">
           <span class="tag">${escapeHtml(day.place)}</span>
+          ${day.hotelName ? `<span class="tag">${escapeHtml(day.hotelName)}</span>` : ""}
           ${day.transportMode ? `<span class="tag">${escapeHtml(day.transportMode)}</span>` : ""}
           <span class="tag">${normalizeCurrency(trip.currency)}</span>
         </div>
@@ -391,6 +408,7 @@ function renderDay(day, index) {
           <div><span>晚餐</span><strong>${escapeHtml(mealPlan.dinner || "尚未填店名")}</strong></div>
         </div>
         <dl class="detail-list">
+          <div><dt>住宿飯店</dt><dd>${escapeHtml(day.hotelName || "尚未填住宿飯店")}</dd></div>
           <div><dt>移動方式</dt><dd>${escapeHtml(day.transportMode || "尚未選擇")}</dd></div>
           <div><dt>移動路線</dt><dd>${escapeHtml(day.route || "尚未填移動路線")}</dd></div>
         </dl>
@@ -421,6 +439,7 @@ function renderDayEditor(day, index) {
         </div>
         <input name="title" type="text" value="${escapeHtml(day.title)}" placeholder="標題" required />
         <input name="place" type="text" value="${escapeHtml(day.place)}" placeholder="城市/區域" required />
+        <input name="hotelName" type="text" value="${escapeHtml(day.hotelName || "")}" placeholder="當晚住宿飯店" />
         <select name="transportMode">${renderTransportOptions(day.transportMode || "")}</select>
         <input name="route" type="text" value="${escapeHtml(day.route || "")}" placeholder="移動路線，例如：飯店 -> 景點 -> 晚餐" />
         <input name="budget" type="number" min="0" step="1" value="${Number(day.budget || 0)}" placeholder="預算" />
@@ -450,7 +469,7 @@ function renderHistory() {
             <article class="history-card">
               <div>
                 <h3>${escapeHtml(entry.trip.name)}</h3>
-                <p>${escapeHtml(entry.trip.country)}・${escapeHtml(entry.trip.baseCity)}｜${entry.trip.days.length} 天｜${escapeHtml(entry.trip.hotelName || "未填住宿")}｜${escapeHtml(entry.trip.flightNo || "未填航班")}｜${formatHistoryBudget(entry.trip)}</p>
+                <p>${escapeHtml(entry.trip.country)}・${escapeHtml(entry.trip.baseCity)}｜${entry.trip.days.length} 天｜${escapeHtml(entry.trip.flightNo || "未填航班")}｜${escapeHtml(entry.trip.flightDeparture || "未填起飛")} -> ${escapeHtml(entry.trip.flightArrival || "未填抵達")}｜${formatHistoryBudget(entry.trip)}</p>
                 <span>${new Date(entry.savedAt).toLocaleString("zh-TW")}</span>
               </div>
               <div class="history-actions">
@@ -494,6 +513,7 @@ function addDay(event) {
   trip.days.push(normalizeDay({
     title: fields.dayTitle.value.trim(),
     place: fields.dayPlace.value.trim(),
+    hotelName: fields.dayHotelName.value.trim(),
     transportMode: fields.dayTransportMode.value.trim(),
     route: fields.dayRoute.value.trim(),
     budget: Number(fields.dayBudget.value) || 0,
@@ -519,6 +539,7 @@ function saveEditedDay(event) {
   trip.days[index] = normalizeDay({
     title: data.get("title"),
     place: data.get("place"),
+    hotelName: data.get("hotelName"),
     transportMode: data.get("transportMode"),
     route: data.get("route"),
     budget: data.get("budget"),
@@ -540,6 +561,7 @@ function addSampleDay() {
   trip.days.push({
     title: "自由探索日",
     place: trip.baseCity || "自選城市",
+    hotelName: "請填當晚住宿飯店",
     route: "飯店 -> 喜歡的街區 -> 晚餐",
     transportMode: "步行 / 大眾運輸",
     budget: 2500,
@@ -581,7 +603,7 @@ function parseImportedTrip(text) {
   let current = null;
 
   const startDay = (title) => {
-    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", photoUrl: "", items: [] };
+    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", photoUrl: "", items: [] };
     days.push(current);
   };
 
@@ -599,6 +621,11 @@ function parseImportedTrip(text) {
 
     if (/^(地點|城市|區域|place)\s*[:：]/i.test(line)) {
       current.place = line.replace(/^(地點|城市|區域|place)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(住宿|住宿飯店|飯店|酒店|hotel|accommodation)\s*[:：]/i.test(line)) {
+      current.hotelName = line.replace(/^(住宿|住宿飯店|飯店|酒店|hotel|accommodation)\s*[:：]\s*/i, "");
       return;
     }
 
@@ -692,7 +719,7 @@ document.querySelectorAll("[data-tab-target]").forEach((button) => {
   button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
 });
 
-[fields.tripName, fields.country, fields.baseCity, fields.hotelName, fields.flightNo, fields.currency, fields.rate, fields.pace].forEach((field) => {
+[fields.tripName, fields.country, fields.baseCity, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.currency, fields.rate, fields.pace].forEach((field) => {
   field.addEventListener("input", updateTripFromFields);
 });
 
