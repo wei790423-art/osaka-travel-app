@@ -405,13 +405,48 @@ function mapUrl(day) {
 }
 
 function mapEmbedUrl(day) {
-  const query = day.mapQuery || day.route || day.place || trip.baseCity;
+  const query = primaryLandmark(day) || day.mapQuery || day.route || day.place || trip.baseCity;
   return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
 }
 
+function landmarkQuery(landmark, day) {
+  return [landmark, day.place, trip.baseCity, trip.country].filter(Boolean).join(" ");
+}
+
 function landmarkMapUrl(landmark, day) {
-  const context = [landmark, day.place, trip.baseCity, trip.country].filter(Boolean).join(" ");
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(context)}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(landmarkQuery(landmark, day))}`;
+}
+
+function landmarkEmbedUrl(landmark, day) {
+  return `https://maps.google.com/maps?q=${encodeURIComponent(landmarkQuery(landmark, day))}&output=embed`;
+}
+
+function travelModeParam(mode = "") {
+  if (mode.includes("步行")) return "walking";
+  if (mode.includes("車") || mode.includes("計程車") || mode.includes("包車")) return "driving";
+  if (mode.includes("巴士") || mode.includes("地鐵") || mode.includes("電車") || mode.includes("新幹線")) return "transit";
+  return "";
+}
+
+function landmarkDirectionsUrl(landmark, day) {
+  const destination = landmarkQuery(landmark, day);
+  const origin = day.hotelName || day.place || trip.baseCity || "";
+  const mode = travelModeParam(day.transportMode);
+  const params = new URLSearchParams({
+    api: "1",
+    destination
+  });
+  if (origin) params.set("origin", origin);
+  if (mode) params.set("travelmode", mode);
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+function dayLandmarks(day) {
+  return day.landmarks?.length ? day.landmarks : [day.place].filter(Boolean);
+}
+
+function primaryLandmark(day) {
+  return dayLandmarks(day)[0] || "";
 }
 
 function renderTransportOptions(selected = "") {
@@ -510,12 +545,18 @@ function render() {
       render();
     });
   });
+
+  document.querySelectorAll("[data-landmark-select]").forEach((select) => {
+    select.addEventListener("change", () => updateLandmarkMap(select));
+  });
 }
 
 function renderDay(day, index) {
   if (editingDayIndex === index) return renderDayEditor(day, index);
   const items = day.items?.length ? day.items : ["尚未填入細節"];
   const mealPlan = normalizeMealPlan(day);
+  const landmarks = dayLandmarks(day);
+  const selectedLandmark = primaryLandmark(day);
   return `
     <article class="day-card booklet-page">
       <div class="day-number"><span>Day</span>${index + 1}</div>
@@ -548,13 +589,28 @@ function renderDay(day, index) {
           <div><dt>移動路線</dt><dd>${escapeHtml(day.route || "尚未填移動路線")}</dd></div>
         </dl>
         <div class="map-card">
-          <iframe title="${escapeHtml(day.title)} 地圖" src="${mapEmbedUrl(day)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-          <a href="${mapUrl(day)}" target="_blank" rel="noreferrer">開啟地圖</a>
+          <div class="map-toolbar" aria-label="景點導航選單">
+            <label>
+              <span>選擇景點導航</span>
+              <select data-landmark-select="${index}">
+                ${landmarks.map((landmark) => `<option value="${escapeHtml(landmark)}">${escapeHtml(landmark)}</option>`).join("")}
+              </select>
+            </label>
+            <div class="map-actions">
+              <a data-landmark-search="${index}" href="${selectedLandmark ? landmarkMapUrl(selectedLandmark, day) : mapUrl(day)}" target="_blank" rel="noreferrer">開啟地圖</a>
+              <a data-landmark-directions="${index}" href="${selectedLandmark ? landmarkDirectionsUrl(selectedLandmark, day) : mapUrl(day)}" target="_blank" rel="noreferrer">開始導航</a>
+            </div>
+          </div>
+          <iframe data-landmark-map="${index}" title="${escapeHtml(day.title)} 景點地圖" src="${selectedLandmark ? landmarkEmbedUrl(selectedLandmark, day) : mapEmbedUrl(day)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
         <div class="landmark-list" aria-label="景點地標導航">
-          <h4>景點地標</h4>
-          ${(day.landmarks?.length ? day.landmarks : [day.place].filter(Boolean)).map((landmark) => `
+          <h4>確定景點快速導航</h4>
+          ${landmarks.map((landmark) => `
             <a href="${landmarkMapUrl(landmark, day)}" target="_blank" rel="noreferrer">
+              <span>${escapeHtml(landmark)}</span>
+              <strong>地圖</strong>
+            </a>
+            <a href="${landmarkDirectionsUrl(landmark, day)}" target="_blank" rel="noreferrer">
               <span>${escapeHtml(landmark)}</span>
               <strong>導航</strong>
             </a>
@@ -570,6 +626,19 @@ function renderDay(day, index) {
       </div>
     </article>
   `;
+}
+
+function updateLandmarkMap(select) {
+  const dayIndex = Number(select.dataset.landmarkSelect);
+  const day = trip.days[dayIndex];
+  if (!day) return;
+  const landmark = select.value;
+  const iframe = document.querySelector(`[data-landmark-map="${dayIndex}"]`);
+  const searchLink = document.querySelector(`[data-landmark-search="${dayIndex}"]`);
+  const directionsLink = document.querySelector(`[data-landmark-directions="${dayIndex}"]`);
+  if (iframe) iframe.src = landmarkEmbedUrl(landmark, day);
+  if (searchLink) searchLink.href = landmarkMapUrl(landmark, day);
+  if (directionsLink) directionsLink.href = landmarkDirectionsUrl(landmark, day);
 }
 
 function renderDayEditor(day, index) {
