@@ -78,6 +78,7 @@ const paceText = {
 
 let trip = loadTrip();
 let history = loadHistory();
+let editingDayIndex = null;
 
 const fields = {
   tripName: document.querySelector("#tripName"),
@@ -88,8 +89,11 @@ const fields = {
   pace: document.querySelector("#pace"),
   dayTitle: document.querySelector("#dayTitle"),
   dayPlace: document.querySelector("#dayPlace"),
+  dayTransportMode: document.querySelector("#dayTransportMode"),
   dayRoute: document.querySelector("#dayRoute"),
   dayBudget: document.querySelector("#dayBudget"),
+  dayMeals: document.querySelector("#dayMeals"),
+  dayPhotoUrl: document.querySelector("#dayPhotoUrl"),
   dayItems: document.querySelector("#dayItems"),
   importText: document.querySelector("#importText")
 };
@@ -126,9 +130,9 @@ function clone(value) {
 function loadTrip() {
   try {
     const saved = JSON.parse(localStorage.getItem(TRIP_KEY));
-    return saved?.days ? saved : clone(osakaTrip);
+    return normalizeTrip(saved?.days ? saved : clone(osakaTrip));
   } catch {
-    return clone(osakaTrip);
+    return normalizeTrip(clone(osakaTrip));
   }
 }
 
@@ -146,6 +150,34 @@ function saveTrip() {
 
 function saveHistoryStore() {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+}
+
+function normalizeTrip(source) {
+  return {
+    ...source,
+    days: (source.days || []).map(normalizeDay)
+  };
+}
+
+function normalizeDay(day) {
+  return {
+    title: day.title || "未命名行程",
+    place: day.place || "",
+    route: day.route || "",
+    transportMode: day.transportMode || "",
+    meals: Array.isArray(day.meals) ? day.meals : splitList(day.meals || ""),
+    photoUrl: day.photoUrl || "",
+    budget: Number(day.budget || 0),
+    items: Array.isArray(day.items) ? day.items : splitLines(day.items || "")
+  };
+}
+
+function splitLines(value) {
+  return String(value).split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+}
+
+function splitList(value) {
+  return String(value).split(/[、,，\n]/).map((item) => item.trim()).filter(Boolean);
 }
 
 function normalizeCurrency(value) {
@@ -218,9 +250,28 @@ function render() {
   nodes.dayList.innerHTML = trip.days.length ? trip.days.map(renderDay).join("") : `<div class="empty-state">目前沒有行程。你可以新增一天、貼上行程匯入，或載入大阪範例。</div>`;
   renderHistory();
 
+  document.querySelectorAll("[data-edit-day]").forEach((button) => {
+    button.addEventListener("click", () => {
+      editingDayIndex = Number(button.dataset.editDay);
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-cancel-edit]").forEach((button) => {
+    button.addEventListener("click", () => {
+      editingDayIndex = null;
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-save-day]").forEach((form) => {
+    form.addEventListener("submit", saveEditedDay);
+  });
+
   document.querySelectorAll("[data-delete-day]").forEach((button) => {
     button.addEventListener("click", () => {
       trip.days.splice(Number(button.dataset.deleteDay), 1);
+      editingDayIndex = null;
       saveTrip();
       render();
     });
@@ -228,27 +279,61 @@ function render() {
 }
 
 function renderDay(day, index) {
+  if (editingDayIndex === index) return renderDayEditor(day, index);
   const items = day.items?.length ? day.items : ["尚未填入細節"];
+  const meals = day.meals?.length ? day.meals : [];
   return `
     <article class="day-card">
       <div class="day-number"><span>Day</span>${index + 1}</div>
       <div>
         <div class="card-title-row">
           <h3>${escapeHtml(day.title)}</h3>
-          <button class="icon-button" type="button" data-delete-day="${index}" aria-label="刪除第 ${index + 1} 天">刪除</button>
+          <div class="card-actions">
+            <button class="icon-button" type="button" data-edit-day="${index}" aria-label="編輯第 ${index + 1} 天">編輯</button>
+            <button class="icon-button" type="button" data-delete-day="${index}" aria-label="刪除第 ${index + 1} 天">刪除</button>
+          </div>
         </div>
+        ${day.photoUrl ? `<img class="day-photo" src="${escapeHtml(day.photoUrl)}" alt="${escapeHtml(day.title)} 照片" loading="lazy" />` : ""}
         <div class="day-meta">
           <span class="tag">${escapeHtml(day.place)}</span>
+          ${day.transportMode ? `<span class="tag">${escapeHtml(day.transportMode)}</span>` : ""}
           <span class="tag">${normalizeCurrency(trip.currency)}</span>
         </div>
+        <dl class="detail-list">
+          <div><dt>吃飯</dt><dd>${meals.length ? meals.map(escapeHtml).join("、") : "尚未填吃飯安排"}</dd></div>
+          <div><dt>移動路線</dt><dd>${escapeHtml(day.route || "尚未填移動路線")}</dd></div>
+        </dl>
         <ul class="timeline">
           ${items.map((item) => `<li><time>•</time><span>${escapeHtml(item)}</span></li>`).join("")}
         </ul>
         <div class="cost-row">
-          <span>${escapeHtml(day.route || "尚未填交通動線")}</span>
+          <span>${escapeHtml(day.transportMode || "尚未填移動方式")}</span>
           <strong>${formatLocal(Number(day.budget || 0))}</strong>
         </div>
       </div>
+    </article>
+  `;
+}
+
+function renderDayEditor(day, index) {
+  return `
+    <article class="day-card day-card--editing">
+      <div class="day-number"><span>Day</span>${index + 1}</div>
+      <form class="edit-day-form" data-save-day="${index}">
+        <div class="card-title-row">
+          <h3>編輯第 ${index + 1} 天</h3>
+          <button class="icon-button" type="button" data-cancel-edit="${index}">取消</button>
+        </div>
+        <input name="title" type="text" value="${escapeHtml(day.title)}" placeholder="標題" required />
+        <input name="place" type="text" value="${escapeHtml(day.place)}" placeholder="城市/區域" required />
+        <input name="transportMode" type="text" value="${escapeHtml(day.transportMode || "")}" placeholder="移動方式，例如：地鐵、步行、租車" />
+        <input name="route" type="text" value="${escapeHtml(day.route || "")}" placeholder="移動路線，例如：飯店 -> 景點 -> 晚餐" />
+        <input name="budget" type="number" min="0" step="1" value="${Number(day.budget || 0)}" placeholder="預算" />
+        <input name="meals" type="text" value="${escapeHtml((day.meals || []).join("、"))}" placeholder="吃飯，例如：早餐、午餐、晚餐" />
+        <input name="photoUrl" type="url" value="${escapeHtml(day.photoUrl || "")}" placeholder="照片網址，例如：https://..." />
+        <textarea name="items" rows="5" placeholder="每行一個行程">${escapeHtml((day.items || []).join("\n"))}</textarea>
+        <button type="submit">儲存這一天</button>
+      </form>
     </article>
   `;
 }
@@ -282,7 +367,7 @@ function renderHistory() {
 
   document.querySelectorAll("[data-load-history]").forEach((button) => {
     button.addEventListener("click", () => {
-      trip = clone(history[Number(button.dataset.loadHistory)].trip);
+      trip = normalizeTrip(clone(history[Number(button.dataset.loadHistory)].trip));
       saveTrip();
       syncFields();
       switchTab("planner");
@@ -307,15 +392,38 @@ function formatHistoryBudget(savedTrip) {
 
 function addDay(event) {
   event.preventDefault();
-  const items = fields.dayItems.value.split("\n").map((item) => item.trim()).filter(Boolean);
-  trip.days.push({
+  const items = splitLines(fields.dayItems.value);
+  trip.days.push(normalizeDay({
     title: fields.dayTitle.value.trim(),
     place: fields.dayPlace.value.trim(),
+    transportMode: fields.dayTransportMode.value.trim(),
     route: fields.dayRoute.value.trim(),
     budget: Number(fields.dayBudget.value) || 0,
+    meals: splitList(fields.dayMeals.value),
+    photoUrl: fields.dayPhotoUrl.value.trim(),
     items
-  });
+  }));
   nodes.dayForm.reset();
+  saveTrip();
+  render();
+}
+
+function saveEditedDay(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const index = Number(form.dataset.saveDay);
+  const data = new FormData(form);
+  trip.days[index] = normalizeDay({
+    title: data.get("title"),
+    place: data.get("place"),
+    transportMode: data.get("transportMode"),
+    route: data.get("route"),
+    budget: data.get("budget"),
+    meals: splitList(data.get("meals")),
+    photoUrl: data.get("photoUrl"),
+    items: splitLines(data.get("items"))
+  });
+  editingDayIndex = null;
   saveTrip();
   render();
 }
@@ -325,7 +433,10 @@ function addSampleDay() {
     title: "自由探索日",
     place: trip.baseCity || "自選城市",
     route: "飯店 -> 喜歡的街區 -> 晚餐",
+    transportMode: "步行 / 大眾運輸",
     budget: 2500,
+    meals: ["在地早餐", "街區晚餐"],
+    photoUrl: "",
     items: ["上午慢慢出門", "下午安排一個主要景點", "晚上留給美食或夜景"]
   });
   saveTrip();
@@ -341,7 +452,7 @@ function clearTrip() {
 
 function loadOsakaTrip() {
   if (!confirm("要載入大阪 8 天 7 夜範例並取代目前行程嗎？")) return;
-  trip = clone(osakaTrip);
+  trip = normalizeTrip(clone(osakaTrip));
   saveTrip();
   syncFields();
   render();
@@ -361,7 +472,7 @@ function parseImportedTrip(text) {
   let current = null;
 
   const startDay = (title) => {
-    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", route: "", budget: 0, items: [] };
+    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", route: "", transportMode: "", budget: 0, meals: [], photoUrl: "", items: [] };
     days.push(current);
   };
 
@@ -382,8 +493,23 @@ function parseImportedTrip(text) {
       return;
     }
 
-    if (/^(交通|路線|動線|route)\s*[:：]/i.test(line)) {
-      current.route = line.replace(/^(交通|路線|動線|route)\s*[:：]\s*/i, "");
+    if (/^(移動方式|交通方式|transport|交通工具)\s*[:：]/i.test(line)) {
+      current.transportMode = line.replace(/^(移動方式|交通方式|transport|交通工具)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(交通|路線|動線|移動路線|route)\s*[:：]/i.test(line)) {
+      current.route = line.replace(/^(交通|路線|動線|移動路線|route)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(吃飯|餐廳|餐飲|meals?)\s*[:：]/i.test(line)) {
+      current.meals = splitList(line.replace(/^(吃飯|餐廳|餐飲|meals?)\s*[:：]\s*/i, ""));
+      return;
+    }
+
+    if (/^(照片|圖片|photo|image)\s*[:：]/i.test(line)) {
+      current.photoUrl = line.replace(/^(照片|圖片|photo|image)\s*[:：]\s*/i, "");
       return;
     }
 
@@ -395,13 +521,13 @@ function parseImportedTrip(text) {
     current.items.push(line.replace(/^[-•*]\s*/, ""));
   });
 
-  return days.filter((day) => day.title || day.items.length);
+  return days.filter((day) => day.title || day.items.length).map(normalizeDay);
 }
 
 function previewImport() {
   const days = parseImportedTrip(fields.importText.value);
   nodes.importPreview.innerHTML = days.length
-    ? `<h3>解析結果：${days.length} 天</h3>${days.map((day, index) => `<div class="preview-day"><strong>Day ${index + 1}：${escapeHtml(day.title)}</strong><span>${escapeHtml(day.place || "未填地點")}｜${escapeHtml(day.route || "未填交通")}｜預算 ${day.budget || 0}</span></div>`).join("")}`
+    ? `<h3>解析結果：${days.length} 天</h3>${days.map((day, index) => `<div class="preview-day"><strong>Day ${index + 1}：${escapeHtml(day.title)}</strong><span>${escapeHtml(day.place || "未填地點")}｜${escapeHtml(day.transportMode || "未填移動方式")}｜${escapeHtml(day.route || "未填移動路線")}｜吃飯 ${(day.meals || []).map(escapeHtml).join("、") || "未填"}｜預算 ${day.budget || 0}</span></div>`).join("")}`
     : `<div class="empty-state">還沒有解析到行程。請貼上至少一段文字。</div>`;
 }
 

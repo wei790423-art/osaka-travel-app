@@ -87,8 +87,11 @@
             <form class="day-form" id="dayForm">
               <input id="dayTitle" type="text" placeholder="標題，例如：市區散步與美食" required />
               <input id="dayPlace" type="text" placeholder="城市/區域，例如：大阪難波" required />
-              <input id="dayRoute" type="text" placeholder="交通動線，例如：飯店 -> 景點 -> 晚餐" />
+              <input id="dayTransportMode" type="text" placeholder="移動方式，例如：地鐵、步行、租車" />
+              <input id="dayRoute" type="text" placeholder="移動路線，例如：飯店 -> 景點 -> 晚餐" />
               <input id="dayBudget" type="number" min="0" step="1" placeholder="預估花費" required />
+              <input id="dayMeals" type="text" placeholder="吃飯，例如：黑門市場早餐、道頓堀晚餐" />
+              <input id="dayPhotoUrl" type="url" placeholder="照片網址，例如：https://..." />
               <textarea id="dayItems" rows="3" placeholder="每行一個行程，例如：09:00 早餐&#10;11:00 博物館&#10;18:00 晚餐"></textarea>
               <button type="submit">新增行程</button>
             </form>
