@@ -2350,6 +2350,336 @@ h1 {
   }
 }
 
+/* ========== Commercial Home Experience ========== */
+.planner-home,
+.planner-detail {
+  display: none;
+}
+
+.planner-home.is-active,
+.planner-detail.is-active {
+  display: block;
+}
+
+.planner-home {
+  width: min(1180px, calc(100% - 40px));
+  margin: 24px auto 0;
+}
+
+.home-cover {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 54px);
+  border: 1px solid rgba(0, 109, 113, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(0, 109, 113, 0.95), rgba(16, 52, 62, 0.94)),
+    url("assets/global-travel-hero.png") center / cover;
+  color: #fff;
+  box-shadow: 0 24px 60px rgba(25, 31, 35, 0.18);
+}
+
+.home-cover::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--gold), #f0cf7a, var(--accent));
+}
+
+.home-cover > * {
+  position: relative;
+  z-index: 1;
+}
+
+.home-cover h2 {
+  max-width: 720px;
+  margin: 0 0 16px;
+  font-size: clamp(2.35rem, 5vw, 4.9rem);
+  line-height: 0.95;
+  letter-spacing: 0;
+}
+
+.home-cover p {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.04rem;
+  line-height: 1.8;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.home-actions button,
+.secondary-action,
+.trip-card-actions button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.home-actions button:first-child,
+.trip-card-actions button:first-child {
+  color: #112326;
+  background: #ffd36a;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+}
+
+.home-actions button:nth-child(2),
+.secondary-action,
+.trip-card-actions button:nth-child(2) {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.secondary-action {
+  color: var(--teal);
+  background: var(--soft);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+.home-metrics {
+  display: grid;
+  gap: 12px;
+  align-self: end;
+}
+
+.home-metrics article {
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.home-metrics span {
+  display: block;
+  color: #fff;
+  font-size: clamp(1.6rem, 3vw, 2.35rem);
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.home-metrics p {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 28px 0 14px;
+}
+
+.home-section-head h2 {
+  margin: 0 0 4px;
+  font-size: clamp(1.55rem, 3vw, 2.1rem);
+}
+
+.home-section-head p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.trip-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.trip-home-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.trip-home-card.is-current {
+  border-color: rgba(0, 109, 113, 0.48);
+}
+
+.trip-card-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--soft);
+}
+
+.trip-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.trip-card-media span {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.58);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.trip-card-body {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.trip-card-kicker {
+  margin: 0 0 6px;
+  color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trip-card-body h3 {
+  margin: 0 0 8px;
+  font-size: 1.28rem;
+  line-height: 1.25;
+}
+
+.trip-card-body p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.trip-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trip-card-meta span {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.trip-card-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.trip-card-actions button:nth-child(2) {
+  color: var(--accent);
+  background: transparent;
+  border-color: rgba(184, 52, 45, 0.24);
+  box-shadow: none;
+}
+
+.trip-card-actions button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.trip-library-panel,
+.toolbar,
+.dashboard,
+.map-overview-wrap,
+.content-grid,
+.wide-panel {
+  animation: panelRise 0.28s ease both;
+}
+
+@keyframes panelRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:root[data-theme="dark"] .home-cover {
+  background:
+    linear-gradient(135deg, rgba(12, 35, 39, 0.96), rgba(8, 16, 20, 0.96)),
+    url("assets/global-travel-hero.png") center / cover;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .home-actions button:nth-child(2),
+:root[data-theme="dark"] .trip-card-actions button:nth-child(2) {
+  color: #d9f6f4;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .secondary-action {
+  color: #d9f6f4;
+  background: #132426;
+}
+
+@media (max-width: 900px) {
+  .home-cover {
+    grid-template-columns: 1fr;
+  }
+
+  .home-metrics {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .planner-home {
+    width: min(100% - 24px, 1180px);
+    margin-top: 18px;
+  }
+
+  .home-cover {
+    padding: 24px;
+  }
+
+  .home-actions,
+  .trip-card-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .home-actions button,
+  .trip-card-actions button,
+  .secondary-action {
+    width: 100%;
+  }
+
+  .home-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .home-section-head {
+    display: block;
+  }
+}
+
 /* ========== Print / PDF Itinerary ========== */
 @media print {
   @page {

@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260528-trips2" />
+    <link rel="stylesheet" href="styles.css?v=20260528-commercial" />
   </head>
   <body>
     <main class="app-shell">
@@ -40,12 +40,50 @@
       </nav>
 
       <section class="tab-panel is-active" id="planner" aria-label="行程規劃">
+        <section class="planner-home is-active" id="plannerHome" aria-label="旅行規劃首頁">
+          <div class="home-cover">
+            <div>
+              <p class="eyebrow">Travel Studio</p>
+              <h2>你的旅行行程工作台</h2>
+              <p>把不同國家、不同天數、不同旅伴的旅行分開管理。先選一份行程，再進入每日住宿、航班、餐食、票券與導航細節。</p>
+              <div class="home-actions">
+                <button id="createTripFromHome" type="button">新增旅行行程</button>
+                <button id="openCurrentTrip" type="button">繼續編輯目前行程</button>
+              </div>
+            </div>
+            <div class="home-metrics" aria-label="旅行總覽">
+              <article>
+                <span id="homeTripCount">0</span>
+                <p>旅行行程</p>
+              </article>
+              <article>
+                <span id="homeDayCount">0</span>
+                <p>規劃天數</p>
+              </article>
+              <article>
+                <span id="homeNextTrip">尚未設定</span>
+                <p>最近出發</p>
+              </article>
+            </div>
+          </div>
+
+          <div class="home-section-head">
+            <div>
+              <h2>選擇旅行</h2>
+              <p>每張卡片都是一份獨立行程，點進去即可編輯完整旅行本。</p>
+            </div>
+          </div>
+          <div class="trip-home-grid" id="tripHomeGrid"></div>
+        </section>
+
+        <div class="planner-detail" id="plannerDetail" aria-label="旅行行程細節">
         <section class="trip-library-panel" aria-label="旅行行程管理">
           <div class="section-heading">
             <div>
               <h2>我的旅行行程</h2>
               <p id="tripLibraryStatus">選擇一個旅行行程開始規劃。</p>
             </div>
+            <button id="backToPlannerHome" type="button" class="secondary-action">回到旅行首頁</button>
           </div>
           <div class="trip-library-controls">
             <div class="field trip-selector-field">
@@ -209,6 +247,7 @@
             </section>
           </aside>
         </section>
+        </div>
       </section>
 
       <section class="tab-panel" id="guides" aria-label="攻略平台">
@@ -353,6 +392,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260528-trips2"></script>
+    <script src="app.js?v=20260528-commercial"></script>
   </body>
 </html>

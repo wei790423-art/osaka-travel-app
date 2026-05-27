@@ -135,6 +135,7 @@ trips = libraryState.trips;
 activeTripId = libraryState.activeTripId;
 let history = loadHistory();
 let editingDayIndex = null;
+let plannerView = "home";
 let theme = localStorage.getItem(THEME_KEY) || "light";
 
 const fields = {
@@ -177,6 +178,15 @@ const fields = {
 const nodes = {
   heroTitle: document.querySelector("#heroTitle"),
   heroCopy: document.querySelector("#heroCopy"),
+  plannerHome: document.querySelector("#plannerHome"),
+  plannerDetail: document.querySelector("#plannerDetail"),
+  tripHomeGrid: document.querySelector("#tripHomeGrid"),
+  homeTripCount: document.querySelector("#homeTripCount"),
+  homeDayCount: document.querySelector("#homeDayCount"),
+  homeNextTrip: document.querySelector("#homeNextTrip"),
+  createTripFromHome: document.querySelector("#createTripFromHome"),
+  openCurrentTrip: document.querySelector("#openCurrentTrip"),
+  backToPlannerHome: document.querySelector("#backToPlannerHome"),
   createTrip: document.querySelector("#createTrip"),
   renameTrip: document.querySelector("#renameTrip"),
   deleteTrip: document.querySelector("#deleteTrip"),
@@ -553,8 +563,8 @@ function normalizeCurrency(value) {
   return (value || "TWD").trim().slice(0, 3).toUpperCase() || "TWD";
 }
 
-function formatLocal(value) {
-  const currency = normalizeCurrency(trip.currency);
+function formatLocal(value, currencyOverride = trip.currency) {
+  const currency = normalizeCurrency(currencyOverride);
   try {
     return new Intl.NumberFormat("zh-TW", { style: "currency", currency, maximumFractionDigits: 0 }).format(value);
   } catch {
@@ -583,6 +593,17 @@ function dateForDay(index) {
 function formatTripDate(date) {
   if (!date) return "未設定日期";
   return new Intl.DateTimeFormat("zh-TW", {
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  }).format(date);
+}
+
+function formatDateWithWeekday(value) {
+  const date = parseDateValue(value);
+  if (!date) return "未設定日期";
+  return new Intl.DateTimeFormat("zh-TW", {
+    year: "numeric",
     month: "2-digit",
     day: "2-digit",
     weekday: "short"
@@ -739,6 +760,106 @@ function renderTripLibrary() {
   if (nodes.deleteTrip) nodes.deleteTrip.disabled = trips.length <= 1;
 }
 
+function aggregateTripStats() {
+  const totalDays = trips.reduce((sum, entry) => sum + normalizeTrip(entry.trip).days.length, 0);
+  const upcoming = trips
+    .map((entry) => normalizeTrip(entry.trip))
+    .filter((savedTrip) => savedTrip.startDate)
+    .sort((a, b) => parseDateValue(a.startDate) - parseDateValue(b.startDate))[0];
+  return {
+    totalDays,
+    upcomingLabel: upcoming ? `${upcoming.name}｜${formatDateWithWeekday(upcoming.startDate)}` : "尚未設定"
+  };
+}
+
+function plannerHomeCard(entry) {
+  const savedTrip = normalizeTrip(entry.trip);
+  const total = totalBudget(savedTrip.days);
+  const isActive = entry.id === activeTripId;
+  const cover = savedTrip.days.find((day) => day.photoUrl)?.photoUrl || "assets/global-travel-hero.png";
+  const flightText = savedTrip.flightNo || "未填航班";
+  const updated = entry.updatedAt ? new Date(entry.updatedAt).toLocaleDateString("zh-TW") : "剛剛";
+
+  return `
+    <article class="trip-home-card${isActive ? " is-current" : ""}">
+      <div class="trip-card-media">
+        <img src="${escapeHtml(cover)}" alt="${escapeHtml(savedTrip.name)} 封面" loading="lazy" />
+        <span>${isActive ? "目前編輯" : "旅行計畫"}</span>
+      </div>
+      <div class="trip-card-body">
+        <div>
+          <p class="trip-card-kicker">${escapeHtml(savedTrip.country)}・${escapeHtml(savedTrip.baseCity)}</p>
+          <h3>${escapeHtml(savedTrip.name)}</h3>
+          <p>${escapeHtml(historyDateRange(savedTrip))}｜${savedTrip.days.length || 0} 天｜${escapeHtml(flightText)}</p>
+        </div>
+        <div class="trip-card-meta">
+          <span>${escapeHtml(formatLocal(total, savedTrip.currency))}</span>
+          <span>更新 ${escapeHtml(updated)}</span>
+        </div>
+        <div class="trip-card-actions">
+          <button type="button" data-open-trip="${escapeHtml(entry.id)}">編輯行程</button>
+          <button type="button" data-delete-trip-card="${escapeHtml(entry.id)}" ${trips.length <= 1 ? "disabled" : ""}>刪除</button>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderTripHome() {
+  if (!nodes.tripHomeGrid) return;
+  const stats = aggregateTripStats();
+  nodes.homeTripCount.textContent = trips.length;
+  nodes.homeDayCount.textContent = stats.totalDays;
+  nodes.homeNextTrip.textContent = stats.upcomingLabel;
+  nodes.tripHomeGrid.innerHTML = trips.map(plannerHomeCard).join("");
+
+  document.querySelectorAll("[data-open-trip]").forEach((button) => {
+    button.addEventListener("click", () => switchActiveTrip(button.dataset.openTrip, true));
+  });
+
+  document.querySelectorAll("[data-delete-trip-card]").forEach((button) => {
+    button.addEventListener("click", () => deleteTripById(button.dataset.deleteTripCard));
+  });
+}
+
+function showPlannerHome() {
+  plannerView = "home";
+  nodes.plannerHome?.classList.add("is-active");
+  nodes.plannerDetail?.classList.remove("is-active");
+  renderHero();
+}
+
+function showPlannerDetail() {
+  plannerView = "detail";
+  nodes.plannerHome?.classList.remove("is-active");
+  nodes.plannerDetail?.classList.add("is-active");
+  renderHero();
+}
+
+function renderHero() {
+  if (plannerView === "home") {
+    const stats = aggregateTripStats();
+    const totalBudgetAll = trips.reduce((sum, entry) => sum + totalBudget(normalizeTrip(entry.trip).days), 0);
+    nodes.heroTitle.textContent = "旅行規劃工作台";
+    nodes.heroCopy.textContent = `管理 ${trips.length} 份旅行、${stats.totalDays} 天行程。從首頁選擇旅程後，再進入每日飯店、航班、餐食、景點導航與票券細節。`;
+    nodes.statDays.textContent = stats.totalDays;
+    nodes.statStops.textContent = trips.length;
+    nodes.statBudget.textContent = Math.round(totalBudgetAll).toLocaleString("zh-TW");
+    nodes.statCurrency.textContent = "ALL";
+    return;
+  }
+
+  const total = totalBudget();
+  const stops = uniqueStops();
+  const flightText = [trip.flightNo, trip.flightDeparture && `起飛 ${trip.flightDeparture}`, trip.flightArrival && `抵達 ${trip.flightArrival}`].filter(Boolean).join("｜") || "尚未填航班";
+  nodes.heroTitle.textContent = trip.name;
+  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，${tripDateRangeText()}，航班 ${flightText}，目前規劃 ${trip.days.length} 天。每日住宿可在行程卡中個別填寫。`;
+  nodes.statDays.textContent = trip.days.length;
+  nodes.statStops.textContent = stops;
+  nodes.statBudget.textContent = Math.round(total).toLocaleString("zh-TW");
+  nodes.statCurrency.textContent = normalizeCurrency(trip.currency);
+}
+
 function updateTripFromFields() {
   trip.name = fields.tripName.value.trim() || "我的旅行計畫";
   trip.country = fields.country.value.trim() || "自選國家";
@@ -756,19 +877,13 @@ function updateTripFromFields() {
 
 function render() {
   const total = totalBudget();
-  const stops = uniqueStops();
-  const flightText = [trip.flightNo, trip.flightDeparture && `起飛 ${trip.flightDeparture}`, trip.flightArrival && `抵達 ${trip.flightArrival}`].filter(Boolean).join("｜") || "尚未填航班";
-  nodes.heroTitle.textContent = trip.name;
-  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，${tripDateRangeText()}，航班 ${flightText}，目前規劃 ${trip.days.length} 天。每日住宿可在行程卡中個別填寫。`;
-  nodes.statDays.textContent = trip.days.length;
-  nodes.statStops.textContent = stops;
-  nodes.statBudget.textContent = Math.round(total).toLocaleString("zh-TW");
-  nodes.statCurrency.textContent = normalizeCurrency(trip.currency);
+  renderHero();
   nodes.visibleDays.textContent = trip.days.length;
   nodes.totalLocal.textContent = formatLocal(total);
   nodes.totalTwd.textContent = formatTwd(total * trip.rate);
   nodes.paceHint.textContent = paceText[trip.pace];
   nodes.dayList.innerHTML = trip.days.length ? trip.days.map(renderDay).join("") : `<div class="empty-state">目前沒有行程。你可以新增一天、貼上行程匯入，或載入大阪範例。</div>`;
+  renderTripHome();
   renderTripLibrary();
   renderHistory();
   renderTickets();
@@ -1017,6 +1132,7 @@ function renderHistory() {
       saveTrip();
       syncFields();
       switchTab("planner");
+      showPlannerDetail();
       render();
     });
   });
@@ -1137,6 +1253,7 @@ function loadOsakaTrip() {
   trip = normalizeTrip(clone(osakaTrip));
   saveTrip();
   syncFields();
+  showPlannerDetail();
   render();
 }
 
@@ -1146,8 +1263,12 @@ function saveCurrentToHistory() {
   switchTab("history");
 }
 
-function switchActiveTrip(tripId) {
-  if (!tripId || tripId === activeTripId) return;
+function switchActiveTrip(tripId, openDetail = false) {
+  if (!tripId) return;
+  if (tripId === activeTripId) {
+    if (openDetail) showPlannerDetail();
+    return;
+  }
   saveTrip();
   const entry = trips.find((item) => item.id === tripId);
   if (!entry) return;
@@ -1157,10 +1278,11 @@ function switchActiveTrip(tripId) {
   localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
   localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
   syncFields();
+  if (openDetail) showPlannerDetail();
   render();
 }
 
-function createNewTrip() {
+function createNewTrip(openDetail = true) {
   saveTrip();
   const typedName = fields.newTripName?.value.trim() || "";
   const name = typedName && typedName !== trip.name ? typedName : `新的旅行 ${trips.length + 1}`;
@@ -1177,6 +1299,7 @@ function createNewTrip() {
   localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
   editingDayIndex = null;
   syncFields();
+  if (openDetail) showPlannerDetail();
   render();
 }
 
@@ -1205,6 +1328,19 @@ function deleteActiveTrip() {
   localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
   editingDayIndex = null;
   syncFields();
+  render();
+}
+
+function deleteTripById(tripId) {
+  const entry = trips.find((item) => item.id === tripId);
+  if (!entry) return;
+  if (tripId === activeTripId) {
+    deleteActiveTrip();
+    return;
+  }
+  if (!confirm(`確定要刪除「${entry.trip.name}」嗎？`)) return;
+  trips = trips.filter((item) => item.id !== tripId);
+  saveTripLibrary();
   render();
 }
 
@@ -1264,6 +1400,7 @@ function applySharedTripFromUrl() {
     clearShareParamFromUrl();
     syncFields();
     switchTab("planner");
+    showPlannerDetail();
     setShareMessage(`<p>已載入分享行程，原本行程已自動存到歷史行程。</p>`);
     return true;
   } catch {
@@ -1418,6 +1555,7 @@ function applyImport() {
   syncFields();
   previewImport();
   switchTab("planner");
+  showPlannerDetail();
   render();
 }
 
@@ -1962,6 +2100,9 @@ function updateWeatherDisplay() {
 
 nodes.dayForm.addEventListener("submit", addDay);
 fields.tripSelector.addEventListener("change", () => switchActiveTrip(fields.tripSelector.value));
+nodes.createTripFromHome.addEventListener("click", () => createNewTrip(true));
+nodes.openCurrentTrip.addEventListener("click", showPlannerDetail);
+nodes.backToPlannerHome.addEventListener("click", showPlannerHome);
 nodes.createTrip.addEventListener("click", createNewTrip);
 nodes.renameTrip.addEventListener("click", renameActiveTrip);
 nodes.deleteTrip.addEventListener("click", deleteActiveTrip);
