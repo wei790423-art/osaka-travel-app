@@ -1447,3 +1447,188 @@ h1 {
     height: 220px;
   }
 }
+
+/* ========== Day Weather ========== */
+.day-weather {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #e8f4fd;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #2a7dc7;
+}
+
+.day-weather:empty {
+  display: none;
+}
+
+.weather-cond {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #2a7dc7;
+  color: #fff;
+  font-size: 0.78rem;
+}
+
+:root[data-theme="dark"] .day-weather {
+  background: #152230;
+  color: #6cb4e8;
+}
+
+:root[data-theme="dark"] .weather-cond {
+  background: #1d5a8a;
+}
+
+/* ========== Backup Landmarks ========== */
+.backup-landmarks {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--gold);
+  border-radius: 8px;
+  background: var(--paper-warm);
+}
+
+.backup-landmarks h4 {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-size: 0.82rem;
+}
+
+.backup-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.backup-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(209, 151, 42, 0.15);
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+:root[data-theme="dark"] .backup-landmarks {
+  background: #242018;
+}
+
+/* ========== Drag and Drop ========== */
+.day-card[draggable="true"] .day-number {
+  cursor: grab;
+  position: relative;
+}
+
+.day-card[draggable="true"] .day-number::after {
+  content: "";
+  display: block;
+  margin-top: 6px;
+  width: 16px;
+  height: 10px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--line) 0px, var(--line) 2px,
+      transparent 2px, transparent 5px
+    );
+  border-radius: 1px;
+  opacity: 0.6;
+  margin-inline: auto;
+}
+
+.day-card.is-dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+
+.day-card.drag-over {
+  border-top: 3px solid var(--accent);
+  padding-top: 19px;
+}
+
+/* ========== Currency Calculator ========== */
+.currency-calc {
+  display: grid;
+  gap: 10px;
+}
+
+.calc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 60px;
+  gap: 8px;
+  align-items: center;
+}
+
+.calc-row input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+:root[data-theme="dark"] .calc-row input {
+  background: #14171b;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.calc-currency {
+  color: var(--teal);
+  font-weight: 850;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.calc-equals {
+  text-align: center;
+  color: var(--muted);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.calc-rate {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.calc-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.preset-btn {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f3f5f4;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.preset-btn:hover {
+  background: var(--teal);
+  color: #fff;
+  border-color: var(--teal);
+}
+
+:root[data-theme="dark"] .preset-btn {
+  background: #1a1d21;
+}

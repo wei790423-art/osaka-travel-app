@@ -1,9 +1,9 @@
-const CACHE_NAME = "global-trip-planner-v6";
+const CACHE_NAME = "global-trip-planner-v7";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260527-mapfood",
-  "./app.js?v=20260527-mapfood",
+  "./styles.css?v=20260527-v2",
+  "./app.js?v=20260527-v2",
   "./manifest.webmanifest",
   "./assets/app-icon.svg",
   "./assets/global-travel-hero.png",
@@ -41,7 +41,8 @@ self.addEventListener("fetch", (event) => {
 
   const isCdnOrTile = url.hostname === "unpkg.com"
     || url.hostname.endsWith("tile.openstreetmap.org")
-    || url.hostname === "nominatim.openstreetmap.org";
+    || url.hostname === "nominatim.openstreetmap.org"
+    || url.hostname === "api.open-meteo.com";
 
   if (isCdnOrTile) {
     event.respondWith(

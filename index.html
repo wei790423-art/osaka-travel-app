@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260527-mapfood" />
+    <link rel="stylesheet" href="styles.css?v=20260527-v2" />
   </head>
   <body>
     <main class="app-shell">
@@ -24,6 +24,7 @@
             <span><strong id="statStops">0</strong> 城市/區域</span>
             <span><strong id="statBudget">0</strong> 預算</span>
             <span><strong id="statCurrency">JPY</strong> 幣別</span>
+            <span><strong id="countdownDays">--</strong> <span id="countdownLabel">天後出發</span></span>
           </div>
         </div>
       </section>
@@ -130,6 +131,7 @@
               <input id="dayMapQuery" type="text" placeholder="地圖搜尋，例如：大阪城 或 飯店到大阪城" />
               <input id="dayPhotoUrl" type="url" placeholder="照片網址，例如：https://..." />
               <textarea id="dayLandmarks" rows="3" placeholder="景點地標，每行一個，例如：大阪城&#10;梅田藍天大廈&#10;道頓堀"></textarea>
+              <textarea id="dayBackupLandmarks" rows="2" placeholder="備案景點（雨天或臨時替換），每行一個"></textarea>
               <textarea id="dayItems" rows="3" placeholder="每行一個行程，例如：09:00 早餐&#10;11:00 博物館&#10;18:00 晚餐"></textarea>
               <button type="submit">新增行程</button>
             </form>
@@ -273,6 +275,22 @@
             <div class="checklist" id="checklist"></div>
           </article>
           <article class="tool-panel">
+            <h2>匯率換算計算機</h2>
+            <div class="currency-calc">
+              <div class="calc-row">
+                <input id="calcLocal" type="number" min="0" step="any" placeholder="輸入金額" />
+                <span class="calc-currency" id="calcLocalLabel">JPY</span>
+              </div>
+              <div class="calc-equals">=</div>
+              <div class="calc-row">
+                <input id="calcTwd" type="number" min="0" step="any" placeholder="換算結果" />
+                <span class="calc-currency">TWD</span>
+              </div>
+              <p class="calc-rate" id="calcRateDisplay"></p>
+              <div class="calc-presets" id="calcPresets"></div>
+            </div>
+          </article>
+          <article class="tool-panel">
             <h2>常用提醒</h2>
             <ul class="tips">
               <li>護照、簽證、網路、保險與信用卡先確認。</li>
@@ -289,6 +307,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260527-mapfood"></script>
+    <script src="app.js?v=20260527-v2"></script>
   </body>
 </html>

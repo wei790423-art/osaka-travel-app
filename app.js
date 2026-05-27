@@ -152,6 +152,7 @@ const fields = {
   dayPhotoUrl: document.querySelector("#dayPhotoUrl"),
   dayLandmarks: document.querySelector("#dayLandmarks"),
   dayItems: document.querySelector("#dayItems"),
+  dayBackupLandmarks: document.querySelector("#dayBackupLandmarks"),
   importText: document.querySelector("#importText")
 };
 
@@ -192,7 +193,14 @@ const nodes = {
   foodDestination: document.querySelector("#foodDestination"),
   foodCategory: document.querySelector("#foodCategory"),
   foodQuickLinks: document.querySelector("#foodQuickLinks"),
-  foodGrid: document.querySelector("#foodGrid")
+  foodGrid: document.querySelector("#foodGrid"),
+  countdownDays: document.querySelector("#countdownDays"),
+  countdownLabel: document.querySelector("#countdownLabel"),
+  calcLocal: document.querySelector("#calcLocal"),
+  calcTwd: document.querySelector("#calcTwd"),
+  calcLocalLabel: document.querySelector("#calcLocalLabel"),
+  calcRateDisplay: document.querySelector("#calcRateDisplay"),
+  calcPresets: document.querySelector("#calcPresets")
 };
 
 const guidePlatforms = [
@@ -369,6 +377,7 @@ function normalizeDay(day) {
     meals: [mealPlan.breakfast, mealPlan.lunch, mealPlan.dinner].filter(Boolean),
     mapQuery: day.mapQuery || day.mapUrl || day.route || day.place || "",
     landmarks: normalizeLandmarks(day),
+    backupLandmarks: Array.isArray(day.backupLandmarks) ? day.backupLandmarks.map(s => String(s).trim()).filter(Boolean) : splitLines(day.backupLandmarks || ""),
     photoUrl: day.photoUrl || "",
     budget: Number(day.budget || 0),
     items: Array.isArray(day.items) ? day.items : splitLines(day.items || "")
@@ -649,6 +658,10 @@ function render() {
   });
 
   renderTripMap();
+  setupDragAndDrop();
+  updateCountdown();
+  updateCalcDisplay();
+  fetchTripWeather();
 }
 
 function renderDay(day, index) {
@@ -658,8 +671,12 @@ function renderDay(day, index) {
   const landmarks = dayLandmarks(day);
   const selectedLandmark = primaryLandmark(day);
   const dayDateText = formatTripDate(dateForDay(index));
+  const dayDate = dateForDay(index);
+  const dateKey = dayDate ? `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}` : "";
+  const weather = dateKey ? weatherData[dateKey] : null;
+  const backups = day.backupLandmarks?.length ? day.backupLandmarks : [];
   return `
-    <article class="day-card booklet-page">
+    <article class="day-card booklet-page" draggable="true" data-day-index="${index}">
       <div class="day-number"><span>Day</span>${index + 1}</div>
       <div>
         <div class="card-title-row">
@@ -681,6 +698,7 @@ function renderDay(day, index) {
           ${day.transportMode ? `<span class="tag">${escapeHtml(day.transportMode)}</span>` : ""}
           <span class="tag">${normalizeCurrency(trip.currency)}</span>
         </div>
+        ${weather ? `<div class="day-weather"><span class="weather-cond">${escapeHtml(weatherText(weather.code))}</span><span>${Math.round(weather.low)}°C ~ ${Math.round(weather.high)}°C</span></div>` : `<div class="day-weather" data-weather-day="${index}"></div>`}
         <div class="meal-grid" aria-label="早中晚餐">
           <div><span>早餐</span><strong>${escapeHtml(mealPlan.breakfast || "尚未填店名")}</strong></div>
           <div><span>午餐</span><strong>${escapeHtml(mealPlan.lunch || "尚未填店名")}</strong></div>
@@ -711,6 +729,7 @@ function renderDay(day, index) {
           <button class="day-map-toggle" type="button" data-toggle-daymap="${index}">展開景點地圖</button>
           <div id="dayMap-${index}" class="day-map-container" data-expanded="false" style="display:none;"></div>
         </div>
+        ${backups.length ? `<div class="backup-landmarks"><h4>備案景點</h4><div class="backup-tags">${backups.map(b => `<span class="backup-tag">${escapeHtml(b)}</span>`).join("")}</div></div>` : ""}
         <ul class="timeline">
           ${items.map((item) => `<li><time>•</time><span>${escapeHtml(item)}</span></li>`).join("")}
         </ul>
@@ -757,6 +776,7 @@ function renderDayEditor(day, index) {
         <input name="mapQuery" type="text" value="${escapeHtml(day.mapQuery || "")}" placeholder="地圖搜尋，例如：大阪城 或 飯店到大阪城" />
         <input name="photoUrl" type="url" value="${escapeHtml(day.photoUrl || "")}" placeholder="照片網址，例如：https://..." />
         <textarea name="landmarks" rows="4" placeholder="景點地標，每行一個">${escapeHtml((day.landmarks || []).join("\n"))}</textarea>
+        <textarea name="backupLandmarks" rows="2" placeholder="備案景點（雨天或臨時替換），每行一個">${escapeHtml((day.backupLandmarks || []).join("\n"))}</textarea>
         <textarea name="items" rows="5" placeholder="每行一個行程">${escapeHtml((day.items || []).join("\n"))}</textarea>
         <button type="submit">儲存這一天</button>
       </form>
@@ -848,6 +868,7 @@ function addDay(event) {
     mapQuery: fields.dayMapQuery.value.trim(),
     photoUrl: fields.dayPhotoUrl.value.trim(),
     landmarks: splitLines(fields.dayLandmarks.value),
+    backupLandmarks: splitLines(fields.dayBackupLandmarks.value),
     items
   }));
   nodes.dayForm.reset();
@@ -875,6 +896,7 @@ function saveEditedDay(event) {
     mapQuery: data.get("mapQuery"),
     photoUrl: data.get("photoUrl"),
     landmarks: splitLines(data.get("landmarks")),
+    backupLandmarks: splitLines(data.get("backupLandmarks") || ""),
     items: splitLines(data.get("items"))
   });
   editingDayIndex = null;
@@ -992,7 +1014,7 @@ function parseImportedTrip(text) {
   let current = null;
 
   const startDay = (title) => {
-    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], photoUrl: "", items: [] };
+    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], backupLandmarks: [], photoUrl: "", items: [] };
     days.push(current);
   };
 
@@ -1056,6 +1078,11 @@ function parseImportedTrip(text) {
 
     if (/^(景點|地標|景點地標|landmarks?|spots?)\s*[:：]/i.test(line)) {
       current.landmarks = splitList(line.replace(/^(景點|地標|景點地標|landmarks?|spots?)\s*[:：]\s*/i, ""));
+      return;
+    }
+
+    if (/^(備案|備案景點|backup|alternatives?)\s*[:：]/i.test(line)) {
+      current.backupLandmarks = splitList(line.replace(/^(備案|備案景點|backup|alternatives?)\s*[:：]\s*/i, ""));
       return;
     }
 
@@ -1467,6 +1494,178 @@ function renderFoodSearch(event) {
   }).join("");
 }
 
+// ========== Countdown Timer ==========
+function updateCountdown() {
+  const start = parseDateValue(trip.startDate);
+  if (!start || !nodes.countdownDays) return;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
+  if (diff > 0) {
+    nodes.countdownDays.textContent = diff;
+    nodes.countdownLabel.textContent = "天後出發";
+  } else if (diff === 0) {
+    nodes.countdownDays.textContent = "Today";
+    nodes.countdownLabel.textContent = "出發日!";
+  } else {
+    const endDate = dateForDay(Math.max(trip.days.length - 1, 0));
+    if (endDate && today <= endDate) {
+      const tripDay = Math.ceil((today - start) / (1000 * 60 * 60 * 24)) + 1;
+      nodes.countdownDays.textContent = `Day ${tripDay}`;
+      nodes.countdownLabel.textContent = "旅行中";
+    } else {
+      nodes.countdownDays.textContent = Math.abs(diff);
+      nodes.countdownLabel.textContent = "天前出發";
+    }
+  }
+}
+
+// ========== Currency Calculator ==========
+function updateCalcDisplay() {
+  const cur = normalizeCurrency(trip.currency);
+  if (nodes.calcLocalLabel) nodes.calcLocalLabel.textContent = cur;
+  if (nodes.calcRateDisplay) nodes.calcRateDisplay.textContent = `匯率：1 ${cur} = ${trip.rate} TWD`;
+  renderCalcPresets();
+}
+
+function calcLocalToTwd() {
+  const val = parseFloat(nodes.calcLocal.value);
+  if (!isNaN(val)) {
+    nodes.calcTwd.value = Math.round(val * trip.rate);
+  } else {
+    nodes.calcTwd.value = "";
+  }
+}
+
+function calcTwdToLocal() {
+  const val = parseFloat(nodes.calcTwd.value);
+  if (!isNaN(val) && trip.rate > 0) {
+    nodes.calcLocal.value = Math.round(val / trip.rate);
+  } else {
+    nodes.calcLocal.value = "";
+  }
+}
+
+function renderCalcPresets() {
+  if (!nodes.calcPresets) return;
+  const presets = [100, 500, 1000, 5000, 10000];
+  const cur = normalizeCurrency(trip.currency);
+  nodes.calcPresets.innerHTML = presets.map(amount => {
+    const twd = Math.round(amount * trip.rate);
+    return `<button type="button" class="preset-btn" data-preset="${amount}">${amount.toLocaleString()} ${cur} = NT$${twd.toLocaleString()}</button>`;
+  }).join("");
+  nodes.calcPresets.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      nodes.calcLocal.value = btn.dataset.preset;
+      calcLocalToTwd();
+    });
+  });
+}
+
+// ========== Drag and Drop ==========
+let draggedDayIndex = null;
+
+function setupDragAndDrop() {
+  const cards = document.querySelectorAll(".day-card[data-day-index]");
+  cards.forEach(card => {
+    card.addEventListener("dragstart", e => {
+      draggedDayIndex = Number(card.dataset.dayIndex);
+      card.classList.add("is-dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(draggedDayIndex));
+    });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("is-dragging");
+      document.querySelectorAll(".drag-over").forEach(el => el.classList.remove("drag-over"));
+      draggedDayIndex = null;
+    });
+    card.addEventListener("dragover", e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const target = card.closest("[data-day-index]");
+      if (target) target.classList.add("drag-over");
+    });
+    card.addEventListener("dragleave", e => {
+      if (!card.contains(e.relatedTarget)) card.classList.remove("drag-over");
+    });
+    card.addEventListener("drop", e => {
+      e.preventDefault();
+      card.classList.remove("drag-over");
+      const targetIndex = Number(card.dataset.dayIndex);
+      if (draggedDayIndex !== null && draggedDayIndex !== targetIndex) {
+        const [moved] = trip.days.splice(draggedDayIndex, 1);
+        trip.days.splice(targetIndex, 0, moved);
+        editingDayIndex = null;
+        saveTrip();
+        render();
+      }
+    });
+  });
+}
+
+// ========== Weather Forecast ==========
+let weatherData = {};
+let weatherFetchedKey = "";
+
+function weatherText(code) {
+  if (code === 0) return "晴天";
+  if (code <= 3) return "多雲";
+  if (code <= 48) return "霧";
+  if (code <= 55) return "毛毛雨";
+  if (code <= 65) return "雨天";
+  if (code <= 75) return "下雪";
+  if (code <= 82) return "陣雨";
+  if (code >= 95) return "雷雨";
+  return "";
+}
+
+async function fetchTripWeather() {
+  if (!trip.days.length || !trip.startDate) return;
+
+  const query = [trip.baseCity, trip.country].filter(Boolean).join(", ");
+  const geo = await geocode(query);
+  if (!geo) return;
+
+  const endDate = dateForDay(trip.days.length - 1);
+  if (!endDate) return;
+  const endStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+  const key = `${geo.lat},${geo.lng},${trip.startDate},${endStr}`;
+  if (key === weatherFetchedKey) return;
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${geo.lat}&longitude=${geo.lng}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=auto&start_date=${trip.startDate}&end_date=${endStr}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    if (data.daily?.time) {
+      weatherData = {};
+      data.daily.time.forEach((date, i) => {
+        weatherData[date] = {
+          high: data.daily.temperature_2m_max[i],
+          low: data.daily.temperature_2m_min[i],
+          code: data.daily.weather_code[i]
+        };
+      });
+      weatherFetchedKey = key;
+      updateWeatherDisplay();
+    }
+  } catch {}
+}
+
+function updateWeatherDisplay() {
+  trip.days.forEach((day, index) => {
+    const dayDate = dateForDay(index);
+    if (!dayDate) return;
+    const dateKey = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
+    const weather = weatherData[dateKey];
+    const container = document.querySelector(`[data-weather-day="${index}"]`);
+    if (container && weather) {
+      container.innerHTML = `<span class="weather-cond">${escapeHtml(weatherText(weather.code))}</span><span>${Math.round(weather.low)}°C ~ ${Math.round(weather.high)}°C</span>`;
+    }
+  });
+}
+
 nodes.dayForm.addEventListener("submit", addDay);
 nodes.addSample.addEventListener("click", addSampleDay);
 nodes.clearTrip.addEventListener("click", clearTrip);
@@ -1479,6 +1678,8 @@ nodes.applyImport.addEventListener("click", applyImport);
 nodes.themeToggle.addEventListener("click", toggleTheme);
 nodes.guideForm.addEventListener("submit", renderGuideLinks);
 nodes.foodForm.addEventListener("submit", renderFoodSearch);
+if (nodes.calcLocal) nodes.calcLocal.addEventListener("input", calcLocalToTwd);
+if (nodes.calcTwd) nodes.calcTwd.addEventListener("input", calcTwdToLocal);
 
 applyTheme();
 applySharedTripFromUrl();
