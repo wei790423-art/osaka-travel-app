@@ -2265,3 +2265,217 @@ h1 {
     justify-content: center;
   }
 }
+
+/* ========== Print / PDF Itinerary ========== */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .hero {
+    min-height: auto;
+    background: #fff !important;
+    color: #111 !important;
+    page-break-after: avoid;
+  }
+
+  .hero__image,
+  .hero__overlay,
+  .tab-nav,
+  .toolbar,
+  .dashboard .summary-panel:nth-child(2),
+  .map-overview-wrap,
+  .side-panel,
+  .guide-card a,
+  .recommendation-card a,
+  .food-card a,
+  .map-actions,
+  .card-actions,
+  .icon-button,
+  .ticket-form,
+  .ticket-actions,
+  .history-actions,
+  .import-actions,
+  .share-panel,
+  .offline-status {
+    display: none !important;
+  }
+
+  .hero__content,
+  .toolbar,
+  .dashboard,
+  .content-grid,
+  .tab-nav,
+  .wide-panel,
+  .map-overview-wrap {
+    width: 100% !important;
+  }
+
+  .hero__content {
+    padding: 0 0 12mm !important;
+    color: #111 !important;
+  }
+
+  h1 {
+    max-width: none;
+    margin-bottom: 6mm;
+    color: #111 !important;
+    font-size: 30pt;
+    line-height: 1.05;
+  }
+
+  .hero__copy {
+    max-width: none;
+    color: #333 !important;
+    font-size: 11pt;
+  }
+
+  .hero__stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4mm;
+  }
+
+  .hero__stats span {
+    border: 1px solid #bbb !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .tab-panel {
+    display: none !important;
+  }
+
+  #planner,
+  #tools {
+    display: block !important;
+  }
+
+  .dashboard {
+    display: block;
+    margin-top: 0;
+  }
+
+  .summary-panel,
+  .tool-panel,
+  .wide-panel,
+  .day-card,
+  .ticket-card {
+    border: 1px solid #cfcfcf !important;
+    background: #fff !important;
+  }
+
+  .summary-panel {
+    padding: 6mm;
+    margin-bottom: 8mm;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .content-grid {
+    display: block;
+    padding: 0;
+  }
+
+  .section-heading p,
+  .tips,
+  .detail-list dd,
+  .ticket-card p,
+  .timeline li {
+    color: #333 !important;
+  }
+
+  .day-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    display: grid;
+    grid-template-columns: 18mm 1fr;
+    gap: 6mm;
+    padding: 6mm;
+    margin-bottom: 7mm;
+    border-left: 4px solid #c98f22 !important;
+  }
+
+  .booklet-page::before {
+    display: none;
+  }
+
+  .day-number {
+    width: 16mm;
+    min-height: 16mm;
+    color: #fff !important;
+    background: #006d71 !important;
+  }
+
+  .day-photo {
+    max-height: 52mm;
+  }
+
+  .meal-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .meal-grid div,
+  .note-box,
+  .map-toolbar,
+  .detail-list div {
+    border: 1px solid #ddd !important;
+    background: #fffaf0 !important;
+  }
+
+  .map-toolbar {
+    display: block;
+  }
+
+  .map-toolbar select {
+    border: 0 !important;
+    padding: 0;
+    background: transparent !important;
+    color: #111 !important;
+  }
+
+  .timeline li {
+    grid-template-columns: 14mm 1fr;
+  }
+
+  .tools-grid {
+    display: block;
+  }
+
+  .ticket-panel {
+    break-before: page;
+  }
+
+  .ticket-list {
+    display: grid;
+    gap: 4mm;
+  }
+
+  .ticket-card {
+    break-inside: avoid;
+    grid-template-columns: 1fr;
+    padding: 5mm;
+  }
+
+  .checklist {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .check-item {
+    border: 1px solid #ddd !important;
+    background: #fff !important;
+  }
+}

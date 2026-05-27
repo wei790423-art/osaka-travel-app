@@ -183,6 +183,7 @@ const nodes = {
   loadOsaka: document.querySelector("#loadOsaka"),
   saveHistory: document.querySelector("#saveHistory"),
   saveHistoryTop: document.querySelector("#saveHistoryTop"),
+  printItinerary: document.querySelector("#printItinerary"),
   createShareLink: document.querySelector("#createShareLink"),
   shareResult: document.querySelector("#shareResult"),
   offlineStatus: document.querySelector("#offlineStatus"),
@@ -1013,6 +1014,15 @@ function saveCurrentToHistory() {
   switchTab("history");
 }
 
+function printItineraryBook() {
+  document.body.classList.add("print-mode");
+  window.print();
+}
+
+window.addEventListener("afterprint", () => {
+  document.body.classList.remove("print-mode");
+});
+
 function addTicket(event) {
   event.preventDefault();
   trip.tickets.push(normalizeTicket({
@@ -1762,6 +1772,7 @@ nodes.clearTrip.addEventListener("click", clearTrip);
 nodes.loadOsaka.addEventListener("click", loadOsakaTrip);
 nodes.saveHistory.addEventListener("click", saveCurrentToHistory);
 nodes.saveHistoryTop.addEventListener("click", saveCurrentToHistory);
+nodes.printItinerary.addEventListener("click", printItineraryBook);
 nodes.ticketForm.addEventListener("submit", addTicket);
 nodes.createShareLink.addEventListener("click", createShareLink);
 nodes.previewImport.addEventListener("click", previewImport);
