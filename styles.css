@@ -235,7 +235,9 @@ h1 {
 :root[data-theme="dark"] .edit-day-form input,
 :root[data-theme="dark"] .edit-day-form select,
 :root[data-theme="dark"] .edit-day-form textarea,
-:root[data-theme="dark"] .import-box {
+:root[data-theme="dark"] .import-box,
+:root[data-theme="dark"] .guide-search input,
+:root[data-theme="dark"] .guide-search select {
   background: #14171b;
   color: var(--ink);
   border-color: var(--line);
@@ -311,6 +313,82 @@ h1 {
   line-height: 1.7;
 }
 
+.guide-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px auto;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.guide-search input,
+.guide-search select {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.guide-search button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 850;
+  cursor: pointer;
+  padding: 0 16px;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.guide-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 148px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9faf8;
+}
+
+.guide-card span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.guide-card h3 {
+  margin: 0 0 8px;
+}
+
+.guide-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.guide-card a {
+  align-self: start;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--teal);
+  color: #fff;
+  font-weight: 850;
+  text-decoration: none;
+}
+
 .import-actions {
   display: flex;
   flex-wrap: wrap;
@@ -341,7 +419,8 @@ h1 {
 }
 
 :root[data-theme="dark"] .preview-day,
-:root[data-theme="dark"] .history-card {
+:root[data-theme="dark"] .history-card,
+:root[data-theme="dark"] .guide-card {
   background: #161a1e;
 }
 
@@ -855,7 +934,9 @@ h1 {
   .dashboard,
   .content-grid,
   .summary-grid,
-  .tools-grid {
+  .tools-grid,
+  .guide-search,
+  .guide-grid {
     grid-template-columns: 1fr;
   }
 

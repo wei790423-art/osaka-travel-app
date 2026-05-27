@@ -165,8 +165,63 @@ const nodes = {
   applyImport: document.querySelector("#applyImport"),
   importPreview: document.querySelector("#importPreview"),
   historyList: document.querySelector("#historyList"),
-  themeToggle: document.querySelector("#themeToggle")
+  themeToggle: document.querySelector("#themeToggle"),
+  guideForm: document.querySelector("#guideForm"),
+  guideDestination: document.querySelector("#guideDestination"),
+  guideIntent: document.querySelector("#guideIntent"),
+  guideGrid: document.querySelector("#guideGrid")
 };
+
+const guidePlatforms = [
+  {
+    name: "Google Maps",
+    type: "地圖 / 動線",
+    note: "查景點位置、餐廳評分、交通動線與收藏清單。",
+    buildUrl: (q, intent) => `https://www.google.com/maps/search/${encodeURIComponent(`${q} ${intentKeyword(intent)}`)}`
+  },
+  {
+    name: "YouTube",
+    type: "影片攻略",
+    note: "看實際街景、交通教學、住宿開箱與完整行程影片。",
+    buildUrl: (q, intent) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`${q} 旅遊攻略 ${intentKeyword(intent)}`)}`
+  },
+  {
+    name: "Google 搜尋",
+    type: "文章懶人包",
+    note: "找部落格、官方資訊、近期交通票券與行程整理。",
+    buildUrl: (q, intent) => `https://www.google.com/search?q=${encodeURIComponent(`${q} 自由行 攻略 ${intentKeyword(intent)}`)}`
+  },
+  {
+    name: "Klook",
+    type: "票券 / 活動",
+    note: "查熱門票券、交通 pass、體驗活動與一日遊。",
+    buildUrl: (q) => `https://www.klook.com/search/result/?query=${encodeURIComponent(q)}`
+  },
+  {
+    name: "KKday",
+    type: "票券 / 一日遊",
+    note: "查在地體驗、交通、門票、包車與行程商品。",
+    buildUrl: (q) => `https://www.kkday.com/zh-tw/search?keyword=${encodeURIComponent(q)}`
+  },
+  {
+    name: "Tripadvisor",
+    type: "評價 / 排名",
+    note: "參考景點、餐廳、住宿評價與旅人排行。",
+    buildUrl: (q) => `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`
+  },
+  {
+    name: "Booking.com",
+    type: "住宿",
+    note: "比較住宿區域、價格、評分與交通便利性。",
+    buildUrl: (q) => `https://www.booking.com/searchresults.zh-tw.html?ss=${encodeURIComponent(q)}`
+  },
+  {
+    name: "官方旅遊網站",
+    type: "官方資訊",
+    note: "查簽證、交通、節慶、天氣與觀光局建議。",
+    buildUrl: (q) => `https://www.google.com/search?q=${encodeURIComponent(`${q} 官方 旅遊 網站 tourism official`)}`
+  }
+];
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -296,6 +351,18 @@ function renderTransportOptions(selected = "") {
   return options
     .map((option) => `<option value="${escapeHtml(option)}"${option === selected ? " selected" : ""}>${option || "選擇移動方式"}</option>`)
     .join("");
+}
+
+function intentKeyword(intent) {
+  const keywords = {
+    full: "行程 規劃",
+    attractions: "景點 必去",
+    food: "美食 餐廳",
+    transport: "交通 路線",
+    tickets: "票券 活動",
+    hotel: "住宿 飯店"
+  };
+  return keywords[intent] || "行程 規劃";
 }
 
 function uniqueStops() {
@@ -736,6 +803,28 @@ function toggleTheme() {
   applyTheme();
 }
 
+function renderGuideLinks(event) {
+  if (event) event.preventDefault();
+  const destination = nodes.guideDestination.value.trim() || trip.baseCity || trip.country || "大阪";
+  const intent = nodes.guideIntent.value;
+  nodes.guideDestination.value = destination;
+  nodes.guideGrid.innerHTML = guidePlatforms
+    .map((platform) => {
+      const url = platform.buildUrl(destination, intent);
+      return `
+        <article class="guide-card">
+          <div>
+            <span>${platform.type}</span>
+            <h3>${platform.name}</h3>
+            <p>${platform.note}</p>
+          </div>
+          <a href="${url}" target="_blank" rel="noreferrer">開啟</a>
+        </article>
+      `;
+    })
+    .join("");
+}
+
 nodes.dayForm.addEventListener("submit", addDay);
 nodes.addSample.addEventListener("click", addSampleDay);
 nodes.clearTrip.addEventListener("click", clearTrip);
@@ -745,8 +834,10 @@ nodes.saveHistoryTop.addEventListener("click", saveCurrentToHistory);
 nodes.previewImport.addEventListener("click", previewImport);
 nodes.applyImport.addEventListener("click", applyImport);
 nodes.themeToggle.addEventListener("click", toggleTheme);
+nodes.guideForm.addEventListener("submit", renderGuideLinks);
 
 applyTheme();
 syncFields();
 renderChecklist();
+renderGuideLinks();
 render();

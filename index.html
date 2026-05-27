@@ -26,6 +26,7 @@
 
       <nav class="tab-nav" aria-label="功能選單">
         <button class="tab-button is-active" type="button" data-tab-target="planner">行程規劃</button>
+        <button class="tab-button" type="button" data-tab-target="guides">攻略平台</button>
         <button class="tab-button" type="button" data-tab-target="import">匯入行程</button>
         <button class="tab-button" type="button" data-tab-target="history">歷史行程</button>
         <button class="tab-button" type="button" data-tab-target="tools">工具清單</button>
@@ -153,6 +154,30 @@
               </ul>
             </section>
           </aside>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="guides" aria-label="攻略平台">
+        <section class="wide-panel">
+          <div class="section-heading">
+            <div>
+              <h2>攻略平台推薦</h2>
+              <p>輸入想去的地點，一鍵開啟地圖、影片、票券、餐廳、官方旅遊資訊與行程靈感。</p>
+            </div>
+          </div>
+          <form class="guide-search" id="guideForm">
+            <input id="guideDestination" type="text" placeholder="例如：大阪、東京、首爾、巴黎" />
+            <select id="guideIntent">
+              <option value="full">完整規劃</option>
+              <option value="attractions">景點</option>
+              <option value="food">美食</option>
+              <option value="transport">交通</option>
+              <option value="tickets">票券活動</option>
+              <option value="hotel">住宿</option>
+            </select>
+            <button type="submit">產生攻略連結</button>
+          </form>
+          <div class="guide-grid" id="guideGrid"></div>
         </section>
       </section>
 
