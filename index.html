@@ -87,10 +87,23 @@
             <form class="day-form" id="dayForm">
               <input id="dayTitle" type="text" placeholder="標題，例如：市區散步與美食" required />
               <input id="dayPlace" type="text" placeholder="城市/區域，例如：大阪難波" required />
-              <input id="dayTransportMode" type="text" placeholder="移動方式，例如：地鐵、步行、租車" />
+              <select id="dayTransportMode">
+                <option value="">選擇移動方式</option>
+                <option value="步行">步行</option>
+                <option value="地鐵 / 電車">地鐵 / 電車</option>
+                <option value="巴士">巴士</option>
+                <option value="計程車">計程車</option>
+                <option value="租車自駕">租車自駕</option>
+                <option value="包車">包車</option>
+                <option value="高鐵 / 新幹線">高鐵 / 新幹線</option>
+                <option value="飛機">飛機</option>
+              </select>
               <input id="dayRoute" type="text" placeholder="移動路線，例如：飯店 -> 景點 -> 晚餐" />
               <input id="dayBudget" type="number" min="0" step="1" placeholder="預估花費" required />
-              <input id="dayMeals" type="text" placeholder="吃飯，例如：黑門市場早餐、道頓堀晚餐" />
+              <input id="dayBreakfast" type="text" placeholder="早餐店名，例如：飯店早餐" />
+              <input id="dayLunch" type="text" placeholder="午餐店名，例如：黑門市場" />
+              <input id="dayDinner" type="text" placeholder="晚餐店名，例如：道頓堀御好燒" />
+              <input id="dayMapQuery" type="text" placeholder="地圖搜尋，例如：大阪城 或 飯店到大阪城" />
               <input id="dayPhotoUrl" type="url" placeholder="照片網址，例如：https://..." />
               <textarea id="dayItems" rows="3" placeholder="每行一個行程，例如：09:00 早餐&#10;11:00 博物館&#10;18:00 晚餐"></textarea>
               <button type="submit">新增行程</button>

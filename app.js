@@ -13,6 +13,9 @@ const osakaTrip = {
       title: "抵達關西機場，難波暖身",
       place: "大阪難波",
       route: "關西機場 -> 南海電鐵 -> 難波",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "機上或機場簡餐", lunch: "關西機場美食街", dinner: "道頓堀御好燒" },
+      mapQuery: "關西機場 到 大阪難波 道頓堀",
       budget: 7600,
       items: ["14:00 抵達關西機場，領交通卡與網路", "16:00 南海電鐵進難波，飯店寄放行李", "18:00 道頓堀、心齋橋、法善寺橫丁散步", "20:00 章魚燒、御好燒或拉麵晚餐"]
     },
@@ -20,6 +23,9 @@ const osakaTrip = {
       title: "大阪城、梅田與夜景",
       place: "大阪市區",
       route: "谷町四丁目 -> 大阪城 -> 梅田",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "飯店早餐", lunch: "京橋商店街", dinner: "梅田地下街餐廳" },
+      mapQuery: "大阪城 梅田 空中庭園",
       budget: 9200,
       items: ["09:00 大阪城公園與天守閣周邊拍照", "12:00 天滿橋或京橋午餐", "15:00 梅田商圈、阪急百貨與地下街", "18:30 藍天大廈空中庭園看夜景"]
     },
@@ -27,6 +33,9 @@ const osakaTrip = {
       title: "日本環球影城整天",
       place: "環球影城",
       route: "難波 -> 西九條 -> 環球城",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "便利商店早餐", lunch: "USJ 園區餐廳", dinner: "環球城市食堂" },
+      mapQuery: "大阪難波 到 日本環球影城",
       budget: 22800,
       items: ["07:30 提早出門，開園前抵達排隊", "09:00 任天堂世界、哈利波特區優先安排", "13:00 園區午餐與表演時間預留", "19:30 回難波簡單晚餐，早點休息"]
     },
@@ -34,6 +43,9 @@ const osakaTrip = {
       title: "京都伏見稻荷與清水寺",
       place: "京都",
       route: "大阪 -> 京都 -> 伏見稻荷 -> 清水五條",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "飯店早餐", lunch: "祇園周邊餐廳", dinner: "大阪車站便餐" },
+      mapQuery: "伏見稻荷大社 清水寺 京都",
       budget: 11800,
       items: ["08:00 JR 或京阪前往京都", "09:30 伏見稻荷大社，避開正午人潮", "13:00 祇園、二年坂、三年坂午餐與散步", "16:00 清水寺周邊，傍晚回大阪"]
     },
@@ -41,6 +53,9 @@ const osakaTrip = {
       title: "奈良公園與通天閣夜晚",
       place: "奈良",
       route: "大阪難波 -> 近鐵奈良 -> 新世界",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "飯店早餐", lunch: "奈良町町家餐廳", dinner: "新世界串炸" },
+      mapQuery: "近鐵奈良 奈良公園 東大寺 新世界大阪",
       budget: 9800,
       items: ["09:00 近鐵前往奈良，先到奈良公園", "10:30 東大寺、春日大社與老街點心", "15:30 回大阪休息或補逛藥妝", "18:30 新世界、通天閣、串炸晚餐"]
     },
@@ -48,6 +63,9 @@ const osakaTrip = {
       title: "神戶港、北野異人館與牛排",
       place: "神戶",
       route: "大阪梅田 -> 三宮 -> 神戶港",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "飯店早餐", lunch: "神戶牛排餐廳", dinner: "神戶港咖啡或輕食" },
+      mapQuery: "神戶三宮 北野異人館 美利堅公園",
       budget: 15200,
       items: ["09:30 阪急或 JR 前往三宮", "10:30 北野異人館街與咖啡店", "13:30 神戶牛午餐或平價牛排備案", "16:00 美利堅公園、港塔周邊，夜景後回大阪"]
     },
@@ -55,6 +73,9 @@ const osakaTrip = {
       title: "黑門市場、天王寺與最後採買",
       place: "大阪市區",
       route: "日本橋 -> 天王寺 -> 阿倍野",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "黑門市場海鮮小吃", lunch: "天王寺百貨餐廳", dinner: "心齋橋燒肉" },
+      mapQuery: "黑門市場 天王寺 阿倍野 Harukas",
       budget: 12800,
       items: ["09:30 黑門市場早餐與海鮮小吃", "12:30 天王寺公園、四天王寺或動物園前散步", "15:00 阿倍野 Harukas、百貨與伴手禮", "19:00 心齋橋最後採買，整理行李"]
     },
@@ -62,6 +83,9 @@ const osakaTrip = {
       title: "退房，機場伴手禮",
       place: "大阪 / 關西機場",
       route: "飯店 -> 關西機場",
+      transportMode: "地鐵 / 電車",
+      mealPlan: { breakfast: "飯店早餐", lunch: "難波咖啡店", dinner: "機場餐廳或機上餐" },
+      mapQuery: "大阪難波 到 關西機場",
       budget: 6900,
       items: ["09:00 飯店退房，行李確認", "10:30 難波周邊咖啡或最後補買", "12:30 搭車前往關西機場", "14:30 機場伴手禮、報到與出境"]
     }
@@ -92,7 +116,10 @@ const fields = {
   dayTransportMode: document.querySelector("#dayTransportMode"),
   dayRoute: document.querySelector("#dayRoute"),
   dayBudget: document.querySelector("#dayBudget"),
-  dayMeals: document.querySelector("#dayMeals"),
+  dayBreakfast: document.querySelector("#dayBreakfast"),
+  dayLunch: document.querySelector("#dayLunch"),
+  dayDinner: document.querySelector("#dayDinner"),
+  dayMapQuery: document.querySelector("#dayMapQuery"),
   dayPhotoUrl: document.querySelector("#dayPhotoUrl"),
   dayItems: document.querySelector("#dayItems"),
   importText: document.querySelector("#importText")
@@ -160,15 +187,35 @@ function normalizeTrip(source) {
 }
 
 function normalizeDay(day) {
+  const mealPlan = normalizeMealPlan(day);
   return {
     title: day.title || "未命名行程",
     place: day.place || "",
     route: day.route || "",
     transportMode: day.transportMode || "",
-    meals: Array.isArray(day.meals) ? day.meals : splitList(day.meals || ""),
+    mealPlan,
+    meals: [mealPlan.breakfast, mealPlan.lunch, mealPlan.dinner].filter(Boolean),
+    mapQuery: day.mapQuery || day.mapUrl || day.route || day.place || "",
     photoUrl: day.photoUrl || "",
     budget: Number(day.budget || 0),
     items: Array.isArray(day.items) ? day.items : splitLines(day.items || "")
+  };
+}
+
+function normalizeMealPlan(day) {
+  if (day.mealPlan) {
+    return {
+      breakfast: day.mealPlan.breakfast || "",
+      lunch: day.mealPlan.lunch || "",
+      dinner: day.mealPlan.dinner || ""
+    };
+  }
+
+  const meals = Array.isArray(day.meals) ? day.meals : splitList(day.meals || "");
+  return {
+    breakfast: day.breakfast || meals[0] || "",
+    lunch: day.lunch || meals[1] || "",
+    dinner: day.dinner || meals[2] || meals[0] || ""
   };
 }
 
@@ -204,6 +251,23 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function mapUrl(day) {
+  const query = day.mapQuery || day.route || day.place || trip.baseCity;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function mapEmbedUrl(day) {
+  const query = day.mapQuery || day.route || day.place || trip.baseCity;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+}
+
+function renderTransportOptions(selected = "") {
+  const options = ["", "步行", "步行 / 大眾運輸", "地鐵 / 電車", "巴士", "計程車", "租車自駕", "包車", "高鐵 / 新幹線", "飛機", "渡輪"];
+  return options
+    .map((option) => `<option value="${escapeHtml(option)}"${option === selected ? " selected" : ""}>${option || "選擇移動方式"}</option>`)
+    .join("");
 }
 
 function uniqueStops() {
@@ -281,13 +345,16 @@ function render() {
 function renderDay(day, index) {
   if (editingDayIndex === index) return renderDayEditor(day, index);
   const items = day.items?.length ? day.items : ["尚未填入細節"];
-  const meals = day.meals?.length ? day.meals : [];
+  const mealPlan = normalizeMealPlan(day);
   return `
-    <article class="day-card">
+    <article class="day-card booklet-page">
       <div class="day-number"><span>Day</span>${index + 1}</div>
       <div>
         <div class="card-title-row">
-          <h3>${escapeHtml(day.title)}</h3>
+          <div>
+            <p class="booklet-kicker">${escapeHtml(trip.country)} ${escapeHtml(trip.baseCity)} 行程本</p>
+            <h3>${escapeHtml(day.title)}</h3>
+          </div>
           <div class="card-actions">
             <button class="icon-button" type="button" data-edit-day="${index}" aria-label="編輯第 ${index + 1} 天">編輯</button>
             <button class="icon-button" type="button" data-delete-day="${index}" aria-label="刪除第 ${index + 1} 天">刪除</button>
@@ -299,10 +366,19 @@ function renderDay(day, index) {
           ${day.transportMode ? `<span class="tag">${escapeHtml(day.transportMode)}</span>` : ""}
           <span class="tag">${normalizeCurrency(trip.currency)}</span>
         </div>
+        <div class="meal-grid" aria-label="早中晚餐">
+          <div><span>早餐</span><strong>${escapeHtml(mealPlan.breakfast || "尚未填店名")}</strong></div>
+          <div><span>午餐</span><strong>${escapeHtml(mealPlan.lunch || "尚未填店名")}</strong></div>
+          <div><span>晚餐</span><strong>${escapeHtml(mealPlan.dinner || "尚未填店名")}</strong></div>
+        </div>
         <dl class="detail-list">
-          <div><dt>吃飯</dt><dd>${meals.length ? meals.map(escapeHtml).join("、") : "尚未填吃飯安排"}</dd></div>
+          <div><dt>移動方式</dt><dd>${escapeHtml(day.transportMode || "尚未選擇")}</dd></div>
           <div><dt>移動路線</dt><dd>${escapeHtml(day.route || "尚未填移動路線")}</dd></div>
         </dl>
+        <div class="map-card">
+          <iframe title="${escapeHtml(day.title)} 地圖" src="${mapEmbedUrl(day)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <a href="${mapUrl(day)}" target="_blank" rel="noreferrer">開啟地圖</a>
+        </div>
         <ul class="timeline">
           ${items.map((item) => `<li><time>•</time><span>${escapeHtml(item)}</span></li>`).join("")}
         </ul>
@@ -326,10 +402,13 @@ function renderDayEditor(day, index) {
         </div>
         <input name="title" type="text" value="${escapeHtml(day.title)}" placeholder="標題" required />
         <input name="place" type="text" value="${escapeHtml(day.place)}" placeholder="城市/區域" required />
-        <input name="transportMode" type="text" value="${escapeHtml(day.transportMode || "")}" placeholder="移動方式，例如：地鐵、步行、租車" />
+        <select name="transportMode">${renderTransportOptions(day.transportMode || "")}</select>
         <input name="route" type="text" value="${escapeHtml(day.route || "")}" placeholder="移動路線，例如：飯店 -> 景點 -> 晚餐" />
         <input name="budget" type="number" min="0" step="1" value="${Number(day.budget || 0)}" placeholder="預算" />
-        <input name="meals" type="text" value="${escapeHtml((day.meals || []).join("、"))}" placeholder="吃飯，例如：早餐、午餐、晚餐" />
+        <input name="breakfast" type="text" value="${escapeHtml(day.mealPlan?.breakfast || "")}" placeholder="早餐店名" />
+        <input name="lunch" type="text" value="${escapeHtml(day.mealPlan?.lunch || "")}" placeholder="午餐店名" />
+        <input name="dinner" type="text" value="${escapeHtml(day.mealPlan?.dinner || "")}" placeholder="晚餐店名" />
+        <input name="mapQuery" type="text" value="${escapeHtml(day.mapQuery || "")}" placeholder="地圖搜尋，例如：大阪城 或 飯店到大阪城" />
         <input name="photoUrl" type="url" value="${escapeHtml(day.photoUrl || "")}" placeholder="照片網址，例如：https://..." />
         <textarea name="items" rows="5" placeholder="每行一個行程">${escapeHtml((day.items || []).join("\n"))}</textarea>
         <button type="submit">儲存這一天</button>
@@ -399,7 +478,12 @@ function addDay(event) {
     transportMode: fields.dayTransportMode.value.trim(),
     route: fields.dayRoute.value.trim(),
     budget: Number(fields.dayBudget.value) || 0,
-    meals: splitList(fields.dayMeals.value),
+    mealPlan: {
+      breakfast: fields.dayBreakfast.value.trim(),
+      lunch: fields.dayLunch.value.trim(),
+      dinner: fields.dayDinner.value.trim()
+    },
+    mapQuery: fields.dayMapQuery.value.trim(),
     photoUrl: fields.dayPhotoUrl.value.trim(),
     items
   }));
@@ -419,7 +503,12 @@ function saveEditedDay(event) {
     transportMode: data.get("transportMode"),
     route: data.get("route"),
     budget: data.get("budget"),
-    meals: splitList(data.get("meals")),
+    mealPlan: {
+      breakfast: data.get("breakfast"),
+      lunch: data.get("lunch"),
+      dinner: data.get("dinner")
+    },
+    mapQuery: data.get("mapQuery"),
     photoUrl: data.get("photoUrl"),
     items: splitLines(data.get("items"))
   });
@@ -435,7 +524,8 @@ function addSampleDay() {
     route: "飯店 -> 喜歡的街區 -> 晚餐",
     transportMode: "步行 / 大眾運輸",
     budget: 2500,
-    meals: ["在地早餐", "街區晚餐"],
+    mealPlan: { breakfast: "在地早餐店", lunch: "街區小餐館", dinner: "夜景餐廳" },
+    mapQuery: `${trip.baseCity || "自選城市"} 自由行景點`,
     photoUrl: "",
     items: ["上午慢慢出門", "下午安排一個主要景點", "晚上留給美食或夜景"]
   });
@@ -472,7 +562,7 @@ function parseImportedTrip(text) {
   let current = null;
 
   const startDay = (title) => {
-    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", route: "", transportMode: "", budget: 0, meals: [], photoUrl: "", items: [] };
+    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", photoUrl: "", items: [] };
     days.push(current);
   };
 
@@ -504,7 +594,28 @@ function parseImportedTrip(text) {
     }
 
     if (/^(吃飯|餐廳|餐飲|meals?)\s*[:：]/i.test(line)) {
-      current.meals = splitList(line.replace(/^(吃飯|餐廳|餐飲|meals?)\s*[:：]\s*/i, ""));
+      const meals = splitList(line.replace(/^(吃飯|餐廳|餐飲|meals?)\s*[:：]\s*/i, ""));
+      current.mealPlan = { breakfast: meals[0] || "", lunch: meals[1] || "", dinner: meals[2] || meals[0] || "" };
+      return;
+    }
+
+    if (/^(早餐|breakfast)\s*[:：]/i.test(line)) {
+      current.mealPlan.breakfast = line.replace(/^(早餐|breakfast)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(午餐|lunch)\s*[:：]/i.test(line)) {
+      current.mealPlan.lunch = line.replace(/^(午餐|lunch)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(晚餐|dinner)\s*[:：]/i.test(line)) {
+      current.mealPlan.dinner = line.replace(/^(晚餐|dinner)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(地圖|map)\s*[:：]/i.test(line)) {
+      current.mapQuery = line.replace(/^(地圖|map)\s*[:：]\s*/i, "");
       return;
     }
 
@@ -527,7 +638,11 @@ function parseImportedTrip(text) {
 function previewImport() {
   const days = parseImportedTrip(fields.importText.value);
   nodes.importPreview.innerHTML = days.length
-    ? `<h3>解析結果：${days.length} 天</h3>${days.map((day, index) => `<div class="preview-day"><strong>Day ${index + 1}：${escapeHtml(day.title)}</strong><span>${escapeHtml(day.place || "未填地點")}｜${escapeHtml(day.transportMode || "未填移動方式")}｜${escapeHtml(day.route || "未填移動路線")}｜吃飯 ${(day.meals || []).map(escapeHtml).join("、") || "未填"}｜預算 ${day.budget || 0}</span></div>`).join("")}`
+    ? `<h3>解析結果：${days.length} 天</h3>${days.map((day, index) => {
+        const mealPlan = normalizeMealPlan(day);
+        const mealText = [mealPlan.breakfast, mealPlan.lunch, mealPlan.dinner].filter(Boolean).map(escapeHtml).join("、") || "未填";
+        return `<div class="preview-day"><strong>Day ${index + 1}：${escapeHtml(day.title)}</strong><span>${escapeHtml(day.place || "未填地點")}｜${escapeHtml(day.transportMode || "未填移動方式")}｜${escapeHtml(day.route || "未填移動路線")}｜餐食 ${mealText}｜預算 ${day.budget || 0}</span></div>`;
+      }).join("")}`
     : `<div class="empty-state">還沒有解析到行程。請貼上至少一段文字。</div>`;
 }
 
