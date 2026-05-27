@@ -13,6 +13,21 @@
   --shadow: 0 18px 45px rgba(26, 32, 39, 0.14);
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f4f1ea;
+  --muted: #b9b5aa;
+  --line: #3d4148;
+  --paper: #111316;
+  --paper-warm: #242018;
+  --panel: #1a1d21;
+  --accent: #e05b4f;
+  --accent-dark: #ffb4a9;
+  --teal: #49aeb2;
+  --gold: #e6bb63;
+  --shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -184,7 +199,7 @@ h1 {
 }
 
 .planner-form {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .field {
@@ -210,6 +225,20 @@ h1 {
   background: #fff;
   color: var(--ink);
   padding: 0 12px;
+}
+
+:root[data-theme="dark"] .field select,
+:root[data-theme="dark"] .field input,
+:root[data-theme="dark"] .day-form input,
+:root[data-theme="dark"] .day-form select,
+:root[data-theme="dark"] .day-form textarea,
+:root[data-theme="dark"] .edit-day-form input,
+:root[data-theme="dark"] .edit-day-form select,
+:root[data-theme="dark"] .edit-day-form textarea,
+:root[data-theme="dark"] .import-box {
+  background: #14171b;
+  color: var(--ink);
+  border-color: var(--line);
 }
 
 .day-form textarea {
@@ -247,10 +276,19 @@ h1 {
 .quick-actions button:nth-child(2),
 .quick-actions button:nth-child(4),
 .icon-button,
-.history-actions button:nth-child(2) {
+.history-actions button:nth-child(2),
+.theme-toggle {
   background: #eef1f0;
   color: var(--ink);
   border: 1px solid var(--line);
+}
+
+:root[data-theme="dark"] .theme-toggle,
+:root[data-theme="dark"] .quick-actions button:nth-child(2),
+:root[data-theme="dark"] .quick-actions button:nth-child(4),
+:root[data-theme="dark"] .icon-button,
+:root[data-theme="dark"] .history-actions button:nth-child(2) {
+  background: #242a30;
 }
 
 .wide-panel {
@@ -300,6 +338,11 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f9faf8;
+}
+
+:root[data-theme="dark"] .preview-day,
+:root[data-theme="dark"] .history-card {
+  background: #161a1e;
 }
 
 .preview-day {
@@ -379,6 +422,10 @@ h1 {
   background: #f3f5f4;
 }
 
+:root[data-theme="dark"] .summary-grid div {
+  background: #15191d;
+}
+
 .metric {
   display: block;
   color: var(--accent-dark);
@@ -451,6 +498,10 @@ h1 {
   background: linear-gradient(90deg, #fffdf8, #fff 46%);
   border-radius: 8px;
   box-shadow: 0 10px 24px rgba(26, 32, 39, 0.07);
+}
+
+:root[data-theme="dark"] .day-card {
+  background: linear-gradient(90deg, #1e1b16, #1a1d21 46%);
 }
 
 .booklet-page {
@@ -553,6 +604,10 @@ h1 {
   background: #f8faf9;
 }
 
+:root[data-theme="dark"] .detail-list div {
+  background: #15191d;
+}
+
 .detail-list dt {
   color: var(--accent-dark);
   font-weight: 850;
@@ -606,6 +661,10 @@ h1 {
   background: #edf1ef;
 }
 
+:root[data-theme="dark"] .map-card iframe {
+  background: #15191d;
+}
+
 .map-card a {
   justify-self: start;
   min-height: 36px;
@@ -617,6 +676,11 @@ h1 {
   color: var(--teal);
   font-weight: 850;
   text-decoration: none;
+}
+
+:root[data-theme="dark"] .map-card a,
+:root[data-theme="dark"] .tag {
+  background: #102c2e;
 }
 
 .edit-day-form {
@@ -738,6 +802,10 @@ h1 {
   background: #fff;
 }
 
+:root[data-theme="dark"] .check-item {
+  background: #15191d;
+}
+
 .check-item input {
   width: 18px;
   height: 18px;
@@ -759,6 +827,10 @@ h1 {
   border-radius: 8px;
   background: #fff;
   color: var(--muted);
+}
+
+:root[data-theme="dark"] .empty-state {
+  background: #15191d;
 }
 
 @media (max-width: 840px) {

@@ -1,10 +1,13 @@
 const TRIP_KEY = "global-trip-planner-v2";
 const HISTORY_KEY = "global-trip-history-v1";
+const THEME_KEY = "global-trip-theme-v1";
 
 const osakaTrip = {
   name: "大阪 8 天 7 夜",
   country: "日本",
   baseCity: "大阪",
+  hotelName: "大阪難波周邊飯店",
+  flightNo: "請填入航班號",
   currency: "JPY",
   rate: 0.22,
   pace: "balanced",
@@ -103,11 +106,14 @@ const paceText = {
 let trip = loadTrip();
 let history = loadHistory();
 let editingDayIndex = null;
+let theme = localStorage.getItem(THEME_KEY) || "light";
 
 const fields = {
   tripName: document.querySelector("#tripName"),
   country: document.querySelector("#country"),
   baseCity: document.querySelector("#baseCity"),
+  hotelName: document.querySelector("#hotelName"),
+  flightNo: document.querySelector("#flightNo"),
   currency: document.querySelector("#currency"),
   rate: document.querySelector("#rate"),
   pace: document.querySelector("#pace"),
@@ -147,7 +153,8 @@ const nodes = {
   previewImport: document.querySelector("#previewImport"),
   applyImport: document.querySelector("#applyImport"),
   importPreview: document.querySelector("#importPreview"),
-  historyList: document.querySelector("#historyList")
+  historyList: document.querySelector("#historyList"),
+  themeToggle: document.querySelector("#themeToggle")
 };
 
 function clone(value) {
@@ -182,6 +189,14 @@ function saveHistoryStore() {
 function normalizeTrip(source) {
   return {
     ...source,
+    name: source.name || "我的旅行計畫",
+    country: source.country || "自選國家",
+    baseCity: source.baseCity || "自選城市",
+    hotelName: source.hotelName || "",
+    flightNo: source.flightNo || "",
+    currency: source.currency || "TWD",
+    rate: Number(source.rate || 1),
+    pace: source.pace || "balanced",
     days: (source.days || []).map(normalizeDay)
   };
 }
@@ -282,6 +297,8 @@ function syncFields() {
   fields.tripName.value = trip.name;
   fields.country.value = trip.country;
   fields.baseCity.value = trip.baseCity;
+  fields.hotelName.value = trip.hotelName || "";
+  fields.flightNo.value = trip.flightNo || "";
   fields.currency.value = normalizeCurrency(trip.currency);
   fields.rate.value = trip.rate;
   fields.pace.value = trip.pace;
@@ -291,6 +308,8 @@ function updateTripFromFields() {
   trip.name = fields.tripName.value.trim() || "我的旅行計畫";
   trip.country = fields.country.value.trim() || "自選國家";
   trip.baseCity = fields.baseCity.value.trim() || "自選城市";
+  trip.hotelName = fields.hotelName.value.trim();
+  trip.flightNo = fields.flightNo.value.trim();
   trip.currency = normalizeCurrency(fields.currency.value);
   trip.rate = Number(fields.rate.value) || 1;
   trip.pace = fields.pace.value;
@@ -302,7 +321,7 @@ function render() {
   const total = totalBudget();
   const stops = uniqueStops();
   nodes.heroTitle.textContent = trip.name;
-  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，目前規劃 ${trip.days.length} 天，隨時可新增、匯入或載入歷史行程。`;
+  nodes.heroCopy.textContent = `${trip.country}・${trip.baseCity}，住宿 ${trip.hotelName || "尚未填飯店"}，航班 ${trip.flightNo || "尚未填航班"}，目前規劃 ${trip.days.length} 天。`;
   nodes.statDays.textContent = trip.days.length;
   nodes.statStops.textContent = stops;
   nodes.statBudget.textContent = Math.round(total).toLocaleString("zh-TW");
@@ -431,7 +450,7 @@ function renderHistory() {
             <article class="history-card">
               <div>
                 <h3>${escapeHtml(entry.trip.name)}</h3>
-                <p>${escapeHtml(entry.trip.country)}・${escapeHtml(entry.trip.baseCity)}｜${entry.trip.days.length} 天｜${formatHistoryBudget(entry.trip)}</p>
+                <p>${escapeHtml(entry.trip.country)}・${escapeHtml(entry.trip.baseCity)}｜${entry.trip.days.length} 天｜${escapeHtml(entry.trip.hotelName || "未填住宿")}｜${escapeHtml(entry.trip.flightNo || "未填航班")}｜${formatHistoryBudget(entry.trip)}</p>
                 <span>${new Date(entry.savedAt).toLocaleString("zh-TW")}</span>
               </div>
               <div class="history-actions">
@@ -673,9 +692,22 @@ document.querySelectorAll("[data-tab-target]").forEach((button) => {
   button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
 });
 
-[fields.tripName, fields.country, fields.baseCity, fields.currency, fields.rate, fields.pace].forEach((field) => {
+[fields.tripName, fields.country, fields.baseCity, fields.hotelName, fields.flightNo, fields.currency, fields.rate, fields.pace].forEach((field) => {
   field.addEventListener("input", updateTripFromFields);
 });
+
+function applyTheme() {
+  document.documentElement.dataset.theme = theme;
+  const isDark = theme === "dark";
+  nodes.themeToggle.textContent = isDark ? "淺色模式" : "深色模式";
+  nodes.themeToggle.setAttribute("aria-pressed", String(isDark));
+}
+
+function toggleTheme() {
+  theme = theme === "dark" ? "light" : "dark";
+  localStorage.setItem(THEME_KEY, theme);
+  applyTheme();
+}
 
 nodes.dayForm.addEventListener("submit", addDay);
 nodes.addSample.addEventListener("click", addSampleDay);
@@ -685,7 +717,9 @@ nodes.saveHistory.addEventListener("click", saveCurrentToHistory);
 nodes.saveHistoryTop.addEventListener("click", saveCurrentToHistory);
 nodes.previewImport.addEventListener("click", previewImport);
 nodes.applyImport.addEventListener("click", applyImport);
+nodes.themeToggle.addEventListener("click", toggleTheme);
 
+applyTheme();
 syncFields();
 renderChecklist();
 render();

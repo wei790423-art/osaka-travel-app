@@ -29,6 +29,7 @@
         <button class="tab-button" type="button" data-tab-target="import">匯入行程</button>
         <button class="tab-button" type="button" data-tab-target="history">歷史行程</button>
         <button class="tab-button" type="button" data-tab-target="tools">工具清單</button>
+        <button class="tab-button theme-toggle" id="themeToggle" type="button" aria-pressed="false">深色模式</button>
       </nav>
 
       <section class="tab-panel is-active" id="planner" aria-label="行程規劃">
@@ -44,6 +45,14 @@
           <div class="field">
             <label for="baseCity">主要城市</label>
             <input id="baseCity" type="text" placeholder="例如：大阪、巴黎、曼谷" />
+          </div>
+          <div class="field">
+            <label for="hotelName">住宿飯店</label>
+            <input id="hotelName" type="text" placeholder="例如：難波東方飯店" />
+          </div>
+          <div class="field">
+            <label for="flightNo">航班號</label>
+            <input id="flightNo" type="text" placeholder="例如：BR132 / JL816" />
           </div>
           <div class="field">
             <label for="currency">當地幣別</label>
