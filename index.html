@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260528-ui" />
+    <link rel="stylesheet" href="styles.css?v=20260528-trips2" />
   </head>
   <body>
     <main class="app-shell">
@@ -40,6 +40,30 @@
       </nav>
 
       <section class="tab-panel is-active" id="planner" aria-label="行程規劃">
+        <section class="trip-library-panel" aria-label="旅行行程管理">
+          <div class="section-heading">
+            <div>
+              <h2>我的旅行行程</h2>
+              <p id="tripLibraryStatus">選擇一個旅行行程開始規劃。</p>
+            </div>
+          </div>
+          <div class="trip-library-controls">
+            <div class="field trip-selector-field">
+              <label for="tripSelector">旅行選單</label>
+              <select id="tripSelector"></select>
+            </div>
+            <div class="field">
+              <label for="newTripName">新增 / 改名</label>
+              <input id="newTripName" type="text" placeholder="例如：東京親子旅行" />
+            </div>
+            <div class="trip-library-actions">
+              <button id="createTrip" type="button">新增行程</button>
+              <button id="renameTrip" type="button">套用名稱</button>
+              <button id="deleteTrip" type="button">刪除行程</button>
+            </div>
+          </div>
+        </section>
+
         <section class="toolbar planner-form" aria-label="旅行設定">
           <div class="field">
             <label for="tripName">旅行名稱</label>
@@ -329,6 +353,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260528-ui"></script>
+    <script src="app.js?v=20260528-trips2"></script>
   </body>
 </html>

@@ -1,4 +1,6 @@
 const TRIP_KEY = "global-trip-planner-v2";
+const TRIP_COLLECTION_KEY = "global-trip-library-v1";
+const ACTIVE_TRIP_ID_KEY = "global-trip-active-id-v1";
 const HISTORY_KEY = "global-trip-history-v1";
 const THEME_KEY = "global-trip-theme-v1";
 const SHARE_PARAM = "share";
@@ -125,11 +127,19 @@ const paceText = {
 };
 
 let trip = loadTrip();
+let trips = loadTripLibrary();
+let activeTripId = localStorage.getItem(ACTIVE_TRIP_ID_KEY) || "";
+const libraryState = ensureTripLibrary(trip, trips, activeTripId);
+trip = libraryState.trip;
+trips = libraryState.trips;
+activeTripId = libraryState.activeTripId;
 let history = loadHistory();
 let editingDayIndex = null;
 let theme = localStorage.getItem(THEME_KEY) || "light";
 
 const fields = {
+  tripSelector: document.querySelector("#tripSelector"),
+  newTripName: document.querySelector("#newTripName"),
   tripName: document.querySelector("#tripName"),
   country: document.querySelector("#country"),
   baseCity: document.querySelector("#baseCity"),
@@ -167,6 +177,10 @@ const fields = {
 const nodes = {
   heroTitle: document.querySelector("#heroTitle"),
   heroCopy: document.querySelector("#heroCopy"),
+  createTrip: document.querySelector("#createTrip"),
+  renameTrip: document.querySelector("#renameTrip"),
+  deleteTrip: document.querySelector("#deleteTrip"),
+  tripLibraryStatus: document.querySelector("#tripLibraryStatus"),
   statDays: document.querySelector("#statDays"),
   statStops: document.querySelector("#statStops"),
   statBudget: document.querySelector("#statBudget"),
@@ -339,8 +353,102 @@ function loadHistory() {
   }
 }
 
+function makeTripId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `trip-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function loadTripLibrary() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(TRIP_COLLECTION_KEY));
+    return Array.isArray(saved)
+      ? saved
+          .filter((entry) => entry?.trip?.days)
+          .map((entry) => ({
+            id: entry.id || makeTripId(),
+            updatedAt: entry.updatedAt || new Date().toISOString(),
+            trip: normalizeTrip(entry.trip)
+          }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTripLibrary() {
+  localStorage.setItem(TRIP_COLLECTION_KEY, JSON.stringify(trips));
+}
+
+function ensureTripLibrary(currentTrip, savedTrips, savedActiveId) {
+  let nextTrips = savedTrips;
+  let nextActiveId = savedActiveId;
+
+  if (!nextTrips.length) {
+    nextActiveId = makeTripId();
+    nextTrips = [{
+      id: nextActiveId,
+      updatedAt: new Date().toISOString(),
+      trip: normalizeTrip(currentTrip)
+    }];
+  }
+
+  if (!nextTrips.some((entry) => entry.id === nextActiveId)) {
+    nextActiveId = nextTrips[0].id;
+  }
+
+  const activeEntry = nextTrips.find((entry) => entry.id === nextActiveId) || nextTrips[0];
+  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeEntry.id);
+  localStorage.setItem(TRIP_COLLECTION_KEY, JSON.stringify(nextTrips));
+  localStorage.setItem(TRIP_KEY, JSON.stringify(activeEntry.trip));
+
+  return {
+    trip: normalizeTrip(activeEntry.trip),
+    trips: nextTrips,
+    activeTripId: activeEntry.id
+  };
+}
+
+function blankTrip(name = "新的旅行") {
+  return normalizeTrip({
+    name,
+    country: "自選國家",
+    baseCity: "自選城市",
+    startDate: todayDateValue(),
+    flightNo: "",
+    flightDeparture: "",
+    flightArrival: "",
+    currency: "TWD",
+    rate: 1,
+    pace: "balanced",
+    tickets: [],
+    days: []
+  });
+}
+
+function syncActiveTripEntry() {
+  const now = new Date().toISOString();
+  const index = trips.findIndex((entry) => entry.id === activeTripId);
+  const entry = {
+    id: activeTripId || makeTripId(),
+    updatedAt: now,
+    trip: normalizeTrip(trip)
+  };
+
+  activeTripId = entry.id;
+  if (index >= 0) {
+    trips[index] = entry;
+  } else {
+    trips = [entry, ...trips];
+  }
+
+  saveTripLibrary();
+  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
+}
+
 function saveTrip() {
+  trip = normalizeTrip(trip);
   localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
+  syncActiveTripEntry();
 }
 
 function saveHistoryStore() {
@@ -596,6 +704,7 @@ function totalBudget(days = trip.days) {
 }
 
 function syncFields() {
+  if (fields.newTripName) fields.newTripName.value = trip.name;
   fields.tripName.value = trip.name;
   fields.country.value = trip.country;
   fields.baseCity.value = trip.baseCity;
@@ -606,6 +715,28 @@ function syncFields() {
   fields.currency.value = normalizeCurrency(trip.currency);
   fields.rate.value = trip.rate;
   fields.pace.value = trip.pace;
+}
+
+function tripOptionLabel(entry) {
+  const savedTrip = normalizeTrip(entry.trip);
+  const dateText = savedTrip.startDate || "未設定日期";
+  const daysText = savedTrip.days.length ? `${savedTrip.days.length} 天` : "未排天數";
+  return `${savedTrip.name}｜${savedTrip.country}・${savedTrip.baseCity}｜${dateText}｜${daysText}`;
+}
+
+function renderTripLibrary() {
+  if (!fields.tripSelector) return;
+  fields.tripSelector.innerHTML = trips
+    .map((entry) => `<option value="${escapeHtml(entry.id)}">${escapeHtml(tripOptionLabel(entry))}</option>`)
+    .join("");
+  fields.tripSelector.value = activeTripId;
+  if (fields.newTripName) fields.newTripName.value = trip.name;
+  if (nodes.tripLibraryStatus) {
+    const activeEntry = trips.find((entry) => entry.id === activeTripId);
+    const updated = activeEntry?.updatedAt ? new Date(activeEntry.updatedAt).toLocaleString("zh-TW") : "剛剛";
+    nodes.tripLibraryStatus.textContent = `目前共有 ${trips.length} 個旅行行程，這份最後更新：${updated}`;
+  }
+  if (nodes.deleteTrip) nodes.deleteTrip.disabled = trips.length <= 1;
 }
 
 function updateTripFromFields() {
@@ -638,6 +769,7 @@ function render() {
   nodes.totalTwd.textContent = formatTwd(total * trip.rate);
   nodes.paceHint.textContent = paceText[trip.pace];
   nodes.dayList.innerHTML = trip.days.length ? trip.days.map(renderDay).join("") : `<div class="empty-state">目前沒有行程。你可以新增一天、貼上行程匯入，或載入大阪範例。</div>`;
+  renderTripLibrary();
   renderHistory();
   renderTickets();
 
@@ -1012,6 +1144,68 @@ function saveCurrentToHistory() {
   addTripToHistory(trip, "手動儲存");
   renderHistory();
   switchTab("history");
+}
+
+function switchActiveTrip(tripId) {
+  if (!tripId || tripId === activeTripId) return;
+  saveTrip();
+  const entry = trips.find((item) => item.id === tripId);
+  if (!entry) return;
+  activeTripId = entry.id;
+  trip = normalizeTrip(clone(entry.trip));
+  editingDayIndex = null;
+  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
+  localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
+  syncFields();
+  render();
+}
+
+function createNewTrip() {
+  saveTrip();
+  const typedName = fields.newTripName?.value.trim() || "";
+  const name = typedName && typedName !== trip.name ? typedName : `新的旅行 ${trips.length + 1}`;
+  const newEntry = {
+    id: makeTripId(),
+    updatedAt: new Date().toISOString(),
+    trip: blankTrip(name)
+  };
+  trips = [newEntry, ...trips];
+  activeTripId = newEntry.id;
+  trip = normalizeTrip(clone(newEntry.trip));
+  saveTripLibrary();
+  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
+  localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
+  editingDayIndex = null;
+  syncFields();
+  render();
+}
+
+function renameActiveTrip() {
+  const name = fields.newTripName?.value.trim() || fields.tripName.value.trim();
+  if (!name) return;
+  trip.name = name;
+  fields.tripName.value = name;
+  saveTrip();
+  render();
+}
+
+function deleteActiveTrip() {
+  if (trips.length <= 1) {
+    if (nodes.tripLibraryStatus) nodes.tripLibraryStatus.textContent = "至少要保留一個旅行行程。";
+    return;
+  }
+
+  if (!confirm(`確定要刪除「${trip.name}」嗎？刪除後不會影響歷史行程。`)) return;
+  trips = trips.filter((entry) => entry.id !== activeTripId);
+  const nextEntry = trips[0];
+  activeTripId = nextEntry.id;
+  trip = normalizeTrip(clone(nextEntry.trip));
+  saveTripLibrary();
+  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
+  localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
+  editingDayIndex = null;
+  syncFields();
+  render();
 }
 
 function printItineraryBook() {
@@ -1767,6 +1961,10 @@ function updateWeatherDisplay() {
 }
 
 nodes.dayForm.addEventListener("submit", addDay);
+fields.tripSelector.addEventListener("change", () => switchActiveTrip(fields.tripSelector.value));
+nodes.createTrip.addEventListener("click", createNewTrip);
+nodes.renameTrip.addEventListener("click", renameActiveTrip);
+nodes.deleteTrip.addEventListener("click", deleteActiveTrip);
 nodes.addSample.addEventListener("click", addSampleDay);
 nodes.clearTrip.addEventListener("click", clearTrip);
 nodes.loadOsaka.addEventListener("click", loadOsakaTrip);
