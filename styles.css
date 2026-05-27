@@ -1776,3 +1776,492 @@ h1 {
 :root[data-theme="dark"] .preset-btn {
   background: #1a1d21;
 }
+
+/* ========== UI Refresh ========== */
+:root {
+  --paper: #f3f5f2;
+  --panel: #ffffff;
+  --line: #d8ddd9;
+  --muted: #626a67;
+  --accent: #b8342d;
+  --accent-dark: #84241f;
+  --teal: #006d71;
+  --gold: #c98f22;
+  --soft: #eef4f1;
+  --soft-warm: #fff7e8;
+  --shadow: 0 14px 34px rgba(25, 31, 35, 0.11);
+}
+
+:root[data-theme="dark"] {
+  --paper: #101214;
+  --panel: #191d20;
+  --line: #373e42;
+  --muted: #b5bbb7;
+  --accent: #e35b51;
+  --accent-dark: #ffb6ae;
+  --teal: #55b8bc;
+  --gold: #e1b862;
+  --soft: #132426;
+  --soft-warm: #242018;
+  --shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+}
+
+body {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 300px),
+    var(--paper);
+}
+
+:root[data-theme="dark"] body {
+  background: var(--paper);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+
+button:hover,
+.guide-card a:hover,
+.recommendation-card a:hover,
+.map-actions a:hover,
+.ticket-actions a:hover {
+  transform: translateY(-1px);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 0;
+  border-color: var(--teal) !important;
+  box-shadow: 0 0 0 3px rgba(0, 109, 113, 0.14);
+}
+
+.hero {
+  min-height: min(560px, 78vh);
+  align-items: center;
+}
+
+.hero__overlay {
+  background:
+    linear-gradient(90deg, rgba(12, 20, 22, 0.88), rgba(12, 20, 22, 0.58) 52%, rgba(12, 20, 22, 0.2)),
+    linear-gradient(0deg, rgba(243, 245, 242, 0.98) 0%, rgba(243, 245, 242, 0) 26%);
+}
+
+:root[data-theme="dark"] .hero__overlay {
+  background:
+    linear-gradient(90deg, rgba(5, 8, 10, 0.88), rgba(5, 8, 10, 0.6) 52%, rgba(5, 8, 10, 0.25)),
+    linear-gradient(0deg, rgba(16, 18, 20, 0.98) 0%, rgba(16, 18, 20, 0) 26%);
+}
+
+.hero__content {
+  width: min(1180px, calc(100% - 40px));
+  padding: 82px 0 112px;
+}
+
+h1 {
+  max-width: 780px;
+  font-size: clamp(3rem, 8vw, 6.8rem);
+  line-height: 0.95;
+}
+
+.hero__copy {
+  max-width: 760px;
+  margin-bottom: 24px;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+}
+
+.hero__stats {
+  gap: 8px;
+}
+
+.hero__stats span {
+  min-width: 118px;
+  padding: 11px 13px;
+}
+
+.toolbar,
+.dashboard,
+.content-grid,
+.tab-nav,
+.wide-panel,
+.map-overview-wrap {
+  width: min(1180px, calc(100% - 40px));
+}
+
+.tab-nav {
+  z-index: 8;
+  gap: 6px;
+  margin-top: -64px;
+  padding: 10px 0;
+  scrollbar-width: thin;
+}
+
+.tab-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 18px rgba(25, 31, 35, 0.08);
+}
+
+.theme-toggle {
+  margin-left: auto;
+}
+
+.toolbar {
+  margin-top: 12px;
+  padding: 16px;
+}
+
+.planner-form {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.field input,
+.field select,
+.day-form input,
+.day-form select,
+.day-form textarea,
+.edit-day-form input,
+.edit-day-form select,
+.edit-day-form textarea,
+.ticket-form input,
+.ticket-form select,
+.ticket-form textarea,
+.guide-search input,
+.guide-search select,
+.food-search input,
+.food-search select,
+.currency-calc input {
+  border-radius: 8px;
+  border-color: var(--line);
+}
+
+.summary-panel,
+.tool-panel,
+.wide-panel,
+.day-card,
+.trip-map,
+.day-detail-map,
+.food-card,
+.ticket-card,
+.history-card,
+.preview-day,
+.recommendation-card,
+.guide-card {
+  box-shadow: var(--shadow);
+}
+
+.summary-panel,
+.tool-panel,
+.wide-panel {
+  border-radius: 8px;
+}
+
+.dashboard {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 18px;
+}
+
+.summary-grid div,
+.detail-list div,
+.map-toolbar,
+.guide-card,
+.history-card,
+.preview-day,
+.ticket-card,
+.check-item {
+  background: #fbfcfb;
+}
+
+:root[data-theme="dark"] .summary-grid div,
+:root[data-theme="dark"] .detail-list div,
+:root[data-theme="dark"] .map-toolbar,
+:root[data-theme="dark"] .ticket-card,
+:root[data-theme="dark"] .check-item {
+  background: #14181b;
+}
+
+.content-grid {
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+}
+
+.section-heading {
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-heading h2,
+.summary-panel h2,
+.tool-panel h2 {
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+
+.map-overview-wrap {
+  margin-top: 20px;
+}
+
+.trip-map {
+  height: clamp(280px, 42vw, 390px);
+}
+
+.day-list {
+  gap: 16px;
+}
+
+.day-card {
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 16px;
+  padding: 20px;
+  background: var(--panel);
+}
+
+:root[data-theme="dark"] .day-card {
+  background: var(--panel);
+}
+
+.booklet-page {
+  border-left-width: 5px;
+}
+
+.booklet-page::before {
+  opacity: 0.45;
+}
+
+.day-number {
+  width: 68px;
+  min-height: 68px;
+}
+
+.card-title-row {
+  align-items: flex-start;
+}
+
+.card-actions {
+  flex: 0 0 auto;
+}
+
+.icon-button {
+  min-width: 52px;
+  min-height: 32px;
+}
+
+.tag {
+  background: var(--soft);
+}
+
+.meal-grid {
+  gap: 8px;
+}
+
+.meal-grid div,
+.note-box {
+  background: var(--soft-warm);
+}
+
+.timeline li {
+  grid-template-columns: 54px minmax(0, 1fr);
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:root[data-theme="dark"] .timeline li {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.timeline li:last-child {
+  border-bottom: 0;
+}
+
+.map-toolbar {
+  grid-template-columns: minmax(0, 1fr) max-content;
+}
+
+.map-actions a,
+.guide-card a,
+.food-card a,
+.recommendation-card a,
+.ticket-actions a,
+.share-panel > button,
+.ticket-form button,
+.guide-search button,
+.food-search button,
+.edit-day-form button[type="submit"],
+.day-form button {
+  border-radius: 8px;
+}
+
+.side-panel {
+  top: 72px;
+}
+
+.quick-actions {
+  grid-template-columns: 1fr;
+}
+
+.tools-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: start;
+}
+
+.ticket-card {
+  box-shadow: none;
+}
+
+.ticket-actions {
+  min-width: 148px;
+}
+
+.food-grid,
+.guide-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.recommendation-card {
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+}
+
+.import-box {
+  min-height: 260px;
+}
+
+@media (max-width: 960px) {
+  .hero {
+    min-height: 560px;
+  }
+
+  .theme-toggle {
+    margin-left: 0;
+  }
+
+  .dashboard,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    position: static;
+  }
+
+  .quick-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    min-height: 520px;
+  }
+
+  .hero__content,
+  .toolbar,
+  .dashboard,
+  .content-grid,
+  .tab-nav,
+  .wide-panel,
+  .map-overview-wrap {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .hero__content {
+    padding-top: 56px;
+    padding-bottom: 78px;
+  }
+
+  h1 {
+    font-size: clamp(2.35rem, 12vw, 3.8rem);
+  }
+
+  .hero__copy {
+    margin-bottom: 16px;
+    font-size: 0.98rem;
+    line-height: 1.5;
+  }
+
+  .hero__stats span {
+    padding: 8px 10px;
+  }
+
+  .hero__stats strong {
+    font-size: 1.12rem;
+  }
+
+  .tab-nav {
+    margin-top: -60px;
+  }
+
+  .tab-button {
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 0.92rem;
+  }
+
+  .toolbar {
+    padding: 12px;
+  }
+
+  .summary-panel,
+  .tool-panel,
+  .wide-panel,
+  .day-card {
+    padding: 16px;
+  }
+
+  .summary-grid,
+  .meal-grid,
+  .day-form,
+  .edit-day-form {
+    grid-template-columns: 1fr;
+  }
+
+  .day-card {
+    grid-template-columns: 1fr;
+  }
+
+  .day-number {
+    width: 64px;
+    min-height: 64px;
+  }
+
+  .card-title-row {
+    display: grid;
+  }
+
+  .card-actions {
+    justify-content: stretch;
+  }
+
+  .icon-button {
+    flex: 1;
+  }
+
+  .detail-list div,
+  .timeline li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .map-toolbar,
+  .ticket-card,
+  .recommendation-card {
+    grid-template-columns: 1fr;
+  }
+
+  .map-actions,
+  .ticket-actions {
+    justify-content: stretch;
+  }
+
+  .map-actions a,
+  .ticket-actions a,
+  .ticket-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}
