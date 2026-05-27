@@ -1,4 +1,4 @@
-const CACHE_NAME = "global-trip-planner-v2";
+const CACHE_NAME = "global-trip-planner-v3";
 const APP_ASSETS = [
   "./",
   "./index.html",

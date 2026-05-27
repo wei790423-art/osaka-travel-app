@@ -498,26 +498,8 @@ function setShareMessage(html) {
   if (nodes.shareResult) nodes.shareResult.innerHTML = html;
 }
 
-function mapUrl(day) {
-  const query = day.mapQuery || day.route || day.place || trip.baseCity;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-}
-
-function mapEmbedUrl(day) {
-  const query = primaryLandmark(day) || day.mapQuery || day.route || day.place || trip.baseCity;
-  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
-}
-
 function landmarkQuery(landmark, day) {
   return [landmark, day.place, trip.baseCity, trip.country].filter(Boolean).join(" ");
-}
-
-function landmarkMapUrl(landmark, day) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(landmarkQuery(landmark, day))}`;
-}
-
-function landmarkEmbedUrl(landmark, day) {
-  return `https://maps.google.com/maps?q=${encodeURIComponent(landmarkQuery(landmark, day))}&output=embed`;
 }
 
 function travelModeParam(mode = "") {
@@ -695,30 +677,15 @@ function renderDay(day, index) {
         <div class="map-card">
           <div class="map-toolbar" aria-label="景點導航選單">
             <label>
-              <span>選擇景點導航</span>
+              <span>確定景點快速導航</span>
               <select data-landmark-select="${index}">
                 ${landmarks.map((landmark) => `<option value="${escapeHtml(landmark)}">${escapeHtml(landmark)}</option>`).join("")}
               </select>
             </label>
             <div class="map-actions">
-              <a data-landmark-search="${index}" href="${selectedLandmark ? landmarkMapUrl(selectedLandmark, day) : mapUrl(day)}" target="_blank" rel="noreferrer">開啟地圖</a>
-              <a data-landmark-directions="${index}" href="${selectedLandmark ? landmarkDirectionsUrl(selectedLandmark, day) : mapUrl(day)}" target="_blank" rel="noreferrer">開始導航</a>
+              <a data-landmark-directions="${index}" href="${selectedLandmark ? landmarkDirectionsUrl(selectedLandmark, day) : "#"}" target="_blank" rel="noreferrer">開始導航</a>
             </div>
           </div>
-          <iframe data-landmark-map="${index}" title="${escapeHtml(day.title)} 景點地圖" src="${selectedLandmark ? landmarkEmbedUrl(selectedLandmark, day) : mapEmbedUrl(day)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
-        <div class="landmark-list" aria-label="景點地標導航">
-          <h4>確定景點快速導航</h4>
-          ${landmarks.map((landmark) => `
-            <a href="${landmarkMapUrl(landmark, day)}" target="_blank" rel="noreferrer">
-              <span>${escapeHtml(landmark)}</span>
-              <strong>地圖</strong>
-            </a>
-            <a href="${landmarkDirectionsUrl(landmark, day)}" target="_blank" rel="noreferrer">
-              <span>${escapeHtml(landmark)}</span>
-              <strong>導航</strong>
-            </a>
-          `).join("") || `<p>尚未設定景點地標</p>`}
         </div>
         <ul class="timeline">
           ${items.map((item) => `<li><time>•</time><span>${escapeHtml(item)}</span></li>`).join("")}
@@ -737,11 +704,7 @@ function updateLandmarkMap(select) {
   const day = trip.days[dayIndex];
   if (!day) return;
   const landmark = select.value;
-  const iframe = document.querySelector(`[data-landmark-map="${dayIndex}"]`);
-  const searchLink = document.querySelector(`[data-landmark-search="${dayIndex}"]`);
   const directionsLink = document.querySelector(`[data-landmark-directions="${dayIndex}"]`);
-  if (iframe) iframe.src = landmarkEmbedUrl(landmark, day);
-  if (searchLink) searchLink.href = landmarkMapUrl(landmark, day);
   if (directionsLink) directionsLink.href = landmarkDirectionsUrl(landmark, day);
 }
 
