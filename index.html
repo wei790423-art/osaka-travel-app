@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260527-v2" />
+    <link rel="stylesheet" href="styles.css?v=20260528-wallet" />
   </head>
   <body>
     <main class="app-shell">
@@ -132,6 +132,7 @@
               <input id="dayPhotoUrl" type="url" placeholder="照片網址，例如：https://..." />
               <textarea id="dayLandmarks" rows="3" placeholder="景點地標，每行一個，例如：大阪城&#10;梅田藍天大廈&#10;道頓堀"></textarea>
               <textarea id="dayBackupLandmarks" rows="2" placeholder="備案景點（雨天或臨時替換），每行一個"></textarea>
+              <textarea id="dayNotes" rows="3" placeholder="每日備註，例如：訂位 18:30、門票編號、集合地點、雨天備案"></textarea>
               <textarea id="dayItems" rows="3" placeholder="每行一個行程，例如：09:00 早餐&#10;11:00 博物館&#10;18:00 晚餐"></textarea>
               <button type="submit">新增行程</button>
             </form>
@@ -274,6 +275,26 @@
             <h2>打包清單</h2>
             <div class="checklist" id="checklist"></div>
           </article>
+          <article class="tool-panel ticket-panel">
+            <h2>票券錢包</h2>
+            <form class="ticket-form" id="ticketForm">
+              <select id="ticketType">
+                <option value="機票">機票</option>
+                <option value="住宿">住宿</option>
+                <option value="門票">門票</option>
+                <option value="交通">交通</option>
+                <option value="保險">保險</option>
+                <option value="其他">其他</option>
+              </select>
+              <input id="ticketName" type="text" placeholder="票券名稱，例如：USJ 門票" required />
+              <input id="ticketDate" type="date" />
+              <input id="ticketCode" type="text" placeholder="訂單編號 / QR Code 文字" />
+              <input id="ticketUrl" type="url" placeholder="截圖或憑證連結，例如：https://..." />
+              <textarea id="ticketNote" rows="3" placeholder="備註，例如：需提前 15 分鐘抵達、櫃台出示護照"></textarea>
+              <button type="submit">新增票券</button>
+            </form>
+            <div class="ticket-list" id="ticketList"></div>
+          </article>
           <article class="tool-panel">
             <h2>匯率換算計算機</h2>
             <div class="currency-calc">
@@ -307,6 +328,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260527-v2"></script>
+    <script src="app.js?v=20260528-wallet"></script>
   </body>
 </html>

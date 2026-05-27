@@ -25,6 +25,7 @@ const osakaTrip = {
       mealPlan: { breakfast: "機上或機場簡餐", lunch: "關西機場美食街", dinner: "道頓堀御好燒" },
       mapQuery: "關西機場 到 大阪難波 道頓堀",
       landmarks: ["關西機場", "難波站", "道頓堀", "心齋橋", "法善寺橫丁"],
+      notes: "抵達後先確認交通卡、網路與飯店入住時間。",
       budget: 7600,
       items: ["14:00 抵達關西機場，領交通卡與網路", "16:00 南海電鐵進難波，飯店寄放行李", "18:00 道頓堀、心齋橋、法善寺橫丁散步", "20:00 章魚燒、御好燒或拉麵晚餐"]
     },
@@ -151,9 +152,16 @@ const fields = {
   dayMapQuery: document.querySelector("#dayMapQuery"),
   dayPhotoUrl: document.querySelector("#dayPhotoUrl"),
   dayLandmarks: document.querySelector("#dayLandmarks"),
+  dayNotes: document.querySelector("#dayNotes"),
   dayItems: document.querySelector("#dayItems"),
   dayBackupLandmarks: document.querySelector("#dayBackupLandmarks"),
-  importText: document.querySelector("#importText")
+  importText: document.querySelector("#importText"),
+  ticketType: document.querySelector("#ticketType"),
+  ticketName: document.querySelector("#ticketName"),
+  ticketDate: document.querySelector("#ticketDate"),
+  ticketCode: document.querySelector("#ticketCode"),
+  ticketUrl: document.querySelector("#ticketUrl"),
+  ticketNote: document.querySelector("#ticketNote")
 };
 
 const nodes = {
@@ -200,7 +208,9 @@ const nodes = {
   calcTwd: document.querySelector("#calcTwd"),
   calcLocalLabel: document.querySelector("#calcLocalLabel"),
   calcRateDisplay: document.querySelector("#calcRateDisplay"),
-  calcPresets: document.querySelector("#calcPresets")
+  calcPresets: document.querySelector("#calcPresets"),
+  ticketForm: document.querySelector("#ticketForm"),
+  ticketList: document.querySelector("#ticketList")
 };
 
 const guidePlatforms = [
@@ -361,6 +371,7 @@ function normalizeTrip(source) {
     currency: source.currency || "TWD",
     rate: Number(source.rate || 1),
     pace: source.pace || "balanced",
+    tickets: Array.isArray(source.tickets) ? source.tickets.map(normalizeTicket) : [],
     days: (source.days || []).map(normalizeDay)
   };
 }
@@ -378,9 +389,22 @@ function normalizeDay(day) {
     mapQuery: day.mapQuery || day.mapUrl || day.route || day.place || "",
     landmarks: normalizeLandmarks(day),
     backupLandmarks: Array.isArray(day.backupLandmarks) ? day.backupLandmarks.map(s => String(s).trim()).filter(Boolean) : splitLines(day.backupLandmarks || ""),
+    notes: day.notes || day.note || "",
     photoUrl: day.photoUrl || "",
     budget: Number(day.budget || 0),
     items: Array.isArray(day.items) ? day.items : splitLines(day.items || "")
+  };
+}
+
+function normalizeTicket(ticket) {
+  return {
+    id: ticket.id || crypto.randomUUID(),
+    type: ticket.type || "其他",
+    name: ticket.name || "未命名票券",
+    date: ticket.date || "",
+    code: ticket.code || "",
+    url: ticket.url || "",
+    note: ticket.note || ""
   };
 }
 
@@ -614,6 +638,7 @@ function render() {
   nodes.paceHint.textContent = paceText[trip.pace];
   nodes.dayList.innerHTML = trip.days.length ? trip.days.map(renderDay).join("") : `<div class="empty-state">目前沒有行程。你可以新增一天、貼上行程匯入，或載入大阪範例。</div>`;
   renderHistory();
+  renderTickets();
 
   document.querySelectorAll("[data-edit-day]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -712,6 +737,7 @@ function renderDay(day, index) {
           <div><dt>移動方式</dt><dd>${escapeHtml(day.transportMode || "尚未選擇")}</dd></div>
           <div><dt>移動路線</dt><dd>${escapeHtml(day.route || "尚未填移動路線")}</dd></div>
         </dl>
+        ${day.notes ? `<div class="note-box"><span>每日備註</span><p>${escapeHtml(day.notes)}</p></div>` : ""}
         <div class="map-card">
           <div class="map-toolbar" aria-label="景點導航選單">
             <label>
@@ -777,6 +803,7 @@ function renderDayEditor(day, index) {
         <input name="photoUrl" type="url" value="${escapeHtml(day.photoUrl || "")}" placeholder="照片網址，例如：https://..." />
         <textarea name="landmarks" rows="4" placeholder="景點地標，每行一個">${escapeHtml((day.landmarks || []).join("\n"))}</textarea>
         <textarea name="backupLandmarks" rows="2" placeholder="備案景點（雨天或臨時替換），每行一個">${escapeHtml((day.backupLandmarks || []).join("\n"))}</textarea>
+        <textarea name="notes" rows="4" placeholder="每日備註，例如：訂位時間、票券編號、集合地點、注意事項">${escapeHtml(day.notes || "")}</textarea>
         <textarea name="items" rows="5" placeholder="每行一個行程">${escapeHtml((day.items || []).join("\n"))}</textarea>
         <button type="submit">儲存這一天</button>
       </form>
@@ -788,6 +815,46 @@ function renderChecklist() {
   nodes.checklist.innerHTML = checklist
     .map((item, index) => `<label class="check-item"><input type="checkbox" data-check="${index}" /><span>${item}</span></label>`)
     .join("");
+}
+
+function formatTicketDate(value) {
+  const date = parseDateValue(value);
+  if (!date) return "未填日期";
+  return new Intl.DateTimeFormat("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short"
+  }).format(date);
+}
+
+function renderTickets() {
+  nodes.ticketList.innerHTML = trip.tickets?.length
+    ? trip.tickets
+        .map((ticket, index) => `
+          <article class="ticket-card">
+            <div>
+              <span>${escapeHtml(ticket.type)}</span>
+              <h3>${escapeHtml(ticket.name)}</h3>
+              <p>${escapeHtml(formatTicketDate(ticket.date))}${ticket.code ? `｜${escapeHtml(ticket.code)}` : ""}</p>
+              ${ticket.note ? `<p>${escapeHtml(ticket.note)}</p>` : ""}
+            </div>
+            <div class="ticket-actions">
+              ${ticket.url ? `<a href="${escapeHtml(ticket.url)}" target="_blank" rel="noreferrer">開啟憑證</a>` : ""}
+              <button type="button" data-delete-ticket="${index}">刪除</button>
+            </div>
+          </article>
+        `)
+        .join("")
+    : `<div class="empty-state">尚未加入票券。可以放機票、訂房、門票、交通票或保險資料。</div>`;
+
+  document.querySelectorAll("[data-delete-ticket]").forEach((button) => {
+    button.addEventListener("click", () => {
+      trip.tickets.splice(Number(button.dataset.deleteTicket), 1);
+      saveTrip();
+      renderTickets();
+    });
+  });
 }
 
 function renderHistory() {
@@ -869,6 +936,7 @@ function addDay(event) {
     photoUrl: fields.dayPhotoUrl.value.trim(),
     landmarks: splitLines(fields.dayLandmarks.value),
     backupLandmarks: splitLines(fields.dayBackupLandmarks.value),
+    notes: fields.dayNotes.value.trim(),
     items
   }));
   nodes.dayForm.reset();
@@ -897,6 +965,7 @@ function saveEditedDay(event) {
     photoUrl: data.get("photoUrl"),
     landmarks: splitLines(data.get("landmarks")),
     backupLandmarks: splitLines(data.get("backupLandmarks") || ""),
+    notes: data.get("notes"),
     items: splitLines(data.get("items"))
   });
   editingDayIndex = null;
@@ -915,6 +984,7 @@ function addSampleDay() {
     mealPlan: { breakfast: "在地早餐店", lunch: "街區小餐館", dinner: "夜景餐廳" },
     mapQuery: `${trip.baseCity || "自選城市"} 自由行景點`,
     landmarks: [trip.baseCity || "自選城市"],
+    notes: "可放訂位時間、票券編號、集合地點或臨時備案。",
     photoUrl: "",
     items: ["上午慢慢出門", "下午安排一個主要景點", "晚上留給美食或夜景"]
   });
@@ -941,6 +1011,21 @@ function saveCurrentToHistory() {
   addTripToHistory(trip, "手動儲存");
   renderHistory();
   switchTab("history");
+}
+
+function addTicket(event) {
+  event.preventDefault();
+  trip.tickets.push(normalizeTicket({
+    type: fields.ticketType.value,
+    name: fields.ticketName.value.trim(),
+    date: fields.ticketDate.value,
+    code: fields.ticketCode.value.trim(),
+    url: fields.ticketUrl.value.trim(),
+    note: fields.ticketNote.value.trim()
+  }));
+  nodes.ticketForm.reset();
+  saveTrip();
+  renderTickets();
 }
 
 async function createShareLink() {
@@ -1014,7 +1099,7 @@ function parseImportedTrip(text) {
   let current = null;
 
   const startDay = (title) => {
-    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], backupLandmarks: [], photoUrl: "", items: [] };
+    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], backupLandmarks: [], notes: "", photoUrl: "", items: [] };
     days.push(current);
   };
 
@@ -1083,6 +1168,11 @@ function parseImportedTrip(text) {
 
     if (/^(備案|備案景點|backup|alternatives?)\s*[:：]/i.test(line)) {
       current.backupLandmarks = splitList(line.replace(/^(備案|備案景點|backup|alternatives?)\s*[:：]\s*/i, ""));
+      return;
+    }
+
+    if (/^(備註|注意事項|提醒|note|notes?)\s*[:：]/i.test(line)) {
+      current.notes = line.replace(/^(備註|注意事項|提醒|note|notes?)\s*[:：]\s*/i, "");
       return;
     }
 
@@ -1672,6 +1762,7 @@ nodes.clearTrip.addEventListener("click", clearTrip);
 nodes.loadOsaka.addEventListener("click", loadOsakaTrip);
 nodes.saveHistory.addEventListener("click", saveCurrentToHistory);
 nodes.saveHistoryTop.addEventListener("click", saveCurrentToHistory);
+nodes.ticketForm.addEventListener("submit", addTicket);
 nodes.createShareLink.addEventListener("click", createShareLink);
 nodes.previewImport.addEventListener("click", previewImport);
 nodes.applyImport.addEventListener("click", applyImport);

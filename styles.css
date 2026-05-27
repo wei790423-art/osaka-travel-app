@@ -342,6 +342,114 @@ h1 {
   background: #14171b;
 }
 
+.ticket-form {
+  display: grid;
+  gap: 9px;
+}
+
+.ticket-form input,
+.ticket-form select,
+.ticket-form textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.ticket-form textarea {
+  min-height: 88px;
+  padding: 10px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.ticket-form button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.ticket-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.ticket-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9faf8;
+}
+
+.ticket-card span {
+  display: inline-flex;
+  margin-bottom: 6px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: #eef5f3;
+  color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.ticket-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.ticket-card p {
+  margin: 0 0 5px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.ticket-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: start;
+  justify-content: flex-end;
+}
+
+.ticket-actions a,
+.ticket-actions button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--teal);
+  color: #fff;
+  font-weight: 850;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ticket-actions button {
+  background: #eef1f0;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+:root[data-theme="dark"] .ticket-form input,
+:root[data-theme="dark"] .ticket-form select,
+:root[data-theme="dark"] .ticket-form textarea,
+:root[data-theme="dark"] .ticket-card {
+  background: #15191d;
+}
+
 .wide-panel {
   margin-top: 24px;
   margin-bottom: 48px;
@@ -847,6 +955,28 @@ h1 {
   line-height: 1.55;
 }
 
+.note-box {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #eadcc4;
+  border-radius: 8px;
+  background: var(--paper-warm);
+}
+
+.note-box span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent-dark);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.note-box p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.65;
+}
+
 .meal-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1206,6 +1336,20 @@ h1 {
 
   .recommendation-card {
     grid-template-columns: 1fr;
+  }
+
+  .ticket-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-actions {
+    justify-content: stretch;
+  }
+
+  .ticket-actions a,
+  .ticket-actions button {
+    flex: 1;
+    justify-content: center;
   }
 }
 
