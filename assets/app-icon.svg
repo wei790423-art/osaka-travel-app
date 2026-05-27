@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="旅行規劃 App 圖示">
+  <rect width="512" height="512" rx="96" fill="#c7352a"/>
+  <path d="M126 344 386 126c12-10 28 4 20 18L296 362c-5 10-18 11-25 2l-48-63-75 56c-10 8-22-5-14-15Z" fill="#fffaf0"/>
+  <path d="M219 302 164 450l72-65 84 45-48-124" fill="#006b6f"/>
+  <circle cx="386" cy="126" r="22" fill="#ffd98b"/>
+</svg>

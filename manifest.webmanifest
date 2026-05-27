@@ -1,0 +1,19 @@
+{
+  "name": "旅行行程規劃 App",
+  "short_name": "旅行規劃",
+  "description": "可離線查看、可分享連結的旅行行程規劃工具。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f6f1",
+  "theme_color": "#c7352a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

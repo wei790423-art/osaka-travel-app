@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#c7352a" />
     <title>旅行行程規劃 App</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -146,6 +149,12 @@
                 <button id="clearTrip" type="button">清空</button>
               </div>
             </section>
+            <section class="tool-panel share-panel">
+              <h2>分享行程</h2>
+              <p>產生可直接載入編輯的網址。對方打開後會先備份原本行程，再載入你分享的版本。</p>
+              <button id="createShareLink" type="button">產生分享連結</button>
+              <div class="share-result" id="shareResult" aria-live="polite"></div>
+            </section>
             <section class="tool-panel">
               <h2>規劃提醒</h2>
               <ul class="tips">
@@ -226,6 +235,10 @@
               <li>熱門餐廳、門票、交通票券可以寫在每天備註裡。</li>
               <li>出發前把離線地圖、訂房截圖和緊急聯絡資訊存好。</li>
             </ul>
+          </article>
+          <article class="tool-panel">
+            <h2>離線與安裝</h2>
+            <p class="offline-status" id="offlineStatus">正在確認離線功能...</p>
           </article>
         </section>
       </section>

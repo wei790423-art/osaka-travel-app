@@ -293,6 +293,55 @@ h1 {
   background: #242a30;
 }
 
+.share-panel p,
+.offline-status {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.share-panel > button {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--teal);
+  color: #fff;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.share-result {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.share-result label {
+  color: var(--accent-dark);
+  font-weight: 850;
+}
+
+.share-result textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.share-result p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+:root[data-theme="dark"] .share-result textarea {
+  background: #14171b;
+}
+
 .wide-panel {
   margin-top: 24px;
   margin-bottom: 48px;

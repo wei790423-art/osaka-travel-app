@@ -1,6 +1,8 @@
 const TRIP_KEY = "global-trip-planner-v2";
 const HISTORY_KEY = "global-trip-history-v1";
 const THEME_KEY = "global-trip-theme-v1";
+const SHARE_PARAM = "share";
+const SHARE_LENGTH_WARNING = 6500;
 
 const osakaTrip = {
   name: "大阪 8 天 7 夜",
@@ -170,6 +172,9 @@ const nodes = {
   loadOsaka: document.querySelector("#loadOsaka"),
   saveHistory: document.querySelector("#saveHistory"),
   saveHistoryTop: document.querySelector("#saveHistoryTop"),
+  createShareLink: document.querySelector("#createShareLink"),
+  shareResult: document.querySelector("#shareResult"),
+  offlineStatus: document.querySelector("#offlineStatus"),
   previewImport: document.querySelector("#previewImport"),
   applyImport: document.querySelector("#applyImport"),
   importPreview: document.querySelector("#importPreview"),
@@ -307,6 +312,18 @@ function saveHistoryStore() {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
+function addTripToHistory(sourceTrip, reason = "手動儲存") {
+  const entry = {
+    id: crypto.randomUUID(),
+    savedAt: new Date().toISOString(),
+    reason,
+    trip: clone(sourceTrip)
+  };
+  history = [entry, ...history].slice(0, 20);
+  saveHistoryStore();
+  return entry;
+}
+
 function normalizeTrip(source) {
   return {
     ...source,
@@ -397,6 +414,41 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function encodeSharePayload(value) {
+  const json = JSON.stringify(normalizeTrip(value));
+  const bytes = new TextEncoder().encode(json);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+}
+
+function decodeSharePayload(payload) {
+  const normalized = payload.replaceAll("-", "+").replaceAll("_", "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return normalizeTrip(JSON.parse(new TextDecoder().decode(bytes)));
+}
+
+function shareUrlForCurrentTrip() {
+  const url = new URL(window.location.href);
+  url.searchParams.set(SHARE_PARAM, encodeSharePayload(trip));
+  url.hash = "";
+  return url.toString();
+}
+
+function clearShareParamFromUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete(SHARE_PARAM);
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function setShareMessage(html) {
+  if (nodes.shareResult) nodes.shareResult.innerHTML = html;
 }
 
 function mapUrl(day) {
@@ -807,11 +859,70 @@ function loadOsakaTrip() {
 }
 
 function saveCurrentToHistory() {
-  const entry = { id: crypto.randomUUID(), savedAt: new Date().toISOString(), trip: clone(trip) };
-  history = [entry, ...history].slice(0, 20);
-  saveHistoryStore();
+  addTripToHistory(trip, "手動儲存");
   renderHistory();
   switchTab("history");
+}
+
+async function createShareLink() {
+  const shareUrl = shareUrlForCurrentTrip();
+  const isLong = shareUrl.length > SHARE_LENGTH_WARNING;
+  let copied = false;
+
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    copied = true;
+  } catch {
+    copied = false;
+  }
+
+  setShareMessage(`
+    <label for="shareLink">分享網址</label>
+    <textarea id="shareLink" rows="4" readonly>${escapeHtml(shareUrl)}</textarea>
+    <p>${copied ? "已複製到剪貼簿。" : "瀏覽器沒有允許自動複製，可以手動複製上方網址。"}${isLong ? " 這趟行程內容很多，網址會比較長；若通訊軟體截斷連結，可改用匯入文字備援。" : ""}</p>
+  `);
+}
+
+function applySharedTripFromUrl() {
+  const url = new URL(window.location.href);
+  const payload = url.searchParams.get(SHARE_PARAM);
+  if (!payload) return false;
+
+  try {
+    const sharedTrip = decodeSharePayload(payload);
+    addTripToHistory(trip, "分享連結載入前自動備份");
+    trip = sharedTrip;
+    saveTrip();
+    clearShareParamFromUrl();
+    syncFields();
+    switchTab("planner");
+    setShareMessage(`<p>已載入分享行程，原本行程已自動存到歷史行程。</p>`);
+    return true;
+  } catch {
+    clearShareParamFromUrl();
+    setShareMessage(`<p>分享連結無法讀取，沒有覆蓋目前行程。請確認網址是否完整。</p>`);
+    return false;
+  }
+}
+
+function updateOfflineStatus(message) {
+  if (nodes.offlineStatus) nodes.offlineStatus.textContent = message;
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    updateOfflineStatus("這個瀏覽器不支援離線安裝功能。");
+    return;
+  }
+
+  window.addEventListener("load", async () => {
+    try {
+      const registration = await navigator.serviceWorker.register("service-worker.js");
+      updateOfflineStatus(registration.active ? "離線功能已啟用，可安裝到手機主畫面。" : "離線功能正在準備中，重新開啟後即可使用。");
+    } catch {
+      updateOfflineStatus("離線功能暫時無法啟用，線上使用不受影響。");
+    }
+  });
 }
 
 function parseImportedTrip(text) {
@@ -1011,13 +1122,16 @@ nodes.clearTrip.addEventListener("click", clearTrip);
 nodes.loadOsaka.addEventListener("click", loadOsakaTrip);
 nodes.saveHistory.addEventListener("click", saveCurrentToHistory);
 nodes.saveHistoryTop.addEventListener("click", saveCurrentToHistory);
+nodes.createShareLink.addEventListener("click", createShareLink);
 nodes.previewImport.addEventListener("click", previewImport);
 nodes.applyImport.addEventListener("click", applyImport);
 nodes.themeToggle.addEventListener("click", toggleTheme);
 nodes.guideForm.addEventListener("submit", renderGuideLinks);
 
 applyTheme();
+applySharedTripFromUrl();
 syncFields();
 renderChecklist();
 renderGuideLinks();
 render();
+registerServiceWorker();
