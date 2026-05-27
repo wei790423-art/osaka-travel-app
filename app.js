@@ -21,6 +21,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "機上或機場簡餐", lunch: "關西機場美食街", dinner: "道頓堀御好燒" },
       mapQuery: "關西機場 到 大阪難波 道頓堀",
+      landmarks: ["關西機場", "難波站", "道頓堀", "心齋橋", "法善寺橫丁"],
       budget: 7600,
       items: ["14:00 抵達關西機場，領交通卡與網路", "16:00 南海電鐵進難波，飯店寄放行李", "18:00 道頓堀、心齋橋、法善寺橫丁散步", "20:00 章魚燒、御好燒或拉麵晚餐"]
     },
@@ -32,6 +33,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "京橋商店街", dinner: "梅田地下街餐廳" },
       mapQuery: "大阪城 梅田 空中庭園",
+      landmarks: ["大阪城公園", "大阪城天守閣", "梅田阪急百貨", "梅田藍天大廈空中庭園"],
       budget: 9200,
       items: ["09:00 大阪城公園與天守閣周邊拍照", "12:00 天滿橋或京橋午餐", "15:00 梅田商圈、阪急百貨與地下街", "18:30 藍天大廈空中庭園看夜景"]
     },
@@ -43,6 +45,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "便利商店早餐", lunch: "USJ 園區餐廳", dinner: "環球城市食堂" },
       mapQuery: "大阪難波 到 日本環球影城",
+      landmarks: ["日本環球影城", "超級任天堂世界", "哈利波特魔法世界", "Universal CityWalk Osaka"],
       budget: 22800,
       items: ["07:30 提早出門，開園前抵達排隊", "09:00 任天堂世界、哈利波特區優先安排", "13:00 園區午餐與表演時間預留", "19:30 回難波簡單晚餐，早點休息"]
     },
@@ -54,6 +57,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "祇園周邊餐廳", dinner: "大阪車站便餐" },
       mapQuery: "伏見稻荷大社 清水寺 京都",
+      landmarks: ["伏見稻荷大社", "祇園", "二年坂", "三年坂", "清水寺"],
       budget: 11800,
       items: ["08:00 JR 或京阪前往京都", "09:30 伏見稻荷大社，避開正午人潮", "13:00 祇園、二年坂、三年坂午餐與散步", "16:00 清水寺周邊，傍晚回大阪"]
     },
@@ -65,6 +69,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "奈良町町家餐廳", dinner: "新世界串炸" },
       mapQuery: "近鐵奈良 奈良公園 東大寺 新世界大阪",
+      landmarks: ["近鐵奈良站", "奈良公園", "東大寺", "春日大社", "通天閣"],
       budget: 9800,
       items: ["09:00 近鐵前往奈良，先到奈良公園", "10:30 東大寺、春日大社與老街點心", "15:30 回大阪休息或補逛藥妝", "18:30 新世界、通天閣、串炸晚餐"]
     },
@@ -76,6 +81,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "神戶牛排餐廳", dinner: "神戶港咖啡或輕食" },
       mapQuery: "神戶三宮 北野異人館 美利堅公園",
+      landmarks: ["三宮站", "北野異人館街", "神戶牛排餐廳", "美利堅公園", "神戶港塔"],
       budget: 15200,
       items: ["09:30 阪急或 JR 前往三宮", "10:30 北野異人館街與咖啡店", "13:30 神戶牛午餐或平價牛排備案", "16:00 美利堅公園、港塔周邊，夜景後回大阪"]
     },
@@ -87,6 +93,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "黑門市場海鮮小吃", lunch: "天王寺百貨餐廳", dinner: "心齋橋燒肉" },
       mapQuery: "黑門市場 天王寺 阿倍野 Harukas",
+      landmarks: ["黑門市場", "天王寺公園", "四天王寺", "阿倍野 Harukas", "心齋橋"],
       budget: 12800,
       items: ["09:30 黑門市場早餐與海鮮小吃", "12:30 天王寺公園、四天王寺或動物園前散步", "15:00 阿倍野 Harukas、百貨與伴手禮", "19:00 心齋橋最後採買，整理行李"]
     },
@@ -98,6 +105,7 @@ const osakaTrip = {
       transportMode: "地鐵 / 電車",
       mealPlan: { breakfast: "飯店早餐", lunch: "難波咖啡店", dinner: "機場餐廳或機上餐" },
       mapQuery: "大阪難波 到 關西機場",
+      landmarks: ["難波站", "關西機場", "關西機場伴手禮區"],
       budget: 6900,
       items: ["09:00 飯店退房，行李確認", "10:30 難波周邊咖啡或最後補買", "12:30 搭車前往關西機場", "14:30 機場伴手禮、報到與出境"]
     }
@@ -138,6 +146,7 @@ const fields = {
   dayDinner: document.querySelector("#dayDinner"),
   dayMapQuery: document.querySelector("#dayMapQuery"),
   dayPhotoUrl: document.querySelector("#dayPhotoUrl"),
+  dayLandmarks: document.querySelector("#dayLandmarks"),
   dayItems: document.querySelector("#dayItems"),
   importText: document.querySelector("#importText")
 };
@@ -325,6 +334,7 @@ function normalizeDay(day) {
     mealPlan,
     meals: [mealPlan.breakfast, mealPlan.lunch, mealPlan.dinner].filter(Boolean),
     mapQuery: day.mapQuery || day.mapUrl || day.route || day.place || "",
+    landmarks: normalizeLandmarks(day),
     photoUrl: day.photoUrl || "",
     budget: Number(day.budget || 0),
     items: Array.isArray(day.items) ? day.items : splitLines(day.items || "")
@@ -354,6 +364,13 @@ function splitLines(value) {
 
 function splitList(value) {
   return String(value).split(/[、,，\n]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function normalizeLandmarks(day) {
+  if (Array.isArray(day.landmarks)) {
+    return day.landmarks.map((item) => String(item).trim()).filter(Boolean);
+  }
+  return splitLines(day.landmarks || day.landmarkText || "");
 }
 
 function normalizeCurrency(value) {
@@ -390,6 +407,11 @@ function mapUrl(day) {
 function mapEmbedUrl(day) {
   const query = day.mapQuery || day.route || day.place || trip.baseCity;
   return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+}
+
+function landmarkMapUrl(landmark, day) {
+  const context = [landmark, day.place, trip.baseCity, trip.country].filter(Boolean).join(" ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(context)}`;
 }
 
 function renderTransportOptions(selected = "") {
@@ -529,6 +551,15 @@ function renderDay(day, index) {
           <iframe title="${escapeHtml(day.title)} 地圖" src="${mapEmbedUrl(day)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
           <a href="${mapUrl(day)}" target="_blank" rel="noreferrer">開啟地圖</a>
         </div>
+        <div class="landmark-list" aria-label="景點地標導航">
+          <h4>景點地標</h4>
+          ${(day.landmarks?.length ? day.landmarks : [day.place].filter(Boolean)).map((landmark) => `
+            <a href="${landmarkMapUrl(landmark, day)}" target="_blank" rel="noreferrer">
+              <span>${escapeHtml(landmark)}</span>
+              <strong>導航</strong>
+            </a>
+          `).join("") || `<p>尚未設定景點地標</p>`}
+        </div>
         <ul class="timeline">
           ${items.map((item) => `<li><time>•</time><span>${escapeHtml(item)}</span></li>`).join("")}
         </ul>
@@ -561,6 +592,7 @@ function renderDayEditor(day, index) {
         <input name="dinner" type="text" value="${escapeHtml(day.mealPlan?.dinner || "")}" placeholder="晚餐店名" />
         <input name="mapQuery" type="text" value="${escapeHtml(day.mapQuery || "")}" placeholder="地圖搜尋，例如：大阪城 或 飯店到大阪城" />
         <input name="photoUrl" type="url" value="${escapeHtml(day.photoUrl || "")}" placeholder="照片網址，例如：https://..." />
+        <textarea name="landmarks" rows="4" placeholder="景點地標，每行一個">${escapeHtml((day.landmarks || []).join("\n"))}</textarea>
         <textarea name="items" rows="5" placeholder="每行一個行程">${escapeHtml((day.items || []).join("\n"))}</textarea>
         <button type="submit">儲存這一天</button>
       </form>
@@ -637,6 +669,7 @@ function addDay(event) {
     },
     mapQuery: fields.dayMapQuery.value.trim(),
     photoUrl: fields.dayPhotoUrl.value.trim(),
+    landmarks: splitLines(fields.dayLandmarks.value),
     items
   }));
   nodes.dayForm.reset();
@@ -663,6 +696,7 @@ function saveEditedDay(event) {
     },
     mapQuery: data.get("mapQuery"),
     photoUrl: data.get("photoUrl"),
+    landmarks: splitLines(data.get("landmarks")),
     items: splitLines(data.get("items"))
   });
   editingDayIndex = null;
@@ -680,6 +714,7 @@ function addSampleDay() {
     budget: 2500,
     mealPlan: { breakfast: "在地早餐店", lunch: "街區小餐館", dinner: "夜景餐廳" },
     mapQuery: `${trip.baseCity || "自選城市"} 自由行景點`,
+    landmarks: [trip.baseCity || "自選城市"],
     photoUrl: "",
     items: ["上午慢慢出門", "下午安排一個主要景點", "晚上留給美食或夜景"]
   });
@@ -716,7 +751,7 @@ function parseImportedTrip(text) {
   let current = null;
 
   const startDay = (title) => {
-    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", photoUrl: "", items: [] };
+    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], photoUrl: "", items: [] };
     days.push(current);
   };
 
@@ -775,6 +810,11 @@ function parseImportedTrip(text) {
 
     if (/^(地圖|map)\s*[:：]/i.test(line)) {
       current.mapQuery = line.replace(/^(地圖|map)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(景點|地標|景點地標|landmarks?|spots?)\s*[:：]/i.test(line)) {
+      current.landmarks = splitList(line.replace(/^(景點|地標|景點地標|landmarks?|spots?)\s*[:：]\s*/i, ""));
       return;
     }
 

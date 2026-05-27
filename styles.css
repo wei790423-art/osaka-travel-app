@@ -850,10 +850,61 @@ h1 {
   text-decoration: none;
 }
 
+.landmark-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9faf8;
+}
+
+.landmark-list h4 {
+  margin: 0 0 4px;
+  color: var(--accent-dark);
+}
+
+.landmark-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid var(--line);
+}
+
+.landmark-list a span {
+  font-weight: 800;
+}
+
+.landmark-list a strong {
+  color: var(--teal);
+  white-space: nowrap;
+}
+
+.landmark-list p {
+  margin: 0;
+  color: var(--muted);
+}
+
 :root[data-theme="dark"] .map-card a,
 :root[data-theme="dark"] .tag,
 :root[data-theme="dark"] .recommendation-card a {
   background: #102c2e;
+}
+
+:root[data-theme="dark"] .landmark-list {
+  background: #15191d;
+}
+
+:root[data-theme="dark"] .landmark-list a {
+  background: #1a1d21;
 }
 
 .edit-day-form {
