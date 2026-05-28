@@ -1969,6 +1969,10 @@ h1 {
   gap: 8px;
 }
 
+.hero__stats[hidden] {
+  display: none !important;
+}
+
 .hero__stats span {
   min-width: 118px;
   padding: 11px 13px;
