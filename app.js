@@ -221,6 +221,11 @@ const nodes = {
   agencyBookTitle: document.querySelector("#agencyBookTitle"),
   agencyBookSubtitle: document.querySelector("#agencyBookSubtitle"),
   agencyBookDays: document.querySelector("#agencyBookDays"),
+  expertRouteSummary: document.querySelector("#expertRouteSummary"),
+  expertThemeList: document.querySelector("#expertThemeList"),
+  expertMonthList: document.querySelector("#expertMonthList"),
+  expertRegionList: document.querySelector("#expertRegionList"),
+  expertHighlightList: document.querySelector("#expertHighlightList"),
   agencyDailyTable: document.querySelector("#agencyDailyTable"),
   agencyHotelList: document.querySelector("#agencyHotelList"),
   agencyFlightList: document.querySelector("#agencyFlightList"),
@@ -974,11 +979,74 @@ function agencyItineraryText(day) {
   return items.join("；");
 }
 
+function uniqueList(values, limit = 8) {
+  return [...new Set(values.map((item) => String(item || "").trim()).filter(Boolean))].slice(0, limit);
+}
+
+function tripMonths() {
+  const start = parseDateValue(trip.startDate);
+  if (!start) return ["全年"];
+  const months = new Set();
+  for (let index = 0; index < Math.max(trip.days.length, 1); index += 1) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    months.add(`${date.getMonth() + 1}月`);
+  }
+  return [...months];
+}
+
+function tripRegions() {
+  return uniqueList([trip.baseCity, ...trip.days.map((day) => day.place)], 10);
+}
+
+function tripHighlights() {
+  const landmarks = trip.days.flatMap((day) => dayLandmarks(day));
+  const titles = trip.days.map((day) => day.title);
+  return uniqueList([...landmarks, ...titles], 10);
+}
+
+function tripThemes() {
+  const text = `${trip.name} ${trip.country} ${trip.baseCity} ${trip.days.map((day) => `${day.title} ${day.place} ${day.items?.join(" ") || ""}`).join(" ")}`;
+  const themes = ["自由行"];
+  if (/寺|神社|城|古蹟|博物館|美術館|宮|塔|市場/.test(text)) themes.push("名勝古蹟", "觀光景點");
+  if (/餐|拉麵|燒肉|市場|咖啡|甜點|美食|早餐|午餐|晚餐/.test(text)) themes.push("吃吃喝喝");
+  if (/展望|夜景|美拍|公園|花|海|山|湖/.test(text)) themes.push("秘境美拍");
+  if (/票|門票|樂園|水族館|展望台|船|觀光/.test(text)) themes.push("旅遊票券");
+  return uniqueList(themes, 8);
+}
+
+function renderChipList(node, items) {
+  if (!node) return;
+  node.innerHTML = items.length
+    ? items.map((item) => `<span>${escapeHtml(item)}</span>`).join("")
+    : `<span>未設定</span>`;
+}
+
+function renderExpertRoute() {
+  if (!nodes.expertRouteSummary) return;
+  const highlights = tripHighlights();
+  const regions = tripRegions();
+  const meals = trip.days.map(mealSummary).filter(Boolean).slice(0, 3);
+  nodes.expertRouteSummary.textContent = [
+    `景點類：${highlights.slice(0, 8).join("、") || "尚未新增景點"}`,
+    `途經地區：${regions.join("、") || "尚未設定地區"}`,
+    meals.length ? `餐食安排：${meals.join("；")}` : "",
+    `行程建議：每日住宿、交通方式、景點導航與票券資訊可在下方行程本中編輯。`
+  ].filter(Boolean).join("。");
+  renderChipList(nodes.expertThemeList, tripThemes());
+  renderChipList(nodes.expertMonthList, tripMonths());
+  renderChipList(nodes.expertRegionList, regions);
+  nodes.expertHighlightList.innerHTML = highlights.length
+    ? highlights.map((item) => `<div>${escapeHtml(item)}</div>`).join("")
+    : `<div>尚未新增亮點</div>`;
+}
+
 function renderAgencyBook() {
   if (!nodes.agencyDailyTable) return;
   nodes.agencyBookTitle.textContent = `${trip.name} 行程書`;
   nodes.agencyBookSubtitle.textContent = `${trip.country}・${trip.baseCity}｜${tripDateRangeText()}｜航班 ${trip.flightNo || "未填航班"}`;
   nodes.agencyBookDays.textContent = `${trip.days.length} 天`;
+  renderExpertRoute();
 
   nodes.agencyDailyTable.innerHTML = trip.days.length
     ? trip.days.map((day, index) => `

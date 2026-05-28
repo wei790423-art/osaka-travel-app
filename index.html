@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260528-clean-hero" />
+    <link rel="stylesheet" href="styles.css?v=20260528-expert-route" />
   </head>
   <body>
     <main class="app-shell">
@@ -204,13 +204,37 @@
         <section class="agency-book" aria-label="旅行社行程書">
           <div class="agency-cover-card">
             <div>
-              <p class="eyebrow">Tour Book</p>
+              <p class="eyebrow">Expert Route</p>
               <h2 id="agencyBookTitle">旅行社行程書</h2>
               <p id="agencyBookSubtitle">整理每日行程、住宿、航班與餐食，方便列印成出團手冊。</p>
             </div>
             <div class="agency-stamp">
               <span>Itinerary</span>
               <strong id="agencyBookDays">0 天</strong>
+            </div>
+          </div>
+          <div class="expert-route-panel">
+            <article class="expert-summary-card">
+              <span class="expert-label">精彩行程搶先看</span>
+              <p id="expertRouteSummary">依照目前行程自動整理亮點、城市、餐食與交通安排。</p>
+            </article>
+            <div class="expert-info-grid">
+              <article>
+                <h3>旅遊主題</h3>
+                <div class="expert-chip-list" id="expertThemeList"></div>
+              </article>
+              <article>
+                <h3>出遊時間</h3>
+                <div class="expert-chip-list" id="expertMonthList"></div>
+              </article>
+              <article>
+                <h3>途經地區</h3>
+                <div class="expert-chip-list" id="expertRegionList"></div>
+              </article>
+              <article>
+                <h3>行程亮點</h3>
+                <div class="expert-highlight-list" id="expertHighlightList"></div>
+              </article>
             </div>
           </div>
           <div class="agency-grid">
@@ -439,6 +463,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260528-clean-hero"></script>
+    <script src="app.js?v=20260528-expert-route"></script>
   </body>
 </html>

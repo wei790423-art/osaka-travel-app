@@ -2432,6 +2432,89 @@ h1 {
   font-size: 1.65rem;
 }
 
+.expert-route-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.expert-summary-card,
+.expert-info-grid article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.expert-summary-card {
+  padding: 22px;
+  border-left: 5px solid var(--gold);
+}
+
+.expert-label {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.expert-summary-card p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.9;
+}
+
+.expert-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.expert-info-grid article {
+  padding: 16px;
+}
+
+.expert-info-grid h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 0.96rem;
+}
+
+.expert-chip-list,
+.expert-highlight-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.expert-chip-list span,
+.expert-highlight-list div {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--teal);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.expert-highlight-list div {
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fffaf0;
+}
+
 .agency-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
@@ -2533,6 +2616,10 @@ h1 {
 
 :root[data-theme="dark"] .agency-list-row {
   background: #14181b;
+}
+
+:root[data-theme="dark"] .expert-highlight-list div {
+  background: #242018;
 }
 
 .home-cover {
@@ -2816,7 +2903,12 @@ h1 {
   }
 
   .agency-cover-card,
+  .expert-route-panel,
   .agency-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .expert-info-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2979,6 +3071,8 @@ h1 {
   .wide-panel,
   .agency-panel,
   .agency-cover-card,
+  .expert-summary-card,
+  .expert-info-grid article,
   .day-card,
   .ticket-card {
     border: 1px solid #cfcfcf !important;
@@ -3011,6 +3105,23 @@ h1 {
 
   .agency-grid {
     display: block;
+  }
+
+  .expert-route-panel {
+    display: block;
+    margin-bottom: 6mm;
+  }
+
+  .expert-summary-card,
+  .expert-info-grid article {
+    padding: 4mm;
+    margin-bottom: 4mm;
+  }
+
+  .expert-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4mm;
   }
 
   .agency-panel {
