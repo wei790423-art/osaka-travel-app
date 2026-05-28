@@ -576,6 +576,30 @@ function formatTwd(value) {
   return new Intl.NumberFormat("zh-TW", { style: "currency", currency: "TWD", maximumFractionDigits: 0 }).format(value);
 }
 
+function currencyDecimals(currency) {
+  return ["JPY", "KRW", "VND", "IDR", "TWD"].includes(normalizeCurrency(currency)) ? 0 : 2;
+}
+
+function formatAmount(value, currency) {
+  const decimals = currencyDecimals(currency);
+  return new Intl.NumberFormat("zh-TW", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value);
+}
+
+function formatInputAmount(value, currency) {
+  const decimals = currencyDecimals(currency);
+  return Number(value).toFixed(decimals);
+}
+
+function formatRate(value) {
+  return new Intl.NumberFormat("zh-TW", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4
+  }).format(Number(value || 1));
+}
+
 function parseDateValue(value) {
   const match = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return null;
@@ -897,6 +921,8 @@ function render() {
 
   document.querySelectorAll("[data-cancel-edit]").forEach((button) => {
     button.addEventListener("click", () => {
+      const form = button.closest("[data-save-day]");
+      if (form) saveEditedDayForm(form);
       editingDayIndex = null;
       render();
     });
@@ -904,6 +930,15 @@ function render() {
 
   document.querySelectorAll("[data-save-day]").forEach((form) => {
     form.addEventListener("submit", saveEditedDay);
+    let autosaveTimer = null;
+    const queueAutosave = () => {
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => saveEditedDayForm(form, { status: true }), 350);
+    };
+    form.querySelectorAll("input, textarea, select").forEach((field) => {
+      field.addEventListener("input", queueAutosave);
+      field.addEventListener("change", queueAutosave);
+    });
   });
 
   document.querySelectorAll("[data-delete-day]").forEach((button) => {
@@ -1035,8 +1070,9 @@ function renderDayEditor(day, index) {
           <div>
             <p class="day-date">${escapeHtml(dayDateText)}</p>
             <h3>編輯第 ${index + 1} 天</h3>
+            <p class="autosave-status" data-autosave-status="${index}">輸入後會自動儲存</p>
           </div>
-          <button class="icon-button" type="button" data-cancel-edit="${index}">取消</button>
+          <button class="icon-button" type="button" data-cancel-edit="${index}">完成</button>
         </div>
         <input name="title" type="text" value="${escapeHtml(day.title)}" placeholder="標題" required />
         <input name="place" type="text" value="${escapeHtml(day.place)}" placeholder="城市/區域" required />
@@ -1053,7 +1089,7 @@ function renderDayEditor(day, index) {
         <textarea name="backupLandmarks" rows="2" placeholder="備案景點（雨天或臨時替換），每行一個">${escapeHtml((day.backupLandmarks || []).join("\n"))}</textarea>
         <textarea name="notes" rows="4" placeholder="每日備註，例如：訂位時間、票券編號、集合地點、注意事項">${escapeHtml(day.notes || "")}</textarea>
         <textarea name="items" rows="5" placeholder="每行一個行程">${escapeHtml((day.items || []).join("\n"))}</textarea>
-        <button type="submit">儲存這一天</button>
+        <button type="submit">完成編輯</button>
       </form>
     </article>
   `;
@@ -1193,12 +1229,12 @@ function addDay(event) {
   render();
 }
 
-function saveEditedDay(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
+function dayFromEditForm(form) {
   const index = Number(form.dataset.saveDay);
   const data = new FormData(form);
-  trip.days[index] = normalizeDay({
+  return {
+    index,
+    day: normalizeDay({
     title: data.get("title"),
     place: data.get("place"),
     hotelName: data.get("hotelName"),
@@ -1216,9 +1252,26 @@ function saveEditedDay(event) {
     backupLandmarks: splitLines(data.get("backupLandmarks") || ""),
     notes: data.get("notes"),
     items: splitLines(data.get("items"))
-  });
-  editingDayIndex = null;
+    })
+  };
+}
+
+function saveEditedDayForm(form, options = {}) {
+  const { index, day } = dayFromEditForm(form);
+  if (!trip.days[index]) return;
+  trip.days[index] = day;
   saveTrip();
+  if (options.status) {
+    const status = document.querySelector(`[data-autosave-status="${index}"]`);
+    if (status) status.textContent = `已自動儲存 ${new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}`;
+  }
+}
+
+function saveEditedDay(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  saveEditedDayForm(form);
+  editingDayIndex = null;
   render();
 }
 
@@ -1956,14 +2009,14 @@ function updateCountdown() {
 function updateCalcDisplay() {
   const cur = normalizeCurrency(trip.currency);
   if (nodes.calcLocalLabel) nodes.calcLocalLabel.textContent = cur;
-  if (nodes.calcRateDisplay) nodes.calcRateDisplay.textContent = `匯率：1 ${cur} = ${trip.rate} TWD`;
+  if (nodes.calcRateDisplay) nodes.calcRateDisplay.textContent = `匯率：1 ${cur} = ${formatRate(trip.rate)} TWD`;
   renderCalcPresets();
 }
 
 function calcLocalToTwd() {
   const val = parseFloat(nodes.calcLocal.value);
   if (!isNaN(val)) {
-    nodes.calcTwd.value = Math.round(val * trip.rate);
+    nodes.calcTwd.value = formatInputAmount(val * trip.rate, "TWD");
   } else {
     nodes.calcTwd.value = "";
   }
@@ -1972,7 +2025,7 @@ function calcLocalToTwd() {
 function calcTwdToLocal() {
   const val = parseFloat(nodes.calcTwd.value);
   if (!isNaN(val) && trip.rate > 0) {
-    nodes.calcLocal.value = Math.round(val / trip.rate);
+    nodes.calcLocal.value = formatInputAmount(val / trip.rate, trip.currency);
   } else {
     nodes.calcLocal.value = "";
   }
@@ -1983,8 +2036,8 @@ function renderCalcPresets() {
   const presets = [100, 500, 1000, 5000, 10000];
   const cur = normalizeCurrency(trip.currency);
   nodes.calcPresets.innerHTML = presets.map(amount => {
-    const twd = Math.round(amount * trip.rate);
-    return `<button type="button" class="preset-btn" data-preset="${amount}">${amount.toLocaleString()} ${cur} = NT$${twd.toLocaleString()}</button>`;
+    const twd = amount * trip.rate;
+    return `<button type="button" class="preset-btn" data-preset="${amount}">${amount.toLocaleString()} ${cur} = NT$${formatAmount(twd, "TWD")}</button>`;
   }).join("");
   nodes.calcPresets.querySelectorAll("[data-preset]").forEach(btn => {
     btn.addEventListener("click", () => {

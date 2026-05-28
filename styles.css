@@ -1111,6 +1111,13 @@ h1 {
   grid-column: 1 / -1;
 }
 
+.autosave-status {
+  margin: 6px 0 0;
+  color: var(--teal);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
 .edit-day-form input,
 .edit-day-form select,
 .edit-day-form textarea {
