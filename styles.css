@@ -2373,6 +2373,164 @@ h1 {
   margin: 24px auto 0;
 }
 
+.agency-book {
+  width: min(1180px, calc(100% - 40px));
+  margin: 20px auto 0;
+}
+
+.agency-cover-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 18px;
+  align-items: end;
+  padding: clamp(22px, 4vw, 36px);
+  border: 1px solid rgba(0, 109, 113, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(238, 244, 241, 0.96)),
+    linear-gradient(120deg, rgba(0, 109, 113, 0.14), rgba(201, 143, 34, 0.12));
+  box-shadow: var(--shadow);
+}
+
+.agency-cover-card h2 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: clamp(1.8rem, 4vw, 3.4rem);
+  line-height: 1.05;
+}
+
+.agency-cover-card p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.agency-stamp {
+  display: grid;
+  place-items: center;
+  min-height: 150px;
+  border: 2px solid rgba(184, 52, 45, 0.35);
+  border-radius: 50%;
+  color: var(--accent);
+  transform: rotate(-4deg);
+}
+
+.agency-stamp span {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.agency-stamp strong {
+  display: block;
+  font-size: 1.65rem;
+}
+
+.agency-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.agency-panel {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.agency-panel--wide {
+  grid-row: span 2;
+}
+
+.agency-panel h2 {
+  margin: 0 0 14px;
+}
+
+.agency-table-wrap {
+  overflow-x: auto;
+}
+
+.agency-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.agency-table th,
+.agency-table td {
+  vertical-align: top;
+  padding: 12px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.agency-table th {
+  color: #fff;
+  background: var(--teal);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.agency-table td:first-child {
+  width: 104px;
+  color: var(--teal);
+}
+
+.agency-table td span,
+.agency-table small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.agency-list {
+  display: grid;
+  gap: 10px;
+}
+
+.agency-list-row {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+}
+
+.agency-list-row span {
+  color: var(--teal);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.agency-list-row strong {
+  display: block;
+  margin-top: 4px;
+  line-height: 1.35;
+}
+
+.agency-list-row p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+:root[data-theme="dark"] .agency-cover-card {
+  background:
+    linear-gradient(135deg, rgba(25, 29, 32, 0.96), rgba(19, 36, 38, 0.94)),
+    linear-gradient(120deg, rgba(85, 184, 188, 0.12), rgba(225, 184, 98, 0.1));
+}
+
+:root[data-theme="dark"] .agency-list-row {
+  background: #14181b;
+}
+
 .home-cover {
   position: relative;
   display: grid;
@@ -2610,6 +2768,7 @@ h1 {
 }
 
 .trip-library-panel,
+.agency-book,
 .toolbar,
 .dashboard,
 .map-overview-wrap,
@@ -2652,6 +2811,15 @@ h1 {
     grid-template-columns: 1fr;
   }
 
+  .agency-cover-card,
+  .agency-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agency-panel--wide {
+    grid-row: auto;
+  }
+
   .home-metrics {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -2663,8 +2831,22 @@ h1 {
     margin-top: 18px;
   }
 
+  .agency-book {
+    width: min(100% - 24px, 1180px);
+    margin-top: 18px;
+  }
+
   .home-cover {
     padding: 24px;
+  }
+
+  .agency-cover-card {
+    padding: 20px;
+  }
+
+  .agency-stamp {
+    width: 140px;
+    min-height: 140px;
   }
 
   .home-actions,
@@ -2791,10 +2973,62 @@ h1 {
   .summary-panel,
   .tool-panel,
   .wide-panel,
+  .agency-panel,
+  .agency-cover-card,
   .day-card,
   .ticket-card {
     border: 1px solid #cfcfcf !important;
     background: #fff !important;
+  }
+
+  .agency-book {
+    width: 100% !important;
+    margin: 0 0 8mm !important;
+  }
+
+  .agency-cover-card {
+    display: grid;
+    grid-template-columns: 1fr 34mm;
+    gap: 6mm;
+    padding: 6mm;
+    margin-bottom: 6mm;
+  }
+
+  .agency-cover-card h2 {
+    color: #111 !important;
+    font-size: 22pt;
+  }
+
+  .agency-stamp {
+    min-height: 30mm;
+    border-color: #c98f22 !important;
+    color: #111 !important;
+  }
+
+  .agency-grid {
+    display: block;
+  }
+
+  .agency-panel {
+    break-inside: avoid;
+    padding: 5mm;
+    margin-bottom: 6mm;
+  }
+
+  .agency-table {
+    min-width: 0;
+    font-size: 8.5pt;
+  }
+
+  .agency-table th,
+  .agency-table td {
+    padding: 3mm;
+    border-color: #ccc !important;
+  }
+
+  .agency-table th {
+    color: #111 !important;
+    background: #eee !important;
   }
 
   .summary-panel {

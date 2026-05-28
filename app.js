@@ -218,6 +218,12 @@ const nodes = {
   totalLocal: document.querySelector("#totalLocal"),
   totalTwd: document.querySelector("#totalTwd"),
   paceHint: document.querySelector("#paceHint"),
+  agencyBookTitle: document.querySelector("#agencyBookTitle"),
+  agencyBookSubtitle: document.querySelector("#agencyBookSubtitle"),
+  agencyBookDays: document.querySelector("#agencyBookDays"),
+  agencyDailyTable: document.querySelector("#agencyDailyTable"),
+  agencyHotelList: document.querySelector("#agencyHotelList"),
+  agencyFlightList: document.querySelector("#agencyFlightList"),
   dayList: document.querySelector("#dayList"),
   checklist: document.querySelector("#checklist"),
   dayForm: document.querySelector("#dayForm"),
@@ -954,6 +960,63 @@ function renderHero() {
   nodes.statCurrency.textContent = normalizeCurrency(trip.currency);
 }
 
+function mealSummary(day) {
+  const meals = normalizeMealPlan(day);
+  return [
+    `早：${meals.breakfast || "自理"}`,
+    `午：${meals.lunch || "自理"}`,
+    `晚：${meals.dinner || "自理"}`
+  ].join(" / ");
+}
+
+function agencyItineraryText(day) {
+  const items = day.items?.length ? day.items : [day.title || day.place || "自由活動"];
+  return items.join("；");
+}
+
+function renderAgencyBook() {
+  if (!nodes.agencyDailyTable) return;
+  nodes.agencyBookTitle.textContent = `${trip.name} 行程書`;
+  nodes.agencyBookSubtitle.textContent = `${trip.country}・${trip.baseCity}｜${tripDateRangeText()}｜航班 ${trip.flightNo || "未填航班"}`;
+  nodes.agencyBookDays.textContent = `${trip.days.length} 天`;
+
+  nodes.agencyDailyTable.innerHTML = trip.days.length
+    ? trip.days.map((day, index) => `
+        <tr>
+          <td><strong>Day ${index + 1}</strong><span>${escapeHtml(formatTripDate(dateForDay(index)))}</span></td>
+          <td>${escapeHtml(day.place || trip.baseCity || "未填地點")}</td>
+          <td>${escapeHtml(agencyItineraryText(day))}</td>
+          <td>${escapeHtml(day.transportMode || "未填")}<br><small>${escapeHtml(day.route || "未填路線")}</small></td>
+          <td>${escapeHtml(mealSummary(day))}</td>
+          <td>${escapeHtml(day.notes || day.hotelName || "無")}</td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="6">尚未新增每日行程。</td></tr>`;
+
+  nodes.agencyHotelList.innerHTML = trip.days.length
+    ? trip.days.map((day, index) => `
+        <div class="agency-list-row">
+          <span>Day ${index + 1}</span>
+          <strong>${escapeHtml(day.hotelName || "未填住宿飯店")}</strong>
+          <p>${escapeHtml(formatTripDate(dateForDay(index)))}｜${escapeHtml(day.place || trip.baseCity || "未填地點")}</p>
+        </div>
+      `).join("")
+    : `<div class="empty-state">尚未新增住宿資料。</div>`;
+
+  const flightRows = [
+    { label: "航班號", value: trip.flightNo || "未填" },
+    { label: "起飛時間", value: trip.flightDeparture || "未填" },
+    { label: "抵達時間", value: trip.flightArrival || "未填" }
+  ];
+  nodes.agencyFlightList.innerHTML = flightRows.map((row) => `
+    <div class="agency-list-row">
+      <span>${escapeHtml(row.label)}</span>
+      <strong>${escapeHtml(row.value)}</strong>
+      <p>${escapeHtml(trip.country)}・${escapeHtml(trip.baseCity)}</p>
+    </div>
+  `).join("");
+}
+
 function updateTripFromFields() {
   const nextCurrency = normalizeCurrency(fields.currency.value);
   const currencyChanged = nextCurrency !== normalizeCurrency(trip.currency);
@@ -981,6 +1044,7 @@ function render() {
   nodes.totalTwd.textContent = formatTwd(total * trip.rate);
   nodes.paceHint.textContent = paceText[trip.pace];
   nodes.dayList.innerHTML = trip.days.length ? trip.days.map(renderDay).join("") : `<div class="empty-state">目前沒有行程。你可以新增一天、貼上行程匯入，或載入大阪範例。</div>`;
+  renderAgencyBook();
   renderTripHome();
   renderTripLibrary();
   renderHistory();

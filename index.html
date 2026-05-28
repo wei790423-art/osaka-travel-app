@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260528-rate-fix" />
+    <link rel="stylesheet" href="styles.css?v=20260528-agency-book" />
   </head>
   <body>
     <main class="app-shell">
@@ -199,6 +199,53 @@
               <button type="submit">新增行程</button>
             </form>
           </article>
+        </section>
+
+        <section class="agency-book" aria-label="旅行社行程書">
+          <div class="agency-cover-card">
+            <div>
+              <p class="eyebrow">Tour Book</p>
+              <h2 id="agencyBookTitle">旅行社行程書</h2>
+              <p id="agencyBookSubtitle">整理每日行程、住宿、航班與餐食，方便列印成出團手冊。</p>
+            </div>
+            <div class="agency-stamp">
+              <span>Itinerary</span>
+              <strong id="agencyBookDays">0 天</strong>
+            </div>
+          </div>
+          <div class="agency-grid">
+            <article class="agency-panel agency-panel--wide">
+              <div class="section-heading">
+                <div>
+                  <h2>每日行程總表</h2>
+                  <p>旅行社常用格式：時間、地點、內容、交通、餐食與備註。</p>
+                </div>
+              </div>
+              <div class="agency-table-wrap">
+                <table class="agency-table">
+                  <thead>
+                    <tr>
+                      <th>日期</th>
+                      <th>地點</th>
+                      <th>行程內容</th>
+                      <th>交通</th>
+                      <th>餐食</th>
+                      <th>備註</th>
+                    </tr>
+                  </thead>
+                  <tbody id="agencyDailyTable"></tbody>
+                </table>
+              </div>
+            </article>
+            <article class="agency-panel">
+              <h2>住宿總表</h2>
+              <div class="agency-list" id="agencyHotelList"></div>
+            </article>
+            <article class="agency-panel">
+              <h2>航班資訊</h2>
+              <div class="agency-list" id="agencyFlightList"></div>
+            </article>
+          </div>
         </section>
 
         <section class="map-overview-wrap" aria-label="行程地圖總覽">
@@ -392,6 +439,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260528-rate-fix"></script>
+    <script src="app.js?v=20260528-agency-book"></script>
   </body>
 </html>
