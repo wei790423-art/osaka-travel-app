@@ -5,6 +5,25 @@ const HISTORY_KEY = "global-trip-history-v1";
 const THEME_KEY = "global-trip-theme-v1";
 const SHARE_PARAM = "share";
 const SHARE_LENGTH_WARNING = 6500;
+const DEFAULT_TWD_RATES = {
+  TWD: 1,
+  JPY: 0.22,
+  CNY: 4.63,
+  USD: 31.1,
+  KRW: 0.023,
+  HKD: 3.99,
+  AUD: 20.5,
+  EUR: 35.3,
+  GBP: 41.7,
+  THB: 0.95,
+  SGD: 24.2,
+  VND: 0.0012,
+  IDR: 0.0019,
+  MYR: 7.35,
+  PHP: 0.56,
+  CAD: 22.8,
+  CHF: 37.8
+};
 
 const osakaTrip = {
   name: "大阪 8 天 7 夜",
@@ -488,7 +507,7 @@ function normalizeTrip(source) {
     flightDeparture: source.flightDeparture || "",
     flightArrival: source.flightArrival || "",
     currency: source.currency || "TWD",
-    rate: Number(source.rate || 1),
+    rate: Number(source.rate || defaultRateForCurrency(source.currency)),
     pace: source.pace || "balanced",
     tickets: Array.isArray(source.tickets) ? source.tickets.map(normalizeTicket) : [],
     days: (source.days || []).map(normalizeDay)
@@ -608,6 +627,10 @@ function normalizeCurrency(value) {
   };
   if (currencyAliases[compact]) return currencyAliases[compact];
   return raw.slice(0, 3).toUpperCase() || "TWD";
+}
+
+function defaultRateForCurrency(currency) {
+  return DEFAULT_TWD_RATES[normalizeCurrency(currency)] || 1;
 }
 
 function formatLocal(value, currencyOverride = trip.currency) {
@@ -932,6 +955,8 @@ function renderHero() {
 }
 
 function updateTripFromFields() {
+  const nextCurrency = normalizeCurrency(fields.currency.value);
+  const currencyChanged = nextCurrency !== normalizeCurrency(trip.currency);
   trip.name = fields.tripName.value.trim() || "我的旅行計畫";
   trip.country = fields.country.value.trim() || "自選國家";
   trip.baseCity = fields.baseCity.value.trim() || "自選城市";
@@ -939,9 +964,11 @@ function updateTripFromFields() {
   trip.flightNo = fields.flightNo.value.trim();
   trip.flightDeparture = fields.flightDeparture.value.trim();
   trip.flightArrival = fields.flightArrival.value.trim();
-  trip.currency = normalizeCurrency(fields.currency.value);
-  trip.rate = Number(fields.rate.value) || 1;
+  trip.currency = nextCurrency;
+  trip.rate = currencyChanged ? defaultRateForCurrency(nextCurrency) : (Number(fields.rate.value) || defaultRateForCurrency(nextCurrency));
   trip.pace = fields.pace.value;
+  fields.currency.value = nextCurrency;
+  fields.rate.value = trip.rate;
   saveTrip();
   render();
 }
@@ -1672,9 +1699,11 @@ document.querySelectorAll("[data-tab-target]").forEach((button) => {
   button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
 });
 
-[fields.tripName, fields.country, fields.baseCity, fields.startDate, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.currency, fields.rate, fields.pace].forEach((field) => {
+[fields.tripName, fields.country, fields.baseCity, fields.startDate, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.rate, fields.pace].forEach((field) => {
   field.addEventListener("input", updateTripFromFields);
 });
+fields.currency.addEventListener("change", updateTripFromFields);
+fields.currency.addEventListener("blur", updateTripFromFields);
 
 function applyTheme() {
   document.documentElement.dataset.theme = theme;
