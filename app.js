@@ -560,7 +560,54 @@ function normalizeLandmarks(day) {
 }
 
 function normalizeCurrency(value) {
-  return (value || "TWD").trim().slice(0, 3).toUpperCase() || "TWD";
+  const raw = String(value || "TWD").trim();
+  const compact = raw.replace(/\s+/g, "").toLowerCase();
+  const currencyAliases = {
+    "台幣": "TWD",
+    "臺幣": "TWD",
+    "新台幣": "TWD",
+    "新臺幣": "TWD",
+    "台灣幣": "TWD",
+    "nt": "TWD",
+    "ntd": "TWD",
+    "日幣": "JPY",
+    "日圓": "JPY",
+    "日元": "JPY",
+    "日本圓": "JPY",
+    "日本円": "JPY",
+    "美金": "USD",
+    "美元": "USD",
+    "美幣": "USD",
+    "韓幣": "KRW",
+    "韓元": "KRW",
+    "韓圜": "KRW",
+    "港幣": "HKD",
+    "港元": "HKD",
+    "澳幣": "AUD",
+    "澳元": "AUD",
+    "歐元": "EUR",
+    "歐幣": "EUR",
+    "英鎊": "GBP",
+    "人民幣": "CNY",
+    "人民元": "CNY",
+    "泰銖": "THB",
+    "泰幣": "THB",
+    "新加坡幣": "SGD",
+    "新幣": "SGD",
+    "越南盾": "VND",
+    "越南幣": "VND",
+    "印尼盾": "IDR",
+    "印尼幣": "IDR",
+    "馬幣": "MYR",
+    "馬來西亞幣": "MYR",
+    "菲律賓披索": "PHP",
+    "披索": "PHP",
+    "加拿大幣": "CAD",
+    "加幣": "CAD",
+    "瑞士法郎": "CHF"
+  };
+  if (currencyAliases[compact]) return currencyAliases[compact];
+  return raw.slice(0, 3).toUpperCase() || "TWD";
 }
 
 function formatLocal(value, currencyOverride = trip.currency) {
