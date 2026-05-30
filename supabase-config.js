@@ -1,6 +1,7 @@
-const isLocalSupabaseHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const isLocalAppHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const useLocalSupabase = isLocalAppHost && new URLSearchParams(window.location.search).get("supabase") === "local";
 
-window.SUPABASE_CONFIG = isLocalSupabaseHost
+window.SUPABASE_CONFIG = useLocalSupabase
   ? {
       url: "http://127.0.0.1:54321",
       publishableKey: "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
