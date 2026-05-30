@@ -1,9 +1,9 @@
-const CACHE_NAME = "global-trip-planner-v22";
+const CACHE_NAME = "global-trip-planner-v23";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=20260530-smart-import",
-  "./app.js?v=20260530-smart-import",
+  "./styles.css?v=20260530-quick-import",
+  "./app.js?v=20260530-quick-import",
   "./manifest.webmanifest",
   "./assets/app-icon.svg",
   "./assets/global-travel-hero.png",

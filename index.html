@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260530-smart-import" />
+    <link rel="stylesheet" href="styles.css?v=20260530-quick-import" />
   </head>
   <body>
     <main class="app-shell">
@@ -98,6 +98,14 @@
               <button id="createTrip" type="button">新增行程</button>
               <button id="renameTrip" type="button">套用名稱</button>
               <button id="deleteTrip" type="button">刪除行程</button>
+            </div>
+          </div>
+          <div class="quick-import-trip">
+            <label for="newTripImportText">貼上文字直接建立新行程</label>
+            <textarea id="newTripImportText" rows="5" placeholder="把 ChatGPT 生成的完整行程貼在這裡，按下方按鈕會自動新增成一份新的旅行，不會覆蓋目前行程。"></textarea>
+            <div class="quick-import-trip__actions">
+              <button id="createTripFromImport" type="button">貼上文字建立行程</button>
+              <p id="newTripImportStatus" aria-live="polite">可辨識每日景點、三餐、住宿、交通與預算。</p>
             </div>
           </div>
         </section>
@@ -482,6 +490,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260530-smart-import"></script>
+    <script src="app.js?v=20260530-quick-import"></script>
   </body>
 </html>

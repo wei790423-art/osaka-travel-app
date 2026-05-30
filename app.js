@@ -160,6 +160,7 @@ let theme = localStorage.getItem(THEME_KEY) || "light";
 const fields = {
   tripSelector: document.querySelector("#tripSelector"),
   newTripName: document.querySelector("#newTripName"),
+  newTripImportText: document.querySelector("#newTripImportText"),
   tripName: document.querySelector("#tripName"),
   country: document.querySelector("#country"),
   baseCity: document.querySelector("#baseCity"),
@@ -206,11 +207,13 @@ const nodes = {
   homeDayCount: document.querySelector("#homeDayCount"),
   homeNextTrip: document.querySelector("#homeNextTrip"),
   createTripFromHome: document.querySelector("#createTripFromHome"),
+  createTripFromImport: document.querySelector("#createTripFromImport"),
   openCurrentTrip: document.querySelector("#openCurrentTrip"),
   backToPlannerHome: document.querySelector("#backToPlannerHome"),
   createTrip: document.querySelector("#createTrip"),
   renameTrip: document.querySelector("#renameTrip"),
   deleteTrip: document.querySelector("#deleteTrip"),
+  newTripImportStatus: document.querySelector("#newTripImportStatus"),
   tripLibraryStatus: document.querySelector("#tripLibraryStatus"),
   statDays: document.querySelector("#statDays"),
   statStops: document.querySelector("#statStops"),
@@ -1624,6 +1627,55 @@ function createNewTrip(openDetail = true) {
   render();
 }
 
+function createTripFromImport() {
+  const text = fields.newTripImportText?.value.trim() || "";
+  if (!text) {
+    if (nodes.newTripImportStatus) nodes.newTripImportStatus.textContent = "請先貼上 ChatGPT 或旅行社格式的行程文字。";
+    return;
+  }
+
+  const days = parseImportedTrip(text);
+  if (!days.length) {
+    if (nodes.newTripImportStatus) nodes.newTripImportStatus.textContent = "沒有解析到每日行程，請確認文字有第 1 天 / Day 1 或至少一段行程內容。";
+    return;
+  }
+
+  saveTrip();
+  const typedName = fields.newTripName?.value.trim() || "";
+  const inferredName = days[0]?.title && !/^第\s*\d+\s*天$/.test(days[0].title) ? `${days[0].title} 行程` : `匯入旅行 ${trips.length + 1}`;
+  const newTrip = {
+    ...blankTrip(typedName || inferredName),
+    country: trip.country || "自選國家",
+    baseCity: trip.baseCity || "自選城市",
+    startDate: trip.startDate || todayDateValue(),
+    currency: trip.currency || "TWD",
+    rate: Number(trip.rate || defaultRateForCurrency(trip.currency)),
+    pace: trip.pace || "balanced",
+    days
+  };
+  const newEntry = {
+    id: makeTripId(),
+    updatedAt: new Date().toISOString(),
+    trip: normalizeTrip(newTrip)
+  };
+
+  trips = [newEntry, ...trips];
+  activeTripId = newEntry.id;
+  trip = normalizeTrip(clone(newEntry.trip));
+  fields.newTripImportText.value = "";
+  if (nodes.newTripImportStatus) {
+    const landmarkCount = days.reduce((sum, day) => sum + (day.landmarks?.length || 0), 0);
+    nodes.newTripImportStatus.textContent = `已建立「${trip.name}」：${days.length} 天，${landmarkCount} 個導航景點。`;
+  }
+  saveTripLibrary();
+  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
+  localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
+  editingDayIndex = null;
+  syncFields();
+  showPlannerDetail();
+  render();
+}
+
 function renameActiveTrip() {
   const name = fields.newTripName?.value.trim() || fields.tripName.value.trim();
   if (!name) return;
@@ -2642,6 +2694,7 @@ nodes.createTripFromHome.addEventListener("click", () => createNewTrip(true));
 nodes.openCurrentTrip.addEventListener("click", showPlannerDetail);
 nodes.backToPlannerHome.addEventListener("click", showPlannerHome);
 nodes.createTrip.addEventListener("click", createNewTrip);
+nodes.createTripFromImport.addEventListener("click", createTripFromImport);
 nodes.renameTrip.addEventListener("click", renameActiveTrip);
 nodes.deleteTrip.addEventListener("click", deleteActiveTrip);
 nodes.addSample.addEventListener("click", addSampleDay);
