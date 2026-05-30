@@ -70,7 +70,7 @@ npm run supabase:stop
 
 ## Supabase 登入與同步
 
-目前 App 已接上 Supabase Email/Password Auth 與 `trips` 雲端同步。前端只使用 publishable key，資料保護依靠 Supabase Auth JWT 與資料表 RLS。
+目前 App 已接上 Supabase Email/Password Auth、`trips` 雲端同步與 Realtime 即時更新。前端只使用 publishable key，資料保護依靠 Supabase Auth JWT 與資料表 RLS。
 
 本機開發預設讀取 `supabase-config.js`，而且只會在 `localhost` / `127.0.0.1` 啟用本機 Supabase：
 

@@ -4,6 +4,8 @@ const ACTIVE_TRIP_ID_KEY = "global-trip-active-id-v1";
 const HISTORY_KEY = "global-trip-history-v1";
 const THEME_KEY = "global-trip-theme-v1";
 const CLOUD_TRIP_MAP_KEY = "global-trip-cloud-map-v1";
+const CLOUD_CLIENT_ID_KEY = "global-trip-cloud-client-id-v1";
+const CLOUD_AUTO_SYNC_DELAY = 1500;
 const SHARE_PARAM = "share";
 const SHARE_LENGTH_WARNING = 6500;
 const DEFAULT_TWD_RATES = {
@@ -161,6 +163,12 @@ let supabaseClient = null;
 let supabaseSession = null;
 let cloudTripMap = loadCloudTripMap();
 let cloudTrips = [];
+let cloudRealtimeChannel = null;
+let cloudAutoSyncTimer = null;
+let cloudSyncInFlight = false;
+let cloudSyncQueued = false;
+let cloudApplyingRemote = false;
+const cloudClientId = getCloudClientId();
 
 const fields = {
   tripSelector: document.querySelector("#tripSelector"),
@@ -427,6 +435,15 @@ function saveCloudTripMap() {
   localStorage.setItem(CLOUD_TRIP_MAP_KEY, JSON.stringify(cloudTripMap));
 }
 
+function getCloudClientId() {
+  let clientId = localStorage.getItem(CLOUD_CLIENT_ID_KEY);
+  if (!clientId) {
+    clientId = makeTripId();
+    localStorage.setItem(CLOUD_CLIENT_ID_KEY, clientId);
+  }
+  return clientId;
+}
+
 function makeTripId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   return `trip-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -519,10 +536,11 @@ function syncActiveTripEntry() {
   localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
 }
 
-function saveTrip() {
+function saveTrip(options = {}) {
   trip = normalizeTrip(trip);
   localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
   syncActiveTripEntry();
+  if (!options.skipCloudSync) queueCloudAutoSync();
 }
 
 function saveHistoryStore() {
@@ -1680,6 +1698,83 @@ function renderCloudAuthState() {
   if (!signedIn && nodes.cloudTripList) nodes.cloudTripList.innerHTML = "";
 }
 
+function clearCloudAutoSync() {
+  if (cloudAutoSyncTimer) {
+    clearTimeout(cloudAutoSyncTimer);
+    cloudAutoSyncTimer = null;
+  }
+}
+
+function queueCloudAutoSync() {
+  if (cloudApplyingRemote || !supabaseClient || !supabaseSession?.user) return;
+  clearCloudAutoSync();
+  setCloudStatus("已編輯，準備自動同步...");
+  cloudAutoSyncTimer = setTimeout(() => {
+    syncCurrentTripToCloud({ automatic: true });
+  }, CLOUD_AUTO_SYNC_DELAY);
+}
+
+function queueInitialCloudSync() {
+  if (cloudTripMap[activeTripId] || cloudTrips.length === 0) {
+    queueCloudAutoSync();
+  } else {
+    setCloudStatus("已登入，請先載入雲端行程；之後編輯會自動同步。");
+  }
+}
+
+async function stopCloudRealtime() {
+  clearCloudAutoSync();
+  if (supabaseClient && cloudRealtimeChannel) {
+    await supabaseClient.removeChannel(cloudRealtimeChannel);
+  }
+  cloudRealtimeChannel = null;
+}
+
+function setupCloudRealtime() {
+  if (!supabaseClient || !supabaseSession?.user) return;
+  if (cloudRealtimeChannel) supabaseClient.removeChannel(cloudRealtimeChannel);
+  cloudRealtimeChannel = supabaseClient
+    .channel(`trip-sync-${supabaseSession.user.id}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "trips",
+        filter: `user_id=eq.${supabaseSession.user.id}`
+      },
+      handleTripRealtimeChange
+    )
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") setCloudStatus("已登入，雲端即時同步已啟用。");
+    });
+}
+
+function handleTripRealtimeChange(payload) {
+  if (!payload?.new?.id) return;
+  const remoteEntry = payload.new;
+  const remoteTrip = remoteEntry.trip_data || {};
+  if (remoteTrip.syncedBy === cloudClientId) return;
+
+  const mappedCloudId = cloudTripMap[activeTripId];
+  const isActiveCloudTrip = mappedCloudId && mappedCloudId === remoteEntry.id;
+  const isKnownLocalTrip = remoteTrip.localTripId && remoteTrip.localTripId === activeTripId;
+
+  cloudTrips = [remoteEntry, ...cloudTrips.filter((entry) => entry.id !== remoteEntry.id)];
+  renderCloudTrips();
+
+  if (!isActiveCloudTrip && !isKnownLocalTrip) {
+    setCloudStatus(`雲端行程「${remoteEntry.name || "未命名旅行"}」已更新。`);
+    return;
+  }
+
+  const localUpdatedAt = new Date(trip.syncedAt || 0).getTime();
+  const remoteUpdatedAt = new Date(remoteTrip.syncedAt || remoteEntry.updated_at || 0).getTime();
+  if (localUpdatedAt && remoteUpdatedAt && remoteUpdatedAt < localUpdatedAt) return;
+
+  applyCloudTrip(remoteEntry, { backup: false, status: `已即時同步「${remoteEntry.name || trip.name}」。` });
+}
+
 async function initSupabaseAuth() {
   supabaseClient = createSupabaseClient();
   if (!supabaseClient) {
@@ -1696,13 +1791,23 @@ async function initSupabaseAuth() {
     setCloudStatus(supabaseSession ? `已登入：${cloudUserEmail()}` : "尚未登入，資料目前只存在這台瀏覽器。");
   }
   renderCloudAuthState();
-  if (supabaseSession) await refreshCloudTrips();
+  if (supabaseSession) {
+    await refreshCloudTrips();
+    setupCloudRealtime();
+    queueInitialCloudSync();
+  }
 
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
     supabaseSession = session;
     setCloudStatus(session ? `已登入：${session.user.email}` : "已登出，資料會保留在這台瀏覽器。");
     renderCloudAuthState();
-    if (session) refreshCloudTrips();
+    if (session) {
+      await refreshCloudTrips();
+      setupCloudRealtime();
+      queueInitialCloudSync();
+    } else {
+      await stopCloudRealtime();
+    }
   });
 }
 
@@ -1744,6 +1849,7 @@ async function signUpWithEmail() {
 
 async function signOutCloud() {
   if (!supabaseClient) return;
+  await stopCloudRealtime();
   const { error } = await supabaseClient.auth.signOut();
   if (error) setCloudStatus(`登出失敗：${error.message}`);
 }
@@ -1758,15 +1864,22 @@ function tripCloudPayload(sourceTrip = trip) {
     trip_data: {
       ...normalized,
       localTripId: activeTripId,
+      syncedBy: cloudClientId,
       syncedAt: new Date().toISOString()
     }
   };
 }
 
-async function syncCurrentTripToCloud() {
+async function syncCurrentTripToCloud(options = {}) {
   if (!supabaseClient || !supabaseSession?.user) return setCloudStatus("請先登入再同步。");
-  saveTrip();
-  setCloudStatus("正在同步目前行程...");
+  clearCloudAutoSync();
+  if (cloudSyncInFlight) {
+    cloudSyncQueued = true;
+    return;
+  }
+  cloudSyncInFlight = true;
+  saveTrip({ skipCloudSync: true });
+  setCloudStatus(options.automatic ? "自動同步中..." : "正在同步目前行程...");
   const payload = {
     ...tripCloudPayload(trip),
     user_id: supabaseSession.user.id
@@ -1778,12 +1891,20 @@ async function syncCurrentTripToCloud() {
   const { data, error } = await query;
   if (error) {
     setCloudStatus(`同步失敗：${error.message}`);
+    cloudSyncInFlight = false;
     return;
   }
   cloudTripMap[activeTripId] = data.id;
   saveCloudTripMap();
-  setCloudStatus(`已同步「${trip.name}」到雲端。`);
+  const normalizedTrip = normalizeTrip(data.trip_data || trip);
+  trip.syncedAt = normalizedTrip.syncedAt || data.updated_at;
+  setCloudStatus(options.automatic ? `已自動同步「${trip.name}」。` : `已同步「${trip.name}」到雲端。`);
   await refreshCloudTrips();
+  cloudSyncInFlight = false;
+  if (cloudSyncQueued) {
+    cloudSyncQueued = false;
+    queueCloudAutoSync();
+  }
 }
 
 async function refreshCloudTrips() {
@@ -1821,7 +1942,13 @@ function renderCloudTrips() {
 function loadCloudTrip(cloudId) {
   const entry = cloudTrips.find((item) => item.id === cloudId);
   if (!entry?.trip_data) return;
-  addTripToHistory(trip, "載入雲端行程前備份");
+  applyCloudTrip(entry, { backup: true, status: `已載入雲端行程「${entry.name || "未命名旅行"}」，之後會即時同步。` });
+}
+
+function applyCloudTrip(entry, options = {}) {
+  if (!entry?.trip_data) return;
+  cloudApplyingRemote = true;
+  if (options.backup) addTripToHistory(trip, "載入雲端行程前備份");
   trip = normalizeTrip(entry.trip_data);
   const localId = entry.trip_data.localTripId || makeTripId();
   activeTripId = localId;
@@ -1829,11 +1956,12 @@ function loadCloudTrip(cloudId) {
   saveCloudTripMap();
   localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
   localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
-  saveTrip();
+  saveTrip({ skipCloudSync: true });
   syncFields();
   showPlannerDetail();
   render();
-  setCloudStatus(`已載入雲端行程「${trip.name}」。`);
+  cloudApplyingRemote = false;
+  setCloudStatus(options.status || `已載入雲端行程「${trip.name}」。`);
 }
 
 function switchActiveTrip(tripId, openDetail = false) {
