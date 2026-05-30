@@ -1245,7 +1245,7 @@ function render() {
 
 function renderDay(day, index) {
   if (editingDayIndex === index) return renderDayEditor(day, index);
-  const items = day.items?.length ? day.items : ["尚未填入細節"];
+  const items = displayTimelineItems(day);
   const mealPlan = normalizeMealPlan(day);
   const landmarks = dayLandmarks(day);
   const selectedLandmark = primaryLandmark(day);
@@ -1311,7 +1311,7 @@ function renderDay(day, index) {
         </div>
         ${backups.length ? `<div class="backup-landmarks"><h4>備案景點</h4><div class="backup-tags">${backups.map(b => `<span class="backup-tag">${escapeHtml(b)}</span>`).join("")}</div></div>` : ""}
         <ul class="timeline">
-          ${items.map((item) => `<li><time>•</time><span>${escapeHtml(item)}</span></li>`).join("")}
+          ${items.map((item) => `<li><time>${escapeHtml(item.label)}</time><span>${escapeHtml(item.text)}</span></li>`).join("")}
         </ul>
         <div class="cost-row">
           <span>${escapeHtml(day.transportMode || "尚未填移動方式")}</span>
@@ -1329,6 +1329,47 @@ function updateLandmarkMap(select) {
   const landmark = select.value;
   const directionsLink = document.querySelector(`[data-landmark-directions="${dayIndex}"]`);
   if (directionsLink) directionsLink.href = landmarkDirectionsUrl(landmark, day);
+}
+
+function normalizeTimelineText(item) {
+  const raw = cleanImportLine(item);
+  if (!raw) return "";
+
+  const withoutTime = stripTimePrefix(raw);
+  const isMealOnly = mealKeyFromLine(withoutTime) && !LANDMARK_HINT_PATTERN.test(withoutTime);
+  if (isMealOnly || HOTEL_PATTERN.test(withoutTime) || BUDGET_PATTERN.test(withoutTime) || NOTE_PATTERN.test(withoutTime)) {
+    return "";
+  }
+
+  const timeMatch = raw.match(/^(\(?\d{1,2}[:：]\d{2}\)?\s*)/);
+  const timeText = timeMatch ? timeMatch[1].trim().replace(/[()]/g, "") : "";
+  const cleaned = withoutTime
+    .replace(/^(早餐|早點|早午餐|午餐|中餐|午飯|晚餐|晚飯|用餐|餐食|餐廳)\s*[:：-]?\s*/i, "")
+    .replace(/(早餐|午餐|中餐|午飯|晚餐|晚飯|用餐|餐食|餐廳)/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!cleaned) return "";
+  return timeText ? `${timeText} ${cleaned}` : cleaned;
+}
+
+function timelineItemLabel(text) {
+  if (looksLikeTransport(text)) return "交通";
+  if (LANDMARK_HINT_PATTERN.test(text)) return "景點";
+  return "行程";
+}
+
+function displayTimelineItems(day) {
+  const items = (day.items || [])
+    .map(normalizeTimelineText)
+    .filter(Boolean)
+    .map((text) => ({ label: timelineItemLabel(text), text }));
+
+  if (items.length) return items;
+  if (day.landmarks?.length) {
+    return day.landmarks.map((landmark) => ({ label: "景點", text: landmark }));
+  }
+  return [{ label: "行程", text: "尚未填入細節" }];
 }
 
 function renderDayEditor(day, index) {
@@ -1954,7 +1995,7 @@ function parseImportedTrip(text) {
     const value = labelMatch?.[2]?.trim() || "";
 
     if (label && /^(上午|下午|晚上|早上|中午)$/.test(label) && value) {
-      current.items.push(line);
+      if (!mealKeyFromLine(value)) current.items.push(line);
       current.landmarks.push(...landmarksFromItineraryLine(value));
       return;
     }
@@ -2032,7 +2073,6 @@ function parseImportedTrip(text) {
 
     if (mealKey) {
       current.mealPlan[mealKey] = sanitizeMealText(line);
-      current.items.push(line);
       return;
     }
 
@@ -2046,7 +2086,6 @@ function parseImportedTrip(text) {
 
     if (HOTEL_PATTERN.test(line) && !current.hotelName) {
       current.hotelName = removeImportLabel(lineWithoutTime, ["住宿", "住宿飯店", "飯店", "酒店", "旅館", "民宿", "hotel", "check-in", "入住"]);
-      current.items.push(line);
       return;
     }
 
