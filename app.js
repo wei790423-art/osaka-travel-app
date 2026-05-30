@@ -225,6 +225,7 @@ const nodes = {
   createTripFromImport: document.querySelector("#createTripFromImport"),
   openCurrentTrip: document.querySelector("#openCurrentTrip"),
   backToPlannerHome: document.querySelector("#backToPlannerHome"),
+  homeNavButton: document.querySelector("#homeNavButton"),
   createTrip: document.querySelector("#createTrip"),
   renameTrip: document.querySelector("#renameTrip"),
   deleteTrip: document.querySelector("#deleteTrip"),
@@ -825,7 +826,7 @@ function setShareMessage(html) {
 }
 
 function landmarkQuery(landmark, day) {
-  return [landmark, day.place, trip.baseCity, trip.country].filter(Boolean).join(" ");
+  return uniqueList([landmark, day.place, trip.baseCity, trip.country]).join(", ");
 }
 
 function travelModeParam(mode = "") {
@@ -1039,6 +1040,7 @@ function renderTripHome() {
 
 function showPlannerHome() {
   plannerView = "home";
+  switchTab("planner");
   nodes.plannerHome?.classList.add("is-active");
   nodes.plannerDetail?.classList.remove("is-active");
   renderHero();
@@ -1046,6 +1048,7 @@ function showPlannerHome() {
 
 function showPlannerDetail() {
   plannerView = "detail";
+  switchTab("planner", { preservePlannerView: true });
   nodes.plannerHome?.classList.remove("is-active");
   nodes.plannerDetail?.classList.add("is-active");
   renderHero();
@@ -1283,6 +1286,7 @@ function render() {
 
   renderTripMap();
   setupDragAndDrop();
+  setupWithinDayOrdering();
   updateCountdown();
   updateCalcDisplay();
   fetchTripWeather();
@@ -1350,13 +1354,22 @@ function renderDay(day, index) {
             </div>
           </div>
         </div>
+        <div class="order-panel" aria-label="景點順序">
+          <div class="order-panel__head">
+            <strong>景點順序</strong>
+            <span>拖拉可調整導航與地圖順序</span>
+          </div>
+          <ol class="landmark-order-list">
+            ${landmarks.map((landmark, landmarkIndex) => `<li draggable="true" data-landmark-order="${index}" data-landmark-index="${landmarkIndex}"><span>${landmarkIndex + 1}</span>${escapeHtml(landmark)}</li>`).join("")}
+          </ol>
+        </div>
         <div class="day-map-section">
           <button class="day-map-toggle" type="button" data-toggle-daymap="${index}">展開景點地圖</button>
           <div id="dayMap-${index}" class="day-map-container" data-expanded="false" style="display:none;"></div>
         </div>
         ${backups.length ? `<div class="backup-landmarks"><h4>備案景點</h4><div class="backup-tags">${backups.map(b => `<span class="backup-tag">${escapeHtml(b)}</span>`).join("")}</div></div>` : ""}
         <ul class="timeline">
-          ${items.map((item) => `<li><time>${escapeHtml(item.label)}</time><span>${escapeHtml(item.text)}</span></li>`).join("")}
+          ${items.map((item) => `<li draggable="${item.sourceIndex >= 0 ? "true" : "false"}" data-timeline-order="${index}" data-timeline-index="${item.sourceIndex}"><time>${escapeHtml(item.label)}</time><span>${escapeHtml(item.text)}</span></li>`).join("")}
         </ul>
         <div class="cost-row">
           <span>${escapeHtml(day.transportMode || "尚未填移動方式")}</span>
@@ -1406,15 +1419,15 @@ function timelineItemLabel(text) {
 
 function displayTimelineItems(day) {
   const items = (day.items || [])
-    .map(normalizeTimelineText)
-    .filter(Boolean)
-    .map((text) => ({ label: timelineItemLabel(text), text }));
+    .map((raw, sourceIndex) => ({ text: normalizeTimelineText(raw), sourceIndex }))
+    .filter((item) => item.text)
+    .map((item) => ({ label: timelineItemLabel(item.text), text: item.text, sourceIndex: item.sourceIndex }));
 
   if (items.length) return items;
   if (day.landmarks?.length) {
-    return day.landmarks.map((landmark) => ({ label: "景點", text: landmark }));
+    return day.landmarks.map((landmark) => ({ label: "景點", text: landmark, sourceIndex: -1 }));
   }
-  return [{ label: "行程", text: "尚未填入細節" }];
+  return [{ label: "行程", text: "尚未填入細節", sourceIndex: -1 }];
 }
 
 function renderDayEditor(day, index) {
@@ -2225,6 +2238,10 @@ function isLandmarkHeading(line) {
   return /^(推薦景點|必訪|景點|地標|地點|打卡點|導航景點)\s*[:：]?$/i.test(line);
 }
 
+function isItineraryHeading(line) {
+  return /^(行程|每日行程|行程內容|時間軸|安排|itinerary|schedule)\s*[:：]?$/i.test(line);
+}
+
 function isNonDaySection(line) {
   return NON_DAY_SECTION_PATTERN.test(line);
 }
@@ -2260,6 +2277,16 @@ function uniqueList(items) {
       seen.add(key);
       return true;
     });
+}
+
+function parseBudgetAmount(line) {
+  const normalized = String(line)
+    .replace(/[,，]/g, "")
+    .replace(/[～~—–-]/g, "-");
+  const numbers = normalized.match(/\d+(?:\.\d+)?/g)?.map(Number).filter((num) => Number.isFinite(num)) || [];
+  if (!numbers.length) return 0;
+  if (numbers.length >= 2 && /[-至到]/.test(normalized)) return Math.round((numbers[0] + numbers[1]) / 2);
+  return numbers[0];
 }
 
 function removeImportLabel(line, labels) {
@@ -2331,11 +2358,16 @@ function landmarksFromItineraryLine(line) {
 }
 
 function normalizeImportedDay(day) {
-  const normalized = normalizeDay(day);
+  const landmarkSource = day.hasExplicitLandmarks
+    ? day.landmarks
+    : [...(day.landmarks || []), ...(day.inferredLandmarks || [])];
+  const normalized = normalizeDay({ ...day, landmarks: landmarkSource });
   normalized.landmarks = uniqueList(normalized.landmarks);
   normalized.backupLandmarks = uniqueList(normalized.backupLandmarks);
   normalized.items = uniqueList(normalized.items);
-  if (!normalized.mapQuery) {
+  if (!day.mapQuery && normalized.landmarks.length) {
+    normalized.mapQuery = normalized.landmarks[0];
+  } else if (!normalized.mapQuery) {
     normalized.mapQuery = normalized.landmarks[0] || normalized.place || trip.baseCity || "";
   }
   if (!normalized.route && normalized.landmarks.length) {
@@ -2345,10 +2377,11 @@ function normalizeImportedDay(day) {
 }
 
 function inferImportedTripMeta(text, days = []) {
+  const badTitlePattern = /以下|依照|規格書|格式|文件整理|可直接匯入|旅行 App|請問|建議|說明|Markdown|JSON/i;
   const titleLine = text
     .split(/\r?\n/)
     .map(cleanImportLine)
-    .find((line) => line && !imageUrlFromMarkdown(line) && !dayHeadingMatch(line) && /天|夜|自由行|旅行|旅遊|行程/i.test(line));
+    .find((line) => line && !badTitlePattern.test(line) && !imageUrlFromMarkdown(line) && !dayHeadingMatch(line) && /天|夜|自由行|旅行|旅遊|行程/i.test(line));
   const source = titleLine || days[0]?.title || "";
   const comboMatch = source.match(/(上海\s*\d+\s*天\s*[+＋]\s*雲南\s*\d+\s*天(?:（共\s*\d+\s*天）)?)/);
   const cityMatch = source.match(/([\u4e00-\u9fa5]{2,6})(?:\s*)?(?:\d+\s*天|\d+\s*日|自由行|旅行|旅遊|行程)/);
@@ -2356,7 +2389,7 @@ function inferImportedTripMeta(text, days = []) {
   const baseCity = /上海|雲南/.test(source) ? "上海＋雲南" : (/哈爾濱/.test(source) ? "哈爾濱" : (cityMatch?.[1] || ""));
   const country = hasChinaPlace ? "中國" : "";
   return {
-    name: comboMatch?.[1]?.replace(/\s+/g, " ") || titleLine || (baseCity ? `${baseCity} ${days.length || ""} 天行程`.trim() : ""),
+    name: (comboMatch?.[1]?.replace(/\s+/g, " ") || titleLine || (baseCity ? `${baseCity} ${days.length || ""} 天行程`.trim() : "")).replace(/^旅行名稱\s*[:：]\s*/i, ""),
     country,
     baseCity
   };
@@ -2393,7 +2426,7 @@ function parseImportedTrip(text) {
   let stoppedDailyParsing = false;
 
   const startDay = (title) => {
-    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], backupLandmarks: [], notes: "", photoUrl: "", items: [] };
+    current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], inferredLandmarks: [], hasExplicitLandmarks: false, backupLandmarks: [], notes: "", photoUrl: "", items: [] };
     days.push(current);
     sectionMode = "items";
     stoppedDailyParsing = false;
@@ -2440,6 +2473,11 @@ function parseImportedTrip(text) {
       return;
     }
 
+    if (isItineraryHeading(line)) {
+      sectionMode = "items";
+      return;
+    }
+
     if (isPeriodHeading(line)) {
       sectionMode = "items";
       return;
@@ -2458,13 +2496,16 @@ function parseImportedTrip(text) {
 
     if (label && /^(上午|下午|晚上|早上|中午)$/.test(label) && value) {
       if (!mealKeyFromLine(value)) current.items.push(line);
-      current.landmarks.push(...landmarksFromItineraryLine(value));
+      current.inferredLandmarks.push(...landmarksFromItineraryLine(value));
       return;
     }
 
     if (sectionMode === "landmarks") {
       const landmarks = landmarksFromItineraryLine(line);
-      if (landmarks.length) current.landmarks.push(...landmarks);
+      if (landmarks.length) {
+        current.hasExplicitLandmarks = true;
+        current.landmarks.push(...landmarks);
+      }
       return;
     }
 
@@ -2515,7 +2556,12 @@ function parseImportedTrip(text) {
     }
 
     if (/^(景點|地標|景點地標|landmarks?|spots?)\s*[:：]/i.test(line)) {
-      current.landmarks = splitList(line.replace(/^(景點|地標|景點地標|landmarks?|spots?)\s*[:：]\s*/i, ""));
+      const landmarkValue = line.replace(/^(景點|地標|景點地標|landmarks?|spots?)\s*[:：]\s*/i, "");
+      if (landmarkValue.trim()) {
+        current.hasExplicitLandmarks = true;
+        current.landmarks = splitList(landmarkValue);
+      }
+      else sectionMode = "landmarks";
       return;
     }
 
@@ -2535,7 +2581,7 @@ function parseImportedTrip(text) {
     }
 
     if (/^(預算|花費|budget|cost)\s*[:：]/i.test(line)) {
-      current.budget = Number(line.replace(/[^\d.]/g, "")) || 0;
+      current.budget = parseBudgetAmount(line);
       return;
     }
 
@@ -2558,7 +2604,7 @@ function parseImportedTrip(text) {
     }
 
     current.items.push(line);
-    current.landmarks.push(...landmarksFromItineraryLine(line));
+    current.inferredLandmarks.push(...landmarksFromItineraryLine(line));
   });
 
   return days.filter((day) => day.title || day.items.length).map(normalizeImportedDay);
@@ -2595,13 +2641,19 @@ function applyImport() {
   render();
 }
 
-function switchTab(targetId) {
+function switchTab(targetId, options = {}) {
   document.querySelectorAll(".tab-button").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tabTarget === targetId);
   });
   document.querySelectorAll(".tab-panel").forEach((panel) => {
     panel.classList.toggle("is-active", panel.id === targetId);
   });
+  if (targetId === "planner" && !options.preservePlannerView && plannerView !== "home") {
+    nodes.plannerHome?.classList.add("is-active");
+    nodes.plannerDetail?.classList.remove("is-active");
+    plannerView = "home";
+    renderHero();
+  }
 }
 
 document.querySelectorAll("[data-tab-target]").forEach((button) => {
@@ -2774,7 +2826,7 @@ let tripMapInstance = null;
 let tripMapRenderedKey = "";
 
 function tripMapKey() {
-  return trip.days.map(d => `${d.place}|${trip.country}`).join(";;");
+  return trip.days.map(d => `${d.place}|${dayLandmarks(d).join("|")}|${trip.country}`).join(";;");
 }
 
 function createNumberedIcon(num, color) {
@@ -2813,7 +2865,9 @@ async function renderTripMap() {
   const points = [];
   for (let i = 0; i < trip.days.length; i++) {
     const day = trip.days[i];
-    const query = [day.place, trip.baseCity, trip.country].filter(Boolean).join(", ");
+    const query = dayLandmarks(day)[0]
+      ? landmarkQuery(dayLandmarks(day)[0], day)
+      : [day.place, trip.baseCity, trip.country].filter(Boolean).join(", ");
     const geo = await geocode(query);
     if (geo) points.push({ ...geo, index: i });
   }
@@ -3097,6 +3151,8 @@ function renderCalcPresets() {
 
 // ========== Drag and Drop ==========
 let draggedDayIndex = null;
+let draggedLandmark = null;
+let draggedTimeline = null;
 
 function setupDragAndDrop() {
   const cards = document.querySelectorAll(".day-card[data-day-index]");
@@ -3129,6 +3185,95 @@ function setupDragAndDrop() {
         const [moved] = trip.days.splice(draggedDayIndex, 1);
         trip.days.splice(targetIndex, 0, moved);
         editingDayIndex = null;
+        saveTrip();
+        render();
+      }
+    });
+  });
+}
+
+function moveArrayItem(list, fromIndex, toIndex) {
+  if (!Array.isArray(list) || fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return false;
+  if (fromIndex >= list.length || toIndex >= list.length) return false;
+  const [moved] = list.splice(fromIndex, 1);
+  list.splice(toIndex, 0, moved);
+  return true;
+}
+
+function setupWithinDayOrdering() {
+  document.querySelectorAll("[data-landmark-order]").forEach((item) => {
+    item.addEventListener("dragstart", (event) => {
+      event.stopPropagation();
+      draggedLandmark = {
+        dayIndex: Number(item.dataset.landmarkOrder),
+        index: Number(item.dataset.landmarkIndex)
+      };
+      item.classList.add("is-dragging");
+      event.dataTransfer.effectAllowed = "move";
+    });
+    item.addEventListener("dragend", () => {
+      item.classList.remove("is-dragging");
+      document.querySelectorAll(".order-drag-over").forEach((el) => el.classList.remove("order-drag-over"));
+      draggedLandmark = null;
+    });
+    item.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      item.classList.add("order-drag-over");
+    });
+    item.addEventListener("dragleave", () => item.classList.remove("order-drag-over"));
+    item.addEventListener("drop", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      item.classList.remove("order-drag-over");
+      const target = {
+        dayIndex: Number(item.dataset.landmarkOrder),
+        index: Number(item.dataset.landmarkIndex)
+      };
+      if (!draggedLandmark || draggedLandmark.dayIndex !== target.dayIndex) return;
+      const day = trip.days[target.dayIndex];
+      if (moveArrayItem(day?.landmarks, draggedLandmark.index, target.index)) {
+        day.route = day.landmarks.join(" -> ");
+        day.mapQuery = day.landmarks.join(" ");
+        saveTrip();
+        render();
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-timeline-order]").forEach((item) => {
+    item.addEventListener("dragstart", (event) => {
+      if (Number(item.dataset.timelineIndex) < 0) return;
+      event.stopPropagation();
+      draggedTimeline = {
+        dayIndex: Number(item.dataset.timelineOrder),
+        index: Number(item.dataset.timelineIndex)
+      };
+      item.classList.add("is-dragging");
+      event.dataTransfer.effectAllowed = "move";
+    });
+    item.addEventListener("dragend", () => {
+      item.classList.remove("is-dragging");
+      document.querySelectorAll(".order-drag-over").forEach((el) => el.classList.remove("order-drag-over"));
+      draggedTimeline = null;
+    });
+    item.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      item.classList.add("order-drag-over");
+    });
+    item.addEventListener("dragleave", () => item.classList.remove("order-drag-over"));
+    item.addEventListener("drop", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      item.classList.remove("order-drag-over");
+      const target = {
+        dayIndex: Number(item.dataset.timelineOrder),
+        index: Number(item.dataset.timelineIndex)
+      };
+      if (!draggedTimeline || draggedTimeline.dayIndex !== target.dayIndex) return;
+      const day = trip.days[target.dayIndex];
+      if (moveArrayItem(day?.items, draggedTimeline.index, target.index)) {
         saveTrip();
         render();
       }
@@ -3204,6 +3349,7 @@ fields.tripSelector.addEventListener("change", () => switchActiveTrip(fields.tri
 nodes.createTripFromHome.addEventListener("click", () => createNewTrip(true));
 nodes.openCurrentTrip.addEventListener("click", showPlannerDetail);
 nodes.backToPlannerHome.addEventListener("click", showPlannerHome);
+nodes.homeNavButton.addEventListener("click", showPlannerHome);
 nodes.createTrip.addEventListener("click", createNewTrip);
 nodes.createTripFromImport.addEventListener("click", createTripFromImport);
 nodes.renameTrip.addEventListener("click", renameActiveTrip);
