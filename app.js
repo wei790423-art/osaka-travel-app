@@ -1685,6 +1685,7 @@ function createTripFromImport() {
   const typedNameRaw = fields.newTripName?.value.trim() || "";
   const typedName = typedNameRaw && typedNameRaw !== trip.name ? typedNameRaw : "";
   const meta = inferImportedTripMeta(text, days);
+  const importedDays = applyImportedTripMetaToDays(days, meta);
   const inferredName = meta.name || (days[0]?.title && !/^第\s*\d+\s*天$/.test(days[0].title) ? `${days[0].title} 行程` : `匯入旅行 ${trips.length + 1}`);
   const newTrip = {
     ...blankTrip(typedName || inferredName),
@@ -1694,7 +1695,7 @@ function createTripFromImport() {
     currency: trip.currency || "TWD",
     rate: Number(trip.rate || defaultRateForCurrency(trip.currency)),
     pace: trip.pace || "balanced",
-    days
+    days: importedDays
   };
   const newEntry = {
     id: makeTripId(),
@@ -1707,8 +1708,8 @@ function createTripFromImport() {
   trip = normalizeTrip(clone(newEntry.trip));
   fields.newTripImportText.value = "";
   if (nodes.newTripImportStatus) {
-    const landmarkCount = days.reduce((sum, day) => sum + (day.landmarks?.length || 0), 0);
-    nodes.newTripImportStatus.textContent = `已建立「${trip.name}」：${days.length} 天，${landmarkCount} 個導航景點。`;
+    const landmarkCount = importedDays.reduce((sum, day) => sum + (day.landmarks?.length || 0), 0);
+    nodes.newTripImportStatus.textContent = `已建立「${trip.name}」：${importedDays.length} 天，${landmarkCount} 個導航景點。`;
   }
   saveTripLibrary();
   localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
@@ -1861,8 +1862,8 @@ const HOTEL_PATTERN = /住宿|飯店|酒店|旅館|民宿|hotel|check-?in|入住
 const FLIGHT_PATTERN = /航班|班機|起飛|抵達|機場|flight|airport|departure|arrival/i;
 const BUDGET_PATTERN = /預算|花費|費用|門票|票券|budget|cost/i;
 const NOTE_PATTERN = /備註|提醒|注意|小提醒|note|tips?/i;
-const LANDMARK_HINT_PATTERN = /城|寺|教堂|神社|大社|宮|塔|橋|坂|公園|園|莊園|林園|廣場|中心|大街|江|島|雪博會|冰雪大世界|雪雕|滑雪|度假區|紀念館|陳列館|市場|老街|街|商圈|百貨|博物館|美術館|水族館|樂園|影城|車站|港|湖|山|溫泉|海灘|觀景|夜景|大廈|庭園|地標|景點|attraction|museum|park|temple|shrine|castle|tower|market|street|station/i;
-const NON_DAY_SECTION_PATTERN = /^(哈爾濱)?必吃美食|冬季穿搭|穿搭建議|行程亮點|注意事項|預算建議|費用估算|參考資料|資料來源|延伸閱讀/i;
+const LANDMARK_HINT_PATTERN = /外灘|明珠|新天地|田子坊|迪士尼|武康路|徐匯|IFC|城|古城|古鎮|寺|教堂|神社|大社|宮|塔|橋|坂|公園|園|莊園|林園|廣場|中心|大街|江|島|海|谷|村|草原|纜車|雪山|風景區|雪博會|冰雪大世界|雪雕|滑雪|度假區|紀念館|陳列館|市場|老街|街|商圈|百貨|博物館|美術館|水族館|樂園|影城|車站|港|湖|山|溫泉|海灘|觀景|夜景|大廈|庭園|地標|景點|attraction|museum|park|temple|shrine|castle|tower|market|street|station/i;
+const NON_DAY_SECTION_PATTERN = /^(哈爾濱)?必吃美食|冬季穿搭|穿搭建議|行程亮點|預估花費|費用估算|最推薦節奏|注意事項|預算建議|參考資料|資料來源|延伸閱讀/i;
 
 function cleanImportLine(line) {
   const raw = String(line).trim();
@@ -1895,6 +1896,11 @@ function isNonDaySection(line) {
 function dayHeadingMatch(line) {
   return line.match(/(?:^|[\s｜|])(?:第\s*(\d+)\s*(?:天|日)|day\s*(\d+))/i)
     || line.match(/^(\d+)\s*(?:天|日)(?!\s*\d|夜)/i);
+}
+
+function isDayRangeHeading(line) {
+  return /(?:第\s*)?\d+\s*(?:天|日)\s*[~～\-—–到至]\s*(?:第\s*)?\d+\s*(?:天|日)/i.test(line)
+    || /day\s*\d+\s*[~～\-—–到至]\s*day\s*\d+/i.test(line);
 }
 
 function stripDayHeading(line) {
@@ -2008,14 +2014,39 @@ function inferImportedTripMeta(text, days = []) {
     .map(cleanImportLine)
     .find((line) => line && !imageUrlFromMarkdown(line) && !dayHeadingMatch(line) && /天|夜|自由行|旅行|旅遊|行程/i.test(line));
   const source = titleLine || days[0]?.title || "";
+  const comboMatch = source.match(/(上海\s*\d+\s*天\s*[+＋]\s*雲南\s*\d+\s*天(?:（共\s*\d+\s*天）)?)/);
   const cityMatch = source.match(/([\u4e00-\u9fa5]{2,6})(?:\s*)?(?:\d+\s*天|\d+\s*日|自由行|旅行|旅遊|行程)/);
-  const baseCity = /哈爾濱/.test(source) ? "哈爾濱" : (cityMatch?.[1] || "");
-  const country = /哈爾濱|中國|大陸|北京|上海|廣州|深圳|成都|重慶/.test(source) ? "中國" : "";
+  const hasChinaPlace = /哈爾濱|中國|大陸|北京|上海|雲南|昆明|大理|麗江|香格里拉|廣州|深圳|成都|重慶/.test(source);
+  const baseCity = /上海|雲南/.test(source) ? "上海＋雲南" : (/哈爾濱/.test(source) ? "哈爾濱" : (cityMatch?.[1] || ""));
+  const country = hasChinaPlace ? "中國" : "";
   return {
-    name: titleLine || (baseCity ? `${baseCity} ${days.length || ""} 天行程`.trim() : ""),
+    name: comboMatch?.[1]?.replace(/\s+/g, " ") || titleLine || (baseCity ? `${baseCity} ${days.length || ""} 天行程`.trim() : ""),
     country,
     baseCity
   };
+}
+
+function applyImportedTripMetaToDays(days, meta) {
+  const fallbackPlace = meta.baseCity || trip.baseCity || "";
+  return days.map((day) => {
+    const place = day.place && !/^自選城市$|^大阪$/.test(day.place) ? day.place : inferDayPlace(day, fallbackPlace);
+    return {
+      ...day,
+      place,
+      mapQuery: day.mapQuery && !/^自選城市$|^大阪$/.test(day.mapQuery) ? day.mapQuery : (day.landmarks?.[0] || place)
+    };
+  });
+}
+
+function inferDayPlace(day, fallbackPlace) {
+  const text = `${day.title || ""} ${(day.items || []).join(" ")} ${(day.landmarks || []).join(" ")}`;
+  if (/香格里拉|獨克宗|龜山|松贊林|納帕海/.test(text)) return "香格里拉";
+  if (/麗江|玉龍雪山|藍月谷|束河|白沙|玉湖/.test(text)) return "麗江";
+  if (/大理|洱海|喜洲|雙廊|崇聖寺|蒼山/.test(text)) return "大理";
+  if (/昆明|石林|翠湖/.test(text)) return "昆明";
+  if (/上海|外灘|南京東路|豫園|陸家嘴|迪士尼|武康路|徐匯/.test(text)) return "上海";
+  if (/哈爾濱|中央大街|冰雪大世界|伏爾加|松花江|亞布力/.test(text)) return "哈爾濱";
+  return fallbackPlace;
 }
 
 function parseImportedTrip(text) {
@@ -2040,6 +2071,12 @@ function parseImportedTrip(text) {
       return;
     }
     if (!line && !imageUrl) return;
+
+    if (isDayRangeHeading(line)) {
+      current = null;
+      sectionMode = "items";
+      return;
+    }
 
     const dayMatch = dayHeadingMatch(line);
     if (dayMatch) {
@@ -2171,7 +2208,7 @@ function parseImportedTrip(text) {
       return;
     }
 
-    if (looksLikeTransport(line)) {
+    if (looksLikeTransport(line) && !LANDMARK_HINT_PATTERN.test(line)) {
       const routeText = removeImportLabel(lineWithoutTime, ["交通", "移動", "路線", "動線", "交通方式", "移動方式"]);
       current.route = current.route ? `${current.route} -> ${routeText}` : routeText;
       current.transportMode = current.transportMode || (/(步行|散步|walk)/i.test(line) ? "步行" : /(巴士|公車|bus)/i.test(line) ? "巴士" : /(計程車|taxi)/i.test(line) ? "計程車" : /(包車)/i.test(line) ? "包車" : "大眾運輸");
@@ -2213,7 +2250,7 @@ function applyImport() {
   if (meta.name) trip.name = meta.name;
   if (meta.country) trip.country = meta.country;
   if (meta.baseCity) trip.baseCity = meta.baseCity;
-  trip.days = days;
+  trip.days = applyImportedTripMetaToDays(days, meta);
   saveTrip();
   syncFields();
   previewImport();
