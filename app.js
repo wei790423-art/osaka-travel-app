@@ -1354,8 +1354,8 @@ function normalizeTimelineText(item) {
 }
 
 function timelineItemLabel(text) {
-  if (looksLikeTransport(text)) return "交通";
   if (LANDMARK_HINT_PATTERN.test(text)) return "景點";
+  if (looksLikeTransport(text)) return "交通";
   return "行程";
 }
 
@@ -1682,12 +1682,14 @@ function createTripFromImport() {
   }
 
   saveTrip();
-  const typedName = fields.newTripName?.value.trim() || "";
-  const inferredName = days[0]?.title && !/^第\s*\d+\s*天$/.test(days[0].title) ? `${days[0].title} 行程` : `匯入旅行 ${trips.length + 1}`;
+  const typedNameRaw = fields.newTripName?.value.trim() || "";
+  const typedName = typedNameRaw && typedNameRaw !== trip.name ? typedNameRaw : "";
+  const meta = inferImportedTripMeta(text, days);
+  const inferredName = meta.name || (days[0]?.title && !/^第\s*\d+\s*天$/.test(days[0].title) ? `${days[0].title} 行程` : `匯入旅行 ${trips.length + 1}`);
   const newTrip = {
     ...blankTrip(typedName || inferredName),
-    country: trip.country || "自選國家",
-    baseCity: trip.baseCity || "自選城市",
+    country: meta.country || trip.country || "自選國家",
+    baseCity: meta.baseCity || trip.baseCity || "自選城市",
     startDate: trip.startDate || todayDateValue(),
     currency: trip.currency || "TWD",
     rate: Number(trip.rate || defaultRateForCurrency(trip.currency)),
@@ -1859,14 +1861,49 @@ const HOTEL_PATTERN = /住宿|飯店|酒店|旅館|民宿|hotel|check-?in|入住
 const FLIGHT_PATTERN = /航班|班機|起飛|抵達|機場|flight|airport|departure|arrival/i;
 const BUDGET_PATTERN = /預算|花費|費用|門票|票券|budget|cost/i;
 const NOTE_PATTERN = /備註|提醒|注意|小提醒|note|tips?/i;
-const LANDMARK_HINT_PATTERN = /城|寺|神社|大社|宮|塔|橋|坂|公園|市場|老街|街|商圈|百貨|博物館|美術館|水族館|樂園|影城|車站|港|湖|山|溫泉|海灘|廣場|觀景|夜景|大廈|庭園|地標|景點|attraction|museum|park|temple|shrine|castle|tower|market|street|station/i;
+const LANDMARK_HINT_PATTERN = /城|寺|教堂|神社|大社|宮|塔|橋|坂|公園|園|莊園|林園|廣場|中心|大街|江|島|雪博會|冰雪大世界|雪雕|滑雪|度假區|紀念館|陳列館|市場|老街|街|商圈|百貨|博物館|美術館|水族館|樂園|影城|車站|港|湖|山|溫泉|海灘|觀景|夜景|大廈|庭園|地標|景點|attraction|museum|park|temple|shrine|castle|tower|market|street|station/i;
+const NON_DAY_SECTION_PATTERN = /^(哈爾濱)?必吃美食|冬季穿搭|穿搭建議|行程亮點|注意事項|預算建議|費用估算|參考資料|資料來源|延伸閱讀/i;
 
 function cleanImportLine(line) {
-  return String(line)
+  const raw = String(line).trim();
+  if (/^[-*_]{3,}$/.test(raw)) return "";
+  return raw
     .replace(/^#{1,6}\s*/, "")
+    .replace(/\*\*/g, "")
     .replace(/^[-•*]\s*/, "")
     .replace(/^\d+[.)、]\s*/, "")
-    .replace(/\*\*/g, "")
+    .replace(/^\p{Extended_Pictographic}\ufe0f?\s*/u, "")
+    .trim();
+}
+
+function imageUrlFromMarkdown(line) {
+  return String(line).match(/!\[[^\]]*]\((https?:\/\/[^)\s]+)[^)]*\)/i)?.[1] || "";
+}
+
+function isPeriodHeading(line) {
+  return /^(上午|早上|中午|下午|傍晚|晚上|夜間)(\s*[:：-].*)?$/i.test(line);
+}
+
+function isLandmarkHeading(line) {
+  return /^(推薦景點|必訪|景點|地標|地點|打卡點|導航景點)\s*[:：]?$/i.test(line);
+}
+
+function isNonDaySection(line) {
+  return NON_DAY_SECTION_PATTERN.test(line);
+}
+
+function dayHeadingMatch(line) {
+  return line.match(/(?:^|[\s｜|])(?:第\s*(\d+)\s*(?:天|日)|day\s*(\d+))/i)
+    || line.match(/^(\d+)\s*(?:天|日)(?!\s*\d|夜)/i);
+}
+
+function stripDayHeading(line) {
+  return line
+    .replace(/^.*?(?=(?:第\s*\d+\s*(?:天|日)|day\s*\d+))/i, "")
+    .replace(/^第\s*\d+\s*(?:天|日)\s*[:：\-、]?\s*/i, "")
+    .replace(/^[/｜|]?\s*day\s*\d+\s*[:：\-、]?\s*/i, "")
+    .replace(/^\d+\s*(?:天|日)\s*[:：\-、]?\s*/i, "")
+    .replace(/^[｜|/]\s*/, "")
     .trim();
 }
 
@@ -1965,28 +2002,80 @@ function normalizeImportedDay(day) {
   return normalized;
 }
 
+function inferImportedTripMeta(text, days = []) {
+  const titleLine = text
+    .split(/\r?\n/)
+    .map(cleanImportLine)
+    .find((line) => line && !imageUrlFromMarkdown(line) && !dayHeadingMatch(line) && /天|夜|自由行|旅行|旅遊|行程/i.test(line));
+  const source = titleLine || days[0]?.title || "";
+  const cityMatch = source.match(/([\u4e00-\u9fa5]{2,6})(?:\s*)?(?:\d+\s*天|\d+\s*日|自由行|旅行|旅遊|行程)/);
+  const baseCity = /哈爾濱/.test(source) ? "哈爾濱" : (cityMatch?.[1] || "");
+  const country = /哈爾濱|中國|大陸|北京|上海|廣州|深圳|成都|重慶/.test(source) ? "中國" : "";
+  return {
+    name: titleLine || (baseCity ? `${baseCity} ${days.length || ""} 天行程`.trim() : ""),
+    country,
+    baseCity
+  };
+}
+
 function parseImportedTrip(text) {
-  const lines = text.split(/\r?\n/).map(cleanImportLine).filter(Boolean);
+  const rawLines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const days = [];
   let current = null;
+  let sectionMode = "items";
+  let stoppedDailyParsing = false;
 
   const startDay = (title) => {
     current = { title: title || `第 ${days.length + 1} 天`, place: trip.baseCity || "", hotelName: "", route: "", transportMode: "", budget: 0, mealPlan: { breakfast: "", lunch: "", dinner: "" }, mapQuery: "", landmarks: [], backupLandmarks: [], notes: "", photoUrl: "", items: [] };
     days.push(current);
+    sectionMode = "items";
+    stoppedDailyParsing = false;
   };
 
-  lines.forEach((line) => {
-    const dayMatch = line.match(/^(?:第\s*)?(\d+)\s*(?:天|日)|^day\s*(\d+)/i);
+  rawLines.forEach((rawLine) => {
+    const imageUrl = imageUrlFromMarkdown(rawLine);
+    const line = cleanImportLine(rawLine);
+    if (/^📍\s*$/.test(rawLine.trim())) {
+      if (current) sectionMode = "landmarks";
+      return;
+    }
+    if (!line && !imageUrl) return;
+
+    const dayMatch = dayHeadingMatch(line);
     if (dayMatch) {
-      const cleaned = line
-        .replace(/^(?:第\s*)?\d+\s*(?:天|日)\s*[:：\-、]?\s*/i, "")
-        .replace(/^[/｜|]?\s*day\s*\d+\s*[:：\-、]?\s*/i, "")
-        .replace(/^day\s*\d+\s*[:：\-、]?\s*/i, "");
-      startDay(cleaned);
+      startDay(stripDayHeading(line));
       return;
     }
 
-    if (!current) startDay("");
+    if (isNonDaySection(line)) {
+      stoppedDailyParsing = days.length > 0;
+      current = null;
+      return;
+    }
+
+    if (imageUrl) {
+      if (current && !current.photoUrl) current.photoUrl = imageUrl;
+      return;
+    }
+
+    if (stoppedDailyParsing) return;
+    if (!current && days.length > 0) return;
+    if (!current) return;
+
+    if (isLandmarkHeading(line)) {
+      sectionMode = "landmarks";
+      return;
+    }
+
+    if (isPeriodHeading(line)) {
+      sectionMode = "items";
+      return;
+    }
+
+    if (/^\d{1,2}[:：]\d{2}\s*入園最佳$|^入園最佳$/i.test(line)) {
+      sectionMode = "items";
+      return;
+    }
 
     const mealKey = mealKeyFromLine(line);
     const lineWithoutTime = stripTimePrefix(line);
@@ -1997,6 +2086,12 @@ function parseImportedTrip(text) {
     if (label && /^(上午|下午|晚上|早上|中午)$/.test(label) && value) {
       if (!mealKeyFromLine(value)) current.items.push(line);
       current.landmarks.push(...landmarksFromItineraryLine(value));
+      return;
+    }
+
+    if (sectionMode === "landmarks") {
+      const landmarks = landmarksFromItineraryLine(line);
+      if (landmarks.length) current.landmarks.push(...landmarks);
       return;
     }
 
@@ -2084,7 +2179,7 @@ function parseImportedTrip(text) {
       return;
     }
 
-    if (HOTEL_PATTERN.test(line) && !current.hotelName) {
+    if (/^(住宿|住宿飯店|hotel|accommodation)\s*[:：]/i.test(line) && !current.hotelName) {
       current.hotelName = removeImportLabel(lineWithoutTime, ["住宿", "住宿飯店", "飯店", "酒店", "旅館", "民宿", "hotel", "check-in", "入住"]);
       return;
     }
@@ -2114,6 +2209,10 @@ function applyImport() {
     previewImport();
     return;
   }
+  const meta = inferImportedTripMeta(fields.importText.value, days);
+  if (meta.name) trip.name = meta.name;
+  if (meta.country) trip.country = meta.country;
+  if (meta.baseCity) trip.baseCity = meta.baseCity;
   trip.days = days;
   saveTrip();
   syncFields();
