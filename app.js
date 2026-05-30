@@ -1755,8 +1755,125 @@ function registerServiceWorker() {
   });
 }
 
+const MEAL_PATTERNS = [
+  { key: "breakfast", pattern: /早餐|早點|早午餐|breakfast|brunch/i },
+  { key: "lunch", pattern: /午餐|中餐|午飯|lunch/i },
+  { key: "dinner", pattern: /晚餐|晚飯|dinner/i }
+];
+
+const TRANSPORT_PATTERN = /交通|移動|路線|搭乘|搭車|地鐵|捷運|電車|火車|高鐵|新幹線|JR|巴士|公車|計程車|包車|步行|散步|渡輪|船|機場快線|transfer|transport|subway|metro|train|bus|taxi|walk/i;
+const HOTEL_PATTERN = /住宿|飯店|酒店|旅館|民宿|hotel|check-?in|入住/i;
+const FLIGHT_PATTERN = /航班|班機|起飛|抵達|機場|flight|airport|departure|arrival/i;
+const BUDGET_PATTERN = /預算|花費|費用|門票|票券|budget|cost/i;
+const NOTE_PATTERN = /備註|提醒|注意|小提醒|note|tips?/i;
+const LANDMARK_HINT_PATTERN = /城|寺|神社|大社|宮|塔|橋|坂|公園|市場|老街|街|商圈|百貨|博物館|美術館|水族館|樂園|影城|車站|港|湖|山|溫泉|海灘|廣場|觀景|夜景|大廈|庭園|地標|景點|attraction|museum|park|temple|shrine|castle|tower|market|street|station/i;
+
+function cleanImportLine(line) {
+  return String(line)
+    .replace(/^#{1,6}\s*/, "")
+    .replace(/^[-•*]\s*/, "")
+    .replace(/^\d+[.)、]\s*/, "")
+    .replace(/\*\*/g, "")
+    .trim();
+}
+
+function uniqueList(items) {
+  const seen = new Set();
+  return items
+    .map((item) => String(item).trim())
+    .filter(Boolean)
+    .filter((item) => {
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function removeImportLabel(line, labels) {
+  const labelPattern = labels.join("|");
+  return line.replace(new RegExp(`^(${labelPattern})\\s*[:：-]?\\s*`, "i"), "").trim();
+}
+
+function stripTimePrefix(line) {
+  return line
+    .replace(/^\(?\d{1,2}[:：]\d{2}\)?\s*[-–—~～至到]?\s*/, "")
+    .replace(/^(上午|早上|中午|下午|晚上|傍晚|夜間)\s*/, "")
+    .trim();
+}
+
+function mealKeyFromLine(line) {
+  return MEAL_PATTERNS.find((meal) => meal.pattern.test(line))?.key || "";
+}
+
+function sanitizeMealText(line) {
+  return stripTimePrefix(line)
+    .replace(/^(早餐|早點|早午餐|午餐|中餐|午飯|晚餐|晚飯|breakfast|brunch|lunch|dinner)\s*[:：-]?\s*/i, "")
+    .replace(/^(用餐|餐食|餐廳)\s*[:：-]?\s*/i, "")
+    .trim();
+}
+
+function looksLikeTransport(line) {
+  return TRANSPORT_PATTERN.test(line) && !mealKeyFromLine(line);
+}
+
+function shouldSkipAsLandmark(line) {
+  return mealKeyFromLine(line) || HOTEL_PATTERN.test(line) || BUDGET_PATTERN.test(line) || NOTE_PATTERN.test(line) || /^自由活動|休息|整理行李|退房|入住|集合|返回|回飯店/i.test(line);
+}
+
+function landmarkFromItineraryLine(line) {
+  const text = stripTimePrefix(cleanImportLine(line))
+    .replace(/^(景點|地標|參觀|遊覽|前往|抵達|到達|造訪|逛|遊玩)\s*[:：-]?\s*/i, "")
+    .replace(/\(.+?\)|（.+?）/g, "")
+    .trim();
+
+  if (!text || shouldSkipAsLandmark(text)) return "";
+  if (looksLikeTransport(text) && !LANDMARK_HINT_PATTERN.test(text)) return "";
+
+  const stopWords = /(自由活動|購物時間|拍照|散策|散步|午休|晚餐|午餐|早餐|用餐|交通|搭乘|返回|回飯店|入住|退房)/i;
+  const compact = text
+    .split(/[，,。；;、]/)[0]
+    .replace(stopWords, "")
+    .trim();
+
+  if (!compact || compact.length < 2) return "";
+  if (!LANDMARK_HINT_PATTERN.test(compact) && !/[A-Za-z]{3,}/.test(compact)) return "";
+  return compact;
+}
+
+function landmarksFromItineraryLine(line) {
+  const text = stripTimePrefix(cleanImportLine(line))
+    .replace(/^(景點|地標|參觀|遊覽|前往|抵達|到達|造訪|逛|遊玩)\s*[:：-]?\s*/i, "")
+    .replace(/\(.+?\)|（.+?）/g, "")
+    .trim();
+
+  if (!text || shouldSkipAsLandmark(text)) return [];
+  if (looksLikeTransport(text) && !LANDMARK_HINT_PATTERN.test(text)) return [];
+
+  return uniqueList(
+    text
+      .split(/[，,。；;、>→]/)
+      .map((part) => landmarkFromItineraryLine(part))
+      .filter(Boolean)
+  );
+}
+
+function normalizeImportedDay(day) {
+  const normalized = normalizeDay(day);
+  normalized.landmarks = uniqueList(normalized.landmarks);
+  normalized.backupLandmarks = uniqueList(normalized.backupLandmarks);
+  normalized.items = uniqueList(normalized.items);
+  if (!normalized.mapQuery) {
+    normalized.mapQuery = normalized.landmarks[0] || normalized.place || trip.baseCity || "";
+  }
+  if (!normalized.route && normalized.landmarks.length) {
+    normalized.route = normalized.landmarks.join(" -> ");
+  }
+  return normalized;
+}
+
 function parseImportedTrip(text) {
-  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const lines = text.split(/\r?\n/).map(cleanImportLine).filter(Boolean);
   const days = [];
   let current = null;
 
@@ -1770,12 +1887,25 @@ function parseImportedTrip(text) {
     if (dayMatch) {
       const cleaned = line
         .replace(/^(?:第\s*)?\d+\s*(?:天|日)\s*[:：\-、]?\s*/i, "")
+        .replace(/^[/｜|]?\s*day\s*\d+\s*[:：\-、]?\s*/i, "")
         .replace(/^day\s*\d+\s*[:：\-、]?\s*/i, "");
       startDay(cleaned);
       return;
     }
 
     if (!current) startDay("");
+
+    const mealKey = mealKeyFromLine(line);
+    const lineWithoutTime = stripTimePrefix(line);
+    const labelMatch = lineWithoutTime.match(/^([^:：]{1,18})\s*[:：]\s*(.+)$/);
+    const label = labelMatch?.[1]?.trim() || "";
+    const value = labelMatch?.[2]?.trim() || "";
+
+    if (label && /^(上午|下午|晚上|早上|中午)$/.test(label) && value) {
+      current.items.push(line);
+      current.landmarks.push(...landmarksFromItineraryLine(value));
+      return;
+    }
 
     if (/^(地點|城市|區域|place)\s*[:：]/i.test(line)) {
       current.place = line.replace(/^(地點|城市|區域|place)\s*[:：]\s*/i, "");
@@ -1797,24 +1927,24 @@ function parseImportedTrip(text) {
       return;
     }
 
-    if (/^(吃飯|餐廳|餐飲|meals?)\s*[:：]/i.test(line)) {
-      const meals = splitList(line.replace(/^(吃飯|餐廳|餐飲|meals?)\s*[:：]\s*/i, ""));
+    if (/^(吃飯|餐廳|餐飲|餐食|三餐|meals?)\s*[:：]/i.test(line)) {
+      const meals = splitList(line.replace(/^(吃飯|餐廳|餐飲|餐食|三餐|meals?)\s*[:：]\s*/i, ""));
       current.mealPlan = { breakfast: meals[0] || "", lunch: meals[1] || "", dinner: meals[2] || meals[0] || "" };
       return;
     }
 
-    if (/^(早餐|breakfast)\s*[:：]/i.test(line)) {
-      current.mealPlan.breakfast = line.replace(/^(早餐|breakfast)\s*[:：]\s*/i, "");
+    if (/^(早餐|早點|早午餐|breakfast|brunch)\s*[:：]/i.test(line)) {
+      current.mealPlan.breakfast = line.replace(/^(早餐|早點|早午餐|breakfast|brunch)\s*[:：]\s*/i, "");
       return;
     }
 
-    if (/^(午餐|lunch)\s*[:：]/i.test(line)) {
-      current.mealPlan.lunch = line.replace(/^(午餐|lunch)\s*[:：]\s*/i, "");
+    if (/^(午餐|中餐|午飯|lunch)\s*[:：]/i.test(line)) {
+      current.mealPlan.lunch = line.replace(/^(午餐|中餐|午飯|lunch)\s*[:：]\s*/i, "");
       return;
     }
 
-    if (/^(晚餐|dinner)\s*[:：]/i.test(line)) {
-      current.mealPlan.dinner = line.replace(/^(晚餐|dinner)\s*[:：]\s*/i, "");
+    if (/^(晚餐|晚飯|dinner)\s*[:：]/i.test(line)) {
+      current.mealPlan.dinner = line.replace(/^(晚餐|晚飯|dinner)\s*[:：]\s*/i, "");
       return;
     }
 
@@ -1848,10 +1978,31 @@ function parseImportedTrip(text) {
       return;
     }
 
-    current.items.push(line.replace(/^[-•*]\s*/, ""));
+    if (mealKey) {
+      current.mealPlan[mealKey] = sanitizeMealText(line);
+      current.items.push(line);
+      return;
+    }
+
+    if (looksLikeTransport(line)) {
+      const routeText = removeImportLabel(lineWithoutTime, ["交通", "移動", "路線", "動線", "交通方式", "移動方式"]);
+      current.route = current.route ? `${current.route} -> ${routeText}` : routeText;
+      current.transportMode = current.transportMode || (/(步行|散步|walk)/i.test(line) ? "步行" : /(巴士|公車|bus)/i.test(line) ? "巴士" : /(計程車|taxi)/i.test(line) ? "計程車" : /(包車)/i.test(line) ? "包車" : "大眾運輸");
+      current.items.push(line);
+      return;
+    }
+
+    if (HOTEL_PATTERN.test(line) && !current.hotelName) {
+      current.hotelName = removeImportLabel(lineWithoutTime, ["住宿", "住宿飯店", "飯店", "酒店", "旅館", "民宿", "hotel", "check-in", "入住"]);
+      current.items.push(line);
+      return;
+    }
+
+    current.items.push(line);
+    current.landmarks.push(...landmarksFromItineraryLine(line));
   });
 
-  return days.filter((day) => day.title || day.items.length).map(normalizeDay);
+  return days.filter((day) => day.title || day.items.length).map(normalizeImportedDay);
 }
 
 function previewImport() {
@@ -1860,7 +2011,8 @@ function previewImport() {
     ? `<h3>解析結果：${days.length} 天</h3>${days.map((day, index) => {
         const mealPlan = normalizeMealPlan(day);
         const mealText = [mealPlan.breakfast, mealPlan.lunch, mealPlan.dinner].filter(Boolean).map(escapeHtml).join("、") || "未填";
-        return `<div class="preview-day"><strong>Day ${index + 1}：${escapeHtml(day.title)}</strong><span>${escapeHtml(day.place || "未填地點")}｜${escapeHtml(day.transportMode || "未填移動方式")}｜${escapeHtml(day.route || "未填移動路線")}｜餐食 ${mealText}｜預算 ${day.budget || 0}</span></div>`;
+        const landmarkText = day.landmarks.length ? day.landmarks.map(escapeHtml).join("、") : "未偵測到確定景點";
+        return `<div class="preview-day"><strong>Day ${index + 1}：${escapeHtml(day.title)}</strong><span>${escapeHtml(day.place || "未填地點")}｜${escapeHtml(day.transportMode || "未填移動方式")}｜餐食 ${mealText}｜導航景點 ${landmarkText}｜預算 ${day.budget || 0}</span></div>`;
       }).join("")}`
     : `<div class="empty-state">還沒有解析到行程。請貼上至少一段文字。</div>`;
 }

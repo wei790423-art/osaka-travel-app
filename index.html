@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260530-route-builder" />
+    <link rel="stylesheet" href="styles.css?v=20260530-smart-import" />
   </head>
   <body>
     <main class="app-shell">
@@ -397,11 +397,11 @@
         <section class="wide-panel">
           <div class="section-heading">
             <div>
-              <h2>貼上行程，直接導入</h2>
-              <p>可以貼 ChatGPT 產生的行程、朋友傳來的文字，或自己打的草稿。支援「第 1 天 / Day 1」、地點、住宿飯店、交通、預算等文字。</p>
+              <h2>AI 行程自動整理</h2>
+              <p>直接貼上 ChatGPT 生成的完整行程，系統會自動辨識每日景點、早餐午餐晚餐、住宿、交通與預算；餐食不會被放進快速導航景點。</p>
             </div>
           </div>
-          <textarea id="importText" class="import-box" rows="14" placeholder="範例：&#10;第 1 天：抵達大阪，難波暖身&#10;地點：大阪難波&#10;交通：關西機場 -> 難波 -> 道頓堀&#10;預算：7600&#10;14:00 抵達關西機場&#10;18:00 道頓堀晚餐&#10;&#10;第 2 天：大阪城與梅田夜景&#10;地點：大阪市區&#10;預算：9200&#10;09:00 大阪城公園&#10;18:30 空中庭園夜景"></textarea>
+          <textarea id="importText" class="import-box" rows="14" placeholder="範例：&#10;第 1 天：抵達大阪，難波暖身&#10;住宿：難波飯店&#10;09:00 早餐：飯店早餐&#10;10:30 大阪城公園&#10;12:30 午餐：京橋商店街餐廳&#10;14:00 梅田藍天大廈空中庭園&#10;交通：地鐵 + 步行&#10;預算：9200&#10;&#10;第 2 天 / Day 2：京都一日遊&#10;08:30 搭乘 JR 前往京都&#10;10:00 伏見稻荷大社&#10;12:00 午餐：祇園周邊餐廳&#10;15:00 清水寺、二年坂、三年坂&#10;晚餐：大阪車站便餐"></textarea>
           <div class="import-actions">
             <button id="previewImport" type="button">預覽解析</button>
             <button id="applyImport" type="button">導入成目前行程</button>
@@ -482,6 +482,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260530-route-builder"></script>
+    <script src="app.js?v=20260530-smart-import"></script>
   </body>
 </html>
