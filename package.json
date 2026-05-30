@@ -1,0 +1,15 @@
+{
+  "name": "global-trip-planner",
+  "private": true,
+  "scripts": {
+    "dev": "node server.cjs",
+    "supabase": "supabase",
+    "supabase:init": "supabase init",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:status": "supabase status"
+  },
+  "devDependencies": {
+    "supabase": "^2.102.0"
+  }
+}

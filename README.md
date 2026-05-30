@@ -40,7 +40,7 @@
 ## 本機預覽
 
 ```powershell
-node server.cjs
+npm run dev
 ```
 
 打開：
@@ -48,6 +48,21 @@ node server.cjs
 ```text
 http://127.0.0.1:4177
 ```
+
+## Supabase CLI
+
+本專案已安裝 Supabase CLI 作為 npm dev dependency，並已執行 `supabase init`。
+
+常用指令：
+
+```powershell
+npm run supabase -- --version
+npm run supabase:start
+npm run supabase:status
+npm run supabase:stop
+```
+
+注意：`supabase start` 需要先安裝並啟動 Docker Desktop。
 
 ## GitHub Pages
 
