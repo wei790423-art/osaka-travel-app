@@ -81,7 +81,7 @@ window.SUPABASE_CONFIG = {
 };
 ```
 
-GitHub Pages 目前會連到正式 Supabase Cloud 專案 `lmvbzbttpelygnhjjckf`，使用 `supabase-config.js` 內的 publishable key。不要把 secret key 或 service_role key 放進前端檔案。
+GitHub Pages 目前會連到正式 Supabase Cloud 專案 `pxbqalvbgbyybhlnqvvy`，使用 `supabase-config.js` 內的 publishable key。不要把 secret key 或 service_role key 放進前端檔案。
 
 ## GitHub Pages
 

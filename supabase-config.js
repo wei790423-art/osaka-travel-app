@@ -6,6 +6,6 @@ window.SUPABASE_CONFIG = isLocalSupabaseHost
       publishableKey: "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
     }
   : {
-      url: "https://lmvbzbttpelygnhjjckf.supabase.co",
-      publishableKey: "sb_publishable_ttuHHquUpv-_QSwOCWNBuw_YvH-EDOJ"
+      url: "https://pxbqalvbgbyybhlnqvvy.supabase.co",
+      publishableKey: "sb_publishable_WqCEK107DY-v2qsc6ezU7g_lFvV8TjF"
     };
