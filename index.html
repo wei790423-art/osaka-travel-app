@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260530-range-import" />
+    <link rel="stylesheet" href="styles.css?v=20260530-auth" />
   </head>
   <body>
     <main class="app-shell">
@@ -107,6 +107,35 @@
               <button id="createTripFromImport" type="button">貼上文字建立行程</button>
               <p id="newTripImportStatus" aria-live="polite">可辨識每日景點、三餐、住宿、交通與預算。</p>
             </div>
+          </div>
+          <div class="cloud-panel" aria-label="Supabase 雲端登入與同步">
+            <div class="cloud-panel__heading">
+              <div>
+                <h3>雲端同步</h3>
+                <p id="cloudStatus">尚未登入，資料目前只存在這台瀏覽器。</p>
+              </div>
+              <span id="cloudUserBadge">Local</span>
+            </div>
+            <div class="cloud-auth-grid">
+              <div class="field">
+                <label for="authEmail">Email</label>
+                <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+              </div>
+              <div class="field">
+                <label for="authPassword">密碼</label>
+                <input id="authPassword" type="password" autocomplete="current-password" placeholder="至少 6 碼" />
+              </div>
+              <div class="cloud-actions">
+                <button id="signIn" type="button">登入</button>
+                <button id="signUp" type="button">註冊</button>
+                <button id="signOut" type="button" class="is-hidden">登出</button>
+              </div>
+            </div>
+            <div class="cloud-sync-actions">
+              <button id="syncTripToCloud" type="button" disabled>同步目前行程</button>
+              <button id="refreshCloudTrips" type="button" disabled>重新整理雲端行程</button>
+            </div>
+            <div class="cloud-trip-list" id="cloudTripList"></div>
           </div>
         </section>
 
@@ -490,6 +519,8 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260530-range-import"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=20260530-auth"></script>
+    <script src="app.js?v=20260530-auth"></script>
   </body>
 </html>

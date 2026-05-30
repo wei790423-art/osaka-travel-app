@@ -68,6 +68,21 @@ npm run supabase:stop
 
 注意：`supabase start` 需要先安裝並啟動 Docker Desktop。
 
+## Supabase 登入與同步
+
+目前 App 已接上 Supabase Email/Password Auth 與 `trips` 雲端同步。前端只使用 publishable key，資料保護依靠 Supabase Auth JWT 與資料表 RLS。
+
+本機開發預設讀取 `supabase-config.js`，而且只會在 `localhost` / `127.0.0.1` 啟用本機 Supabase：
+
+```js
+window.SUPABASE_CONFIG = {
+  url: "http://127.0.0.1:54321",
+  publishableKey: "sb_publishable_..."
+};
+```
+
+部署到正式 Supabase 專案時，請把 `supabase-config.js` 的正式環境設定改成正式專案的 `url` 與 `publishableKey`；不要把 secret key 或 service_role key 放進前端檔案。
+
 ## GitHub Pages
 
 這是純 HTML/CSS/JavaScript 專案，已包含 GitHub Pages Actions workflow。

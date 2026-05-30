@@ -3,6 +3,7 @@ const TRIP_COLLECTION_KEY = "global-trip-library-v1";
 const ACTIVE_TRIP_ID_KEY = "global-trip-active-id-v1";
 const HISTORY_KEY = "global-trip-history-v1";
 const THEME_KEY = "global-trip-theme-v1";
+const CLOUD_TRIP_MAP_KEY = "global-trip-cloud-map-v1";
 const SHARE_PARAM = "share";
 const SHARE_LENGTH_WARNING = 6500;
 const DEFAULT_TWD_RATES = {
@@ -156,11 +157,17 @@ let history = loadHistory();
 let editingDayIndex = null;
 let plannerView = "home";
 let theme = localStorage.getItem(THEME_KEY) || "light";
+let supabaseClient = null;
+let supabaseSession = null;
+let cloudTripMap = loadCloudTripMap();
+let cloudTrips = [];
 
 const fields = {
   tripSelector: document.querySelector("#tripSelector"),
   newTripName: document.querySelector("#newTripName"),
   newTripImportText: document.querySelector("#newTripImportText"),
+  authEmail: document.querySelector("#authEmail"),
+  authPassword: document.querySelector("#authPassword"),
   tripName: document.querySelector("#tripName"),
   country: document.querySelector("#country"),
   baseCity: document.querySelector("#baseCity"),
@@ -214,6 +221,14 @@ const nodes = {
   renameTrip: document.querySelector("#renameTrip"),
   deleteTrip: document.querySelector("#deleteTrip"),
   newTripImportStatus: document.querySelector("#newTripImportStatus"),
+  cloudStatus: document.querySelector("#cloudStatus"),
+  cloudUserBadge: document.querySelector("#cloudUserBadge"),
+  signIn: document.querySelector("#signIn"),
+  signUp: document.querySelector("#signUp"),
+  signOut: document.querySelector("#signOut"),
+  syncTripToCloud: document.querySelector("#syncTripToCloud"),
+  refreshCloudTrips: document.querySelector("#refreshCloudTrips"),
+  cloudTripList: document.querySelector("#cloudTripList"),
   tripLibraryStatus: document.querySelector("#tripLibraryStatus"),
   statDays: document.querySelector("#statDays"),
   statStops: document.querySelector("#statStops"),
@@ -398,6 +413,18 @@ function loadHistory() {
   } catch {
     return [];
   }
+}
+
+function loadCloudTripMap() {
+  try {
+    return JSON.parse(localStorage.getItem(CLOUD_TRIP_MAP_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveCloudTripMap() {
+  localStorage.setItem(CLOUD_TRIP_MAP_KEY, JSON.stringify(cloudTripMap));
 }
 
 function makeTripId() {
@@ -1626,6 +1653,187 @@ function saveCurrentToHistory() {
   addTripToHistory(trip, "手動儲存");
   renderHistory();
   switchTab("history");
+}
+
+function createSupabaseClient() {
+  const config = globalThis.SUPABASE_CONFIG || {};
+  if (!globalThis.supabase?.createClient || !config.url || !config.publishableKey) return null;
+  return globalThis.supabase.createClient(config.url, config.publishableKey);
+}
+
+function setCloudStatus(message) {
+  if (nodes.cloudStatus) nodes.cloudStatus.textContent = message;
+}
+
+function cloudUserEmail() {
+  return supabaseSession?.user?.email || "";
+}
+
+function renderCloudAuthState() {
+  const signedIn = Boolean(supabaseSession?.user);
+  if (nodes.cloudUserBadge) nodes.cloudUserBadge.textContent = signedIn ? cloudUserEmail() : "Local";
+  if (nodes.signIn) nodes.signIn.classList.toggle("is-hidden", signedIn);
+  if (nodes.signUp) nodes.signUp.classList.toggle("is-hidden", signedIn);
+  if (nodes.signOut) nodes.signOut.classList.toggle("is-hidden", !signedIn);
+  if (nodes.syncTripToCloud) nodes.syncTripToCloud.disabled = !signedIn;
+  if (nodes.refreshCloudTrips) nodes.refreshCloudTrips.disabled = !signedIn;
+  if (!signedIn && nodes.cloudTripList) nodes.cloudTripList.innerHTML = "";
+}
+
+async function initSupabaseAuth() {
+  supabaseClient = createSupabaseClient();
+  if (!supabaseClient) {
+    setCloudStatus("尚未設定 Supabase，雲端登入暫不可用。");
+    renderCloudAuthState();
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.getSession();
+  if (error) {
+    setCloudStatus(`讀取登入狀態失敗：${error.message}`);
+  } else {
+    supabaseSession = data.session;
+    setCloudStatus(supabaseSession ? `已登入：${cloudUserEmail()}` : "尚未登入，資料目前只存在這台瀏覽器。");
+  }
+  renderCloudAuthState();
+  if (supabaseSession) await refreshCloudTrips();
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    supabaseSession = session;
+    setCloudStatus(session ? `已登入：${session.user.email}` : "已登出，資料會保留在這台瀏覽器。");
+    renderCloudAuthState();
+    if (session) refreshCloudTrips();
+  });
+}
+
+function authCredentials() {
+  return {
+    email: fields.authEmail?.value.trim() || "",
+    password: fields.authPassword?.value || ""
+  };
+}
+
+async function signInWithEmail() {
+  if (!supabaseClient) return setCloudStatus("Supabase 尚未設定。");
+  const { email, password } = authCredentials();
+  if (!email || password.length < 6) return setCloudStatus("請輸入 Email 與至少 6 碼密碼。");
+  setCloudStatus("登入中...");
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) setCloudStatus(`登入失敗：${error.message}`);
+}
+
+async function signUpWithEmail() {
+  if (!supabaseClient) return setCloudStatus("Supabase 尚未設定。");
+  const { email, password } = authCredentials();
+  if (!email || password.length < 6) return setCloudStatus("請輸入 Email 與至少 6 碼密碼。");
+  setCloudStatus("建立帳號中...");
+  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+  if (error) {
+    setCloudStatus(`註冊失敗：${error.message}`);
+    return;
+  }
+  if (data.session) {
+    supabaseSession = data.session;
+    renderCloudAuthState();
+    setCloudStatus(`已註冊並登入：${email}`);
+    await syncCurrentTripToCloud();
+  } else {
+    setCloudStatus("註冊完成，請到 Mailpit 或信箱完成驗證後再登入。");
+  }
+}
+
+async function signOutCloud() {
+  if (!supabaseClient) return;
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) setCloudStatus(`登出失敗：${error.message}`);
+}
+
+function tripCloudPayload(sourceTrip = trip) {
+  const normalized = normalizeTrip(sourceTrip);
+  return {
+    name: normalized.name,
+    country: normalized.country,
+    base_city: normalized.baseCity,
+    start_date: normalized.startDate || null,
+    trip_data: {
+      ...normalized,
+      localTripId: activeTripId,
+      syncedAt: new Date().toISOString()
+    }
+  };
+}
+
+async function syncCurrentTripToCloud() {
+  if (!supabaseClient || !supabaseSession?.user) return setCloudStatus("請先登入再同步。");
+  saveTrip();
+  setCloudStatus("正在同步目前行程...");
+  const payload = {
+    ...tripCloudPayload(trip),
+    user_id: supabaseSession.user.id
+  };
+  const cloudId = cloudTripMap[activeTripId];
+  const query = cloudId
+    ? supabaseClient.from("trips").update(payload).eq("id", cloudId).select("id").single()
+    : supabaseClient.from("trips").insert(payload).select("id").single();
+  const { data, error } = await query;
+  if (error) {
+    setCloudStatus(`同步失敗：${error.message}`);
+    return;
+  }
+  cloudTripMap[activeTripId] = data.id;
+  saveCloudTripMap();
+  setCloudStatus(`已同步「${trip.name}」到雲端。`);
+  await refreshCloudTrips();
+}
+
+async function refreshCloudTrips() {
+  if (!supabaseClient || !supabaseSession?.user) return;
+  const { data, error } = await supabaseClient
+    .from("trips")
+    .select("id,name,country,base_city,start_date,trip_data,updated_at")
+    .order("updated_at", { ascending: false });
+  if (error) {
+    setCloudStatus(`讀取雲端行程失敗：${error.message}`);
+    return;
+  }
+  cloudTrips = data || [];
+  renderCloudTrips();
+}
+
+function renderCloudTrips() {
+  if (!nodes.cloudTripList) return;
+  nodes.cloudTripList.innerHTML = cloudTrips.length
+    ? cloudTrips.map((entry) => `
+        <article class="cloud-trip-card">
+          <div>
+            <strong>${escapeHtml(entry.name || "未命名旅行")}</strong>
+            <span>${escapeHtml(entry.country || "未填國家")}・${escapeHtml(entry.base_city || "未填城市")}｜${new Date(entry.updated_at).toLocaleString("zh-TW")}</span>
+          </div>
+          <button type="button" data-load-cloud-trip="${escapeHtml(entry.id)}">載入</button>
+        </article>
+      `).join("")
+    : `<div class="empty-state">尚未同步任何雲端行程。</div>`;
+  nodes.cloudTripList.querySelectorAll("[data-load-cloud-trip]").forEach((button) => {
+    button.addEventListener("click", () => loadCloudTrip(button.dataset.loadCloudTrip));
+  });
+}
+
+function loadCloudTrip(cloudId) {
+  const entry = cloudTrips.find((item) => item.id === cloudId);
+  if (!entry?.trip_data) return;
+  addTripToHistory(trip, "載入雲端行程前備份");
+  trip = normalizeTrip(entry.trip_data);
+  const localId = entry.trip_data.localTripId || makeTripId();
+  activeTripId = localId;
+  cloudTripMap[activeTripId] = entry.id;
+  saveCloudTripMap();
+  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
+  localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
+  saveTrip();
+  syncFields();
+  showPlannerDetail();
+  render();
+  setCloudStatus(`已載入雲端行程「${trip.name}」。`);
 }
 
 function switchActiveTrip(tripId, openDetail = false) {
@@ -2872,6 +3080,11 @@ nodes.createTrip.addEventListener("click", createNewTrip);
 nodes.createTripFromImport.addEventListener("click", createTripFromImport);
 nodes.renameTrip.addEventListener("click", renameActiveTrip);
 nodes.deleteTrip.addEventListener("click", deleteActiveTrip);
+nodes.signIn.addEventListener("click", signInWithEmail);
+nodes.signUp.addEventListener("click", signUpWithEmail);
+nodes.signOut.addEventListener("click", signOutCloud);
+nodes.syncTripToCloud.addEventListener("click", syncCurrentTripToCloud);
+nodes.refreshCloudTrips.addEventListener("click", refreshCloudTrips);
 nodes.addSample.addEventListener("click", addSampleDay);
 nodes.clearTrip.addEventListener("click", clearTrip);
 nodes.loadOsaka.addEventListener("click", loadOsakaTrip);
@@ -2897,3 +3110,4 @@ renderGuideLinks();
 renderFoodSearch();
 render();
 registerServiceWorker();
+initSupabaseAuth();

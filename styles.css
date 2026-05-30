@@ -1888,6 +1888,127 @@ h1 {
   font-size: 0.9rem;
 }
 
+.cloud-panel {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(0, 109, 113, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.cloud-panel__heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cloud-panel__heading h3 {
+  margin: 0 0 4px;
+  color: #173235;
+  font-size: 1rem;
+}
+
+.cloud-panel__heading p {
+  margin: 0;
+  color: #5d6b6d;
+  font-size: 0.9rem;
+}
+
+.cloud-panel__heading span {
+  max-width: 240px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 109, 113, 0.18);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #006d71;
+  background: #eef9f7;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cloud-auth-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 0.8fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.cloud-actions,
+.cloud-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cloud-actions button,
+.cloud-sync-actions button,
+.cloud-trip-card button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 16px;
+  color: #fff;
+  background: #006d71;
+  font-weight: 900;
+}
+
+.cloud-actions button:nth-child(2) {
+  color: #173235;
+  background: #ffd36a;
+}
+
+.cloud-actions button:nth-child(3),
+.cloud-trip-card button {
+  color: #173235;
+  background: #eef9f7;
+  border: 1px solid rgba(0, 109, 113, 0.18);
+}
+
+.cloud-sync-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+.cloud-trip-list {
+  display: grid;
+  gap: 10px;
+}
+
+.cloud-trip-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(0, 109, 113, 0.12);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.cloud-trip-card strong,
+.cloud-trip-card span {
+  display: block;
+}
+
+.cloud-trip-card strong {
+  color: #173235;
+}
+
+.cloud-trip-card span {
+  margin-top: 4px;
+  color: #5d6b6d;
+  font-size: 0.86rem;
+}
+
 :root[data-theme="dark"] .trip-library-panel {
   border-color: rgba(127, 219, 214, 0.2);
   background: linear-gradient(135deg, rgba(27, 37, 43, 0.96), rgba(18, 28, 34, 0.94));
@@ -1906,6 +2027,30 @@ h1 {
 
 :root[data-theme="dark"] .quick-import-trip__actions p {
   color: #b8c8ca;
+}
+
+:root[data-theme="dark"] .cloud-panel,
+:root[data-theme="dark"] .cloud-trip-card {
+  border-color: rgba(127, 219, 214, 0.16);
+  background: rgba(12, 18, 22, 0.58);
+}
+
+:root[data-theme="dark"] .cloud-panel__heading h3,
+:root[data-theme="dark"] .cloud-trip-card strong {
+  color: #edf7f6;
+}
+
+:root[data-theme="dark"] .cloud-panel__heading p,
+:root[data-theme="dark"] .cloud-trip-card span {
+  color: #b8c8ca;
+}
+
+:root[data-theme="dark"] .cloud-panel__heading span,
+:root[data-theme="dark"] .cloud-actions button:nth-child(3),
+:root[data-theme="dark"] .cloud-trip-card button {
+  color: #9ee8e0;
+  background: rgba(127, 219, 214, 0.1);
+  border-color: rgba(127, 219, 214, 0.2);
 }
 
 :root[data-theme="dark"] .trip-library-actions button:nth-child(2) {
@@ -1928,6 +2073,15 @@ h1 {
 
   .trip-library-actions button {
     flex: 1 1 140px;
+  }
+
+  .cloud-auth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cloud-trip-card {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
