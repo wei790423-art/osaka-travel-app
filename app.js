@@ -236,6 +236,10 @@ const nodes = {
   renameTrip: document.querySelector("#renameTrip"),
   deleteTrip: document.querySelector("#deleteTrip"),
   newTripImportStatus: document.querySelector("#newTripImportStatus"),
+  cloudDialog: document.querySelector("#cloudDialog"),
+  openCloudPanel: document.querySelector("#openCloudPanel"),
+  closeCloudPanel: document.querySelector("#closeCloudPanel"),
+  cloudNavLabel: document.querySelector("#cloudNavLabel"),
   cloudStatus: document.querySelector("#cloudStatus"),
   cloudUserBadge: document.querySelector("#cloudUserBadge"),
   signIn: document.querySelector("#signIn"),
@@ -1819,12 +1823,31 @@ function cloudUserEmail() {
 function renderCloudAuthState() {
   const signedIn = Boolean(supabaseSession?.user);
   if (nodes.cloudUserBadge) nodes.cloudUserBadge.textContent = signedIn ? cloudUserEmail() : "Local";
+  if (nodes.cloudNavLabel) nodes.cloudNavLabel.textContent = signedIn ? "已開啟同步" : "雲端同步";
+  if (nodes.openCloudPanel) {
+    nodes.openCloudPanel.classList.toggle("is-synced", signedIn);
+    nodes.openCloudPanel.setAttribute("aria-label", signedIn ? `雲端同步已開啟：${cloudUserEmail()}` : "登入並開啟雲端同步");
+  }
+  document.querySelectorAll(".auth-credential").forEach((field) => field.classList.toggle("is-hidden", signedIn));
   if (nodes.signIn) nodes.signIn.classList.toggle("is-hidden", signedIn);
   if (nodes.signUp) nodes.signUp.classList.toggle("is-hidden", signedIn);
   if (nodes.signOut) nodes.signOut.classList.toggle("is-hidden", !signedIn);
   if (nodes.syncTripToCloud) nodes.syncTripToCloud.disabled = !signedIn;
   if (nodes.refreshCloudTrips) nodes.refreshCloudTrips.disabled = !signedIn;
   if (!signedIn && nodes.cloudTripList) nodes.cloudTripList.innerHTML = "";
+}
+
+function openCloudPanel() {
+  if (!nodes.cloudDialog) return;
+  if (typeof nodes.cloudDialog.showModal === "function") nodes.cloudDialog.showModal();
+  else nodes.cloudDialog.setAttribute("open", "");
+  if (!supabaseSession?.user) fields.authEmail?.focus();
+}
+
+function closeCloudPanel() {
+  if (!nodes.cloudDialog) return;
+  if (typeof nodes.cloudDialog.close === "function") nodes.cloudDialog.close();
+  else nodes.cloudDialog.removeAttribute("open");
 }
 
 function clearCloudAutoSync() {
@@ -3560,8 +3583,13 @@ nodes.deleteTrip.addEventListener("click", deleteActiveTrip);
 nodes.signIn.addEventListener("click", signInWithEmail);
 nodes.signUp.addEventListener("click", signUpWithEmail);
 nodes.signOut.addEventListener("click", signOutCloud);
-nodes.syncTripToCloud.addEventListener("click", syncCurrentTripToCloud);
-nodes.refreshCloudTrips.addEventListener("click", refreshCloudTrips);
+if (nodes.syncTripToCloud) nodes.syncTripToCloud.addEventListener("click", syncCurrentTripToCloud);
+if (nodes.refreshCloudTrips) nodes.refreshCloudTrips.addEventListener("click", refreshCloudTrips);
+nodes.openCloudPanel.addEventListener("click", openCloudPanel);
+nodes.closeCloudPanel.addEventListener("click", closeCloudPanel);
+nodes.cloudDialog.addEventListener("click", (event) => {
+  if (event.target === nodes.cloudDialog) closeCloudPanel();
+});
 nodes.addSample.addEventListener("click", addSampleDay);
 nodes.clearTrip.addEventListener("click", clearTrip);
 nodes.loadOsaka.addEventListener("click", loadOsakaTrip);

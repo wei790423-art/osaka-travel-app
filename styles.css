@@ -175,6 +175,41 @@ h1 {
   color: #fff;
 }
 
+.cloud-nav-button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 42px;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 109, 113, 0.28);
+  border-radius: 8px;
+  color: #005d61;
+  background: rgba(238, 249, 247, 0.94);
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(26, 32, 39, 0.08);
+}
+
+.cloud-nav-button__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #9ba4a2;
+}
+
+.cloud-nav-button.is-synced {
+  color: #fff;
+  border-color: #006d71;
+  background: #006d71;
+}
+
+.cloud-nav-button.is-synced .cloud-nav-button__dot {
+  background: #91e6c7;
+  box-shadow: 0 0 0 3px rgba(145, 230, 199, 0.2);
+}
+
 .tab-panel {
   display: none;
 }
@@ -2006,13 +2041,74 @@ h1 {
 }
 
 .cloud-panel {
-  margin-top: 18px;
   display: grid;
   gap: 14px;
   padding: 16px;
   border: 1px solid rgba(0, 109, 113, 0.16);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.74);
+}
+
+.cloud-dialog {
+  width: min(720px, calc(100% - 28px));
+  max-height: min(760px, calc(100vh - 36px));
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: var(--shadow);
+}
+
+.cloud-dialog::backdrop {
+  background: rgba(18, 24, 26, 0.56);
+  backdrop-filter: blur(4px);
+}
+
+.cloud-dialog .cloud-panel {
+  overflow: auto;
+  max-height: min(760px, calc(100vh - 36px));
+  padding: 22px;
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.cloud-dialog__close {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--soft);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cloud-account-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cloud-account-row span {
+  max-width: 260px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 109, 113, 0.18);
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #006d71;
+  background: #eef9f7;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cloud-account-row strong {
+  color: var(--muted);
+  font-size: 0.84rem;
 }
 
 .cloud-panel__heading {
@@ -2163,6 +2259,7 @@ h1 {
 }
 
 :root[data-theme="dark"] .cloud-panel__heading span,
+:root[data-theme="dark"] .cloud-account-row span,
 :root[data-theme="dark"] .cloud-actions button:nth-child(3),
 :root[data-theme="dark"] .cloud-trip-card button {
   color: #9ee8e0;
@@ -2199,6 +2296,10 @@ h1 {
   .cloud-trip-card {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .cloud-nav-button {
+    margin-left: 0;
   }
 }
 
