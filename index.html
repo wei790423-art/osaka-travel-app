@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260531-cloud-nav" />
+    <link rel="stylesheet" href="styles.css?v=20260531-flight-lookup" />
   </head>
   <body>
     <main class="app-shell">
@@ -136,6 +136,7 @@
             <label for="flightNo">航班號</label>
             <input id="flightNo" type="text" placeholder="例如：BR132 / JL816" />
             <a class="field-link" id="flightLookup" href="https://www.flightaware.com/live/" target="_blank" rel="noreferrer">查詢航班時刻</a>
+            <small class="flight-lookup-status" id="flightLookupStatus" aria-live="polite">輸入航班號後會自動查詢時刻。</small>
           </div>
           <div class="field">
             <label for="flightDeparture">起飛時間</label>
@@ -539,6 +540,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260531-cloud-default"></script>
-    <script src="app.js?v=20260531-cloud-nav"></script>
+    <script src="app.js?v=20260531-flight-lookup"></script>
   </body>
 </html>

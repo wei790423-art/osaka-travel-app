@@ -231,6 +231,7 @@ const nodes = {
   backToPlannerHome: document.querySelector("#backToPlannerHome"),
   homeNavButton: document.querySelector("#homeNavButton"),
   flightLookup: document.querySelector("#flightLookup"),
+  flightLookupStatus: document.querySelector("#flightLookupStatus"),
   dayFlightFields: document.querySelector("#dayFlightFields"),
   createTrip: document.querySelector("#createTrip"),
   renameTrip: document.querySelector("#renameTrip"),
@@ -745,6 +746,81 @@ function flightLookupUrl(flightNo = "") {
     : "https://www.flightaware.com/live/";
 }
 
+let flightLookupTimer = null;
+let lastFlightLookupKey = "";
+
+function setFlightLookupStatus(message, state = "") {
+  if (!nodes.flightLookupStatus) return;
+  nodes.flightLookupStatus.textContent = message;
+  nodes.flightLookupStatus.dataset.state = state;
+}
+
+function flightLookupEndpoint() {
+  const url = String(globalThis.SUPABASE_CONFIG?.url || "").replace(/\/$/, "");
+  return url ? `${url}/functions/v1/flight-lookup` : "";
+}
+
+function formatFlightScheduleTime(value, airport = {}, fallback = "") {
+  if (!value) return fallback;
+  try {
+    const formatted = new Intl.DateTimeFormat("zh-TW", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: airport.timezone || undefined
+    }).format(new Date(value));
+    return `${formatted} ${airport.code || ""}`.trim();
+  } catch {
+    return `${value} ${airport.code || ""}`.trim();
+  }
+}
+
+async function lookupPrimaryFlightSchedule() {
+  const flightNo = fields.flightNo.value.trim();
+  const date = fields.startDate.value || trip.startDate || "";
+  const endpoint = flightLookupEndpoint();
+  if (!flightNo || !endpoint) return;
+  const lookupKey = `${flightNo}|${date}`;
+  if (lookupKey === lastFlightLookupKey) return;
+  lastFlightLookupKey = lookupKey;
+  setFlightLookupStatus("正在查詢航班時刻...", "loading");
+  const config = globalThis.SUPABASE_CONFIG || {};
+  const params = new URLSearchParams({ flightNo });
+  if (date) params.set("date", date);
+  try {
+    const response = await fetch(`${endpoint}?${params}`, {
+      headers: {
+        apikey: config.publishableKey || "",
+        Authorization: `Bearer ${config.publishableKey || ""}`
+      }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (data.code === "flight_provider_not_configured") {
+        setFlightLookupStatus("尚未設定航班資料 API，暫時請點上方連結查詢。", "warning");
+      } else {
+        setFlightLookupStatus(data.error || "查不到此航班，請確認航班號與出發日期。", "warning");
+      }
+      lastFlightLookupKey = "";
+      return;
+    }
+    fields.flightDeparture.value = formatFlightScheduleTime(data.departure?.scheduled, data.departure?.airport);
+    fields.flightArrival.value = formatFlightScheduleTime(data.arrival?.scheduled, data.arrival?.airport);
+    updateTripFromFields();
+    setFlightLookupStatus(`已自動帶入 ${data.flightNo || flightNo} 的預定時刻。`, "success");
+  } catch {
+    lastFlightLookupKey = "";
+    setFlightLookupStatus("目前無法連線至航班查詢服務，仍可手動輸入時間。", "warning");
+  }
+}
+
+function queuePrimaryFlightLookup() {
+  clearTimeout(flightLookupTimer);
+  flightLookupTimer = setTimeout(lookupPrimaryFlightSchedule, 550);
+}
+
 function formatLocal(value, currencyOverride = trip.currency) {
   const currency = normalizeCurrency(currencyOverride);
   try {
@@ -897,10 +973,6 @@ function landmarkDirectionsUrl(landmark, day) {
 
 function dayLandmarks(day) {
   return day.landmarks?.length ? day.landmarks : [day.place].filter(Boolean);
-}
-
-function primaryLandmark(day) {
-  return dayLandmarks(day)[0] || "";
 }
 
 function routePlaceLines(value) {
@@ -1326,10 +1398,6 @@ function render() {
     });
   });
 
-  document.querySelectorAll("[data-landmark-select]").forEach((select) => {
-    select.addEventListener("change", () => updateLandmarkMap(select));
-  });
-
   document.querySelectorAll("[data-toggle-edit-flight]").forEach((checkbox) => {
     checkbox.addEventListener("change", () => {
       const fieldsContainer = document.querySelector(`[data-edit-flight-fields="${checkbox.dataset.toggleEditFlight}"]`);
@@ -1351,7 +1419,6 @@ function renderDay(day, index) {
   if (editingDayIndex === index) return renderDayEditor(day, index);
   const mealPlan = normalizeMealPlan(day);
   const landmarks = dayLandmarks(day);
-  const selectedLandmark = primaryLandmark(day);
   const dayDateText = formatTripDate(dateForDay(index));
   const dayDate = dateForDay(index);
   const dateKey = dayDate ? `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}` : "";
@@ -1396,19 +1463,6 @@ function renderDay(day, index) {
         </dl>
         ${day.flightNo ? `<div class="note-box"><span>當日轉機 / 額外班機</span><p>${escapeHtml(day.flightNo)}${day.flightDeparture ? `｜起飛 ${escapeHtml(day.flightDeparture)}` : ""}${day.flightArrival ? `｜抵達 ${escapeHtml(day.flightArrival)}` : ""}｜<a href="${flightLookupUrl(day.flightNo)}" target="_blank" rel="noreferrer">查詢航班時刻</a></p></div>` : ""}
         ${day.notes ? `<div class="note-box"><span>每日備註</span><p>${escapeHtml(day.notes)}</p></div>` : ""}
-        <div class="map-card">
-          <div class="map-toolbar" aria-label="景點導航選單">
-            <label>
-              <span>確定景點快速導航</span>
-              <select data-landmark-select="${index}">
-                ${landmarks.map((landmark) => `<option value="${escapeHtml(landmark)}">${escapeHtml(landmark)}</option>`).join("")}
-              </select>
-            </label>
-            <div class="map-actions">
-              <a data-landmark-directions="${index}" href="${selectedLandmark ? landmarkDirectionsUrl(selectedLandmark, day) : "#"}" target="_blank" rel="noreferrer">目前位置導航</a>
-            </div>
-          </div>
-        </div>
         <div class="day-map-section">
           <div class="day-map-heading">景點地圖</div>
           <div id="dayMap-${index}" class="day-map-container" data-expanded="true"></div>
@@ -1436,15 +1490,6 @@ function renderDay(day, index) {
       </div>
     </article>
   `;
-}
-
-function updateLandmarkMap(select) {
-  const dayIndex = Number(select.dataset.landmarkSelect);
-  const day = trip.days[dayIndex];
-  if (!day) return;
-  const landmark = select.value;
-  const directionsLink = document.querySelector(`[data-landmark-directions="${dayIndex}"]`);
-  if (directionsLink) directionsLink.href = landmarkDirectionsUrl(landmark, day);
 }
 
 const LANDMARK_PHOTO_CACHE_KEY = "trip-landmark-photo-cache-v1";
@@ -2825,6 +2870,12 @@ document.querySelectorAll("[data-tab-target]").forEach((button) => {
 
 [fields.tripName, fields.startDate, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.rate, fields.pace].forEach((field) => {
   field.addEventListener("input", updateTripFromFields);
+});
+fields.flightNo.addEventListener("input", queuePrimaryFlightLookup);
+fields.flightNo.addEventListener("blur", lookupPrimaryFlightSchedule);
+fields.startDate.addEventListener("change", () => {
+  lastFlightLookupKey = "";
+  queuePrimaryFlightLookup();
 });
 [fields.country, fields.baseCity].forEach((field) => {
   field.addEventListener("input", () => {

@@ -13,7 +13,7 @@
 - 自訂旅行名稱、國家、城市、幣別與匯率
 - 輸入出發日期後，自動代入每日日期與星期
 - 每天可個別記錄住宿飯店
-- 可記錄航班號、起飛時間與抵達時間，並開啟 FlightAware 查詢航班時刻
+- 可記錄航班號、起飛時間與抵達時間；設定 FlightAware AeroAPI 後，輸入航班號會自動帶入預定時刻
 - 每日可選填轉機或額外班機，不需要時保持隱藏
 - 支援深色模式，偏好會保存在瀏覽器
 - 一鍵載入大阪 8 天 7 夜範例
@@ -22,7 +22,7 @@
 - 每天可記錄訂位、票券編號、集合地點等每日備註
 - 每天可分別填早餐、午餐、晚餐店名
 - 移動方式用選單選擇，並可產生地圖查詢入口
-- 每天可設定多個景點地標，常駐顯示定位地圖，並用下拉選單從目前位置直接開啟 Google Maps 導航
+- 每天可設定多個景點地標，常駐顯示定位地圖，並在每個景點旁直接開啟 Google Maps 導航
 - 景點清單會自動載入 Wikimedia 景點縮圖，並可直接拖拉有編號的景點列調整順序
 - 可產生網址分享連結，打開後直接載入成可編輯行程
 - 載入分享連結前會自動把原本行程備份到歷史行程
@@ -86,6 +86,17 @@ window.SUPABASE_CONFIG = {
 ```
 
 GitHub Pages 目前會連到正式 Supabase Cloud 專案 `pxbqalvbgbyybhlnqvvy`，使用 `supabase-config.js` 內的 publishable key。不要把 secret key 或 service_role key 放進前端檔案。
+
+## 航班自動查詢
+
+前端輸入航班號後，會呼叫 Supabase Edge Function `flight-lookup` 查詢 FlightAware AeroAPI，並自動帶入預定起飛與抵達時間。第三方 API key 只能放在 Supabase Secret，不可寫入前端：
+
+```powershell
+npx supabase secrets set FLIGHTAWARE_AEROAPI_KEY=你的金鑰
+npx supabase functions deploy flight-lookup --no-verify-jwt
+```
+
+尚未設定 API key 時，App 仍可手動輸入時間，並可使用 FlightAware 連結開啟查詢頁。
 
 ## GitHub Pages
 

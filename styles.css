@@ -248,6 +248,20 @@ h1 {
   font-weight: 700;
 }
 
+.flight-lookup-status {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.flight-lookup-status[data-state="success"] {
+  color: var(--teal);
+}
+
+.flight-lookup-status[data-state="warning"] {
+  color: var(--accent-dark);
+}
+
 .field select,
 .field input,
 .day-form input,
