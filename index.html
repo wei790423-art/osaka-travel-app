@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260530-ui-polish" />
+    <link rel="stylesheet" href="styles.css?v=20260530-route-builder" />
   </head>
   <body>
     <main class="app-shell">
@@ -199,6 +199,25 @@
               <button type="submit">新增行程</button>
             </form>
           </article>
+        </section>
+
+        <section class="route-studio" aria-label="景點池自動排程">
+          <div class="route-studio__intro">
+            <p class="eyebrow">Route Builder</p>
+            <h2>景點池自動排程</h2>
+            <p>把所有想去的景點一次貼上，系統會依地理位置估算順路順序，先排成每日路線；之後你仍可用拖拉微調。</p>
+          </div>
+          <div class="route-studio__form">
+            <textarea id="placePoolText" rows="7" placeholder="每行一個地點，例如：&#10;大阪城&#10;黑門市場&#10;道頓堀&#10;梅田藍天大廈&#10;通天閣"></textarea>
+            <div class="route-studio__controls">
+              <label>
+                分配天數
+                <input id="placePoolDays" type="number" min="1" max="30" value="3" />
+              </label>
+              <button id="optimizePlaces" type="button">自動安排順序</button>
+            </div>
+            <p id="placePoolStatus" class="route-status" aria-live="polite">輸入景點後即可自動排序。</p>
+          </div>
         </section>
 
         <section class="agency-book" aria-label="旅行社行程書">
@@ -463,6 +482,6 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js?v=20260530-ui-polish"></script>
+    <script src="app.js?v=20260530-route-builder"></script>
   </body>
 </html>

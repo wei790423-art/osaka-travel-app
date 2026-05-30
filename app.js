@@ -185,6 +185,8 @@ const fields = {
   dayNotes: document.querySelector("#dayNotes"),
   dayItems: document.querySelector("#dayItems"),
   dayBackupLandmarks: document.querySelector("#dayBackupLandmarks"),
+  placePoolText: document.querySelector("#placePoolText"),
+  placePoolDays: document.querySelector("#placePoolDays"),
   importText: document.querySelector("#importText"),
   ticketType: document.querySelector("#ticketType"),
   ticketName: document.querySelector("#ticketName"),
@@ -238,6 +240,8 @@ const nodes = {
   saveHistory: document.querySelector("#saveHistory"),
   saveHistoryTop: document.querySelector("#saveHistoryTop"),
   printItinerary: document.querySelector("#printItinerary"),
+  optimizePlaces: document.querySelector("#optimizePlaces"),
+  placePoolStatus: document.querySelector("#placePoolStatus"),
   createShareLink: document.querySelector("#createShareLink"),
   shareResult: document.querySelector("#shareResult"),
   offlineStatus: document.querySelector("#offlineStatus"),
@@ -802,6 +806,59 @@ function primaryLandmark(day) {
   return dayLandmarks(day)[0] || "";
 }
 
+function routePlaceLines(value) {
+  return uniqueList(
+    String(value || "")
+      .split(/\r?\n|、|，|,/)
+      .map((item) => item.replace(/^\d+[.)、\s-]*/, "").trim()),
+    80
+  );
+}
+
+function distanceKm(a, b) {
+  const toRad = (deg) => deg * Math.PI / 180;
+  const earth = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * earth * Math.asin(Math.sqrt(h));
+}
+
+function nearestRoute(points) {
+  if (points.length <= 2) return points;
+  const remaining = [...points];
+  const route = [remaining.shift()];
+  while (remaining.length) {
+    const last = route[route.length - 1];
+    let bestIndex = 0;
+    let bestDistance = Infinity;
+    remaining.forEach((point, index) => {
+      const distance = distanceKm(last.geo, point.geo);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    });
+    route.push(remaining.splice(bestIndex, 1)[0]);
+  }
+  return route;
+}
+
+function chunkPlaces(places, dayCount) {
+  const chunks = Array.from({ length: dayCount }, () => []);
+  places.forEach((place, index) => {
+    const bucket = Math.min(Math.floor(index * dayCount / places.length), dayCount - 1);
+    chunks[bucket].push(place);
+  });
+  return chunks;
+}
+
+function setPlacePoolStatus(message) {
+  if (nodes.placePoolStatus) nodes.placePoolStatus.textContent = message;
+}
+
 function renderTransportOptions(selected = "") {
   const options = ["", "步行", "步行 / 大眾運輸", "地鐵 / 電車", "巴士", "計程車", "租車自駕", "包車", "高鐵 / 新幹線", "飛機", "渡輪"];
   return options
@@ -829,6 +886,10 @@ function totalBudget(days = trip.days) {
   return days.reduce((sum, day) => sum + Number(day.budget || 0), 0);
 }
 
+function updatePlacePoolDefaults() {
+  if (fields.placePoolDays) fields.placePoolDays.value = Math.max(trip.days.length || 3, 1);
+}
+
 function syncFields() {
   if (fields.newTripName) fields.newTripName.value = trip.name;
   fields.tripName.value = trip.name;
@@ -841,6 +902,7 @@ function syncFields() {
   fields.currency.value = normalizeCurrency(trip.currency);
   fields.rate.value = trip.rate;
   fields.pace.value = trip.pace;
+  updatePlacePoolDefaults();
 }
 
 function tripOptionLabel(entry) {
@@ -1929,6 +1991,69 @@ async function geocode(query) {
   return null;
 }
 
+async function optimizePlacePool() {
+  const places = routePlaceLines(fields.placePoolText?.value || "");
+  if (!places.length) {
+    setPlacePoolStatus("請先輸入至少一個景點。");
+    return;
+  }
+
+  const dayCount = Math.max(1, Math.min(Number(fields.placePoolDays?.value) || trip.days.length || 1, 30));
+  nodes.optimizePlaces.disabled = true;
+  setPlacePoolStatus(`正在定位 ${places.length} 個景點並計算順路順序...`);
+
+  const located = [];
+  const missing = [];
+  for (const place of places) {
+    const geo = await geocode([place, trip.baseCity, trip.country].filter(Boolean).join(", "));
+    if (geo) {
+      located.push({ name: place, geo });
+    } else {
+      missing.push(place);
+    }
+  }
+
+  if (!located.length) {
+    nodes.optimizePlaces.disabled = false;
+    setPlacePoolStatus("目前找不到可排序的景點，請確認地點名稱或加上城市/國家。");
+    return;
+  }
+
+  const sorted = nearestRoute(located);
+  const chunks = chunkPlaces(sorted, dayCount);
+  const existingHotels = trip.days.map((day) => day.hotelName).filter(Boolean);
+  const existingMeals = trip.days.map((day) => normalizeMealPlan(day));
+
+  trip.days = chunks.map((group, index) => {
+    const names = group.map((item) => item.name);
+    const first = names[0] || trip.baseCity || "自選城市";
+    const last = names[names.length - 1] || first;
+    return normalizeDay({
+      title: names.length > 1 ? `${first} - ${last}` : first,
+      place: first,
+      hotelName: existingHotels[index] || existingHotels[index - 1] || "",
+      transportMode: "地圖順路規劃",
+      route: names.join(" -> "),
+      budget: trip.days[index]?.budget || 0,
+      mealPlan: existingMeals[index] || { breakfast: "", lunch: "", dinner: "" },
+      mapQuery: names.join(" "),
+      landmarks: names,
+      backupLandmarks: [],
+      notes: "由景點池自動排序產生，可再拖拉微調。",
+      photoUrl: "",
+      items: names.map((name, itemIndex) => `${String(itemIndex + 1).padStart(2, "0")}. ${name}`)
+    });
+  });
+
+  editingDayIndex = null;
+  saveTrip();
+  syncFields();
+  showPlannerDetail();
+  render();
+  nodes.optimizePlaces.disabled = false;
+  setPlacePoolStatus(`已排入 ${located.length} 個景點，共 ${dayCount} 天。${missing.length ? `未定位：${missing.join("、")}` : "全部景點已定位。"}`);
+}
+
 // ========== Trip Overview Map ==========
 let tripMapInstance = null;
 let tripMapRenderedKey = "";
@@ -2373,6 +2498,7 @@ nodes.loadOsaka.addEventListener("click", loadOsakaTrip);
 nodes.saveHistory.addEventListener("click", saveCurrentToHistory);
 nodes.saveHistoryTop.addEventListener("click", saveCurrentToHistory);
 nodes.printItinerary.addEventListener("click", printItineraryBook);
+nodes.optimizePlaces.addEventListener("click", optimizePlacePool);
 nodes.ticketForm.addEventListener("submit", addTicket);
 nodes.createShareLink.addEventListener("click", createShareLink);
 nodes.previewImport.addEventListener("click", previewImport);

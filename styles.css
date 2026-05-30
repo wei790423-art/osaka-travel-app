@@ -2382,6 +2382,105 @@ h1 {
   margin: 20px auto 0;
 }
 
+.route-studio {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: 18px;
+  width: min(1180px, calc(100% - 40px));
+  margin: 20px auto 0;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid var(--brand-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 246, 243, 0.92)),
+    radial-gradient(circle at top right, rgba(0, 109, 113, 0.14), transparent 34%);
+  box-shadow: 0 18px 45px rgba(21, 39, 39, 0.09);
+}
+
+.route-studio__intro h2 {
+  margin: 8px 0 10px;
+  color: var(--brand-ink);
+  font-size: clamp(1.7rem, 3.4vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.route-studio__intro p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.route-studio__form {
+  display: grid;
+  gap: 12px;
+}
+
+.route-studio textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.route-studio__controls {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.32fr) minmax(180px, 0.68fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.route-studio__controls label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.route-studio__controls input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.route-studio__controls button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--teal), #0d8585);
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: 0 14px 28px rgba(0, 109, 113, 0.18);
+}
+
+.route-studio__controls button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.route-status {
+  margin: 0;
+  color: var(--teal);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+:root[data-theme="dark"] .route-studio {
+  background:
+    linear-gradient(135deg, rgba(25, 29, 32, 0.96), rgba(19, 36, 38, 0.9)),
+    radial-gradient(circle at top right, rgba(85, 184, 188, 0.12), transparent 34%);
+  box-shadow: none;
+}
+
 .agency-cover-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 180px;
@@ -3182,6 +3281,7 @@ h1 {
 
 .trip-library-panel,
 .agency-book,
+.route-studio,
 .toolbar,
 .dashboard,
 .map-overview-wrap,
@@ -3226,6 +3326,7 @@ h1 {
 
   .agency-cover-card,
   .expert-route-panel,
+  .route-studio,
   .agency-grid {
     grid-template-columns: 1fr;
   }
@@ -3252,6 +3353,15 @@ h1 {
   .agency-book {
     width: min(100% - 24px, 1180px);
     margin-top: 18px;
+  }
+
+  .route-studio {
+    width: min(100% - 24px, 1180px);
+    padding: 18px;
+  }
+
+  .route-studio__controls {
+    grid-template-columns: 1fr;
   }
 
   .home-cover {
@@ -3317,6 +3427,7 @@ h1 {
   .toolbar,
   .dashboard .summary-panel:nth-child(2),
   .map-overview-wrap,
+  .route-studio,
   .side-panel,
   .guide-card a,
   .recommendation-card a,
