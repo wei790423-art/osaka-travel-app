@@ -1335,6 +1335,7 @@ function render() {
 
   renderTripMap();
   renderOpenDayMaps();
+  loadLandmarkPhotos();
   setupDragAndDrop();
   setupWithinDayOrdering();
   updateCountdown();
@@ -1344,7 +1345,6 @@ function render() {
 
 function renderDay(day, index) {
   if (editingDayIndex === index) return renderDayEditor(day, index);
-  const items = displayTimelineItems(day);
   const mealPlan = normalizeMealPlan(day);
   const landmarks = dayLandmarks(day);
   const selectedLandmark = primaryLandmark(day);
@@ -1405,22 +1405,25 @@ function renderDay(day, index) {
             </div>
           </div>
         </div>
-        <div class="order-panel" aria-label="景點順序">
-          <div class="order-panel__head">
-            <strong>景點順序</strong>
-            <span>拖拉可調整導航與地圖順序</span>
-          </div>
-          <ol class="landmark-order-list">
-            ${landmarks.map((landmark, landmarkIndex) => `<li draggable="true" data-landmark-order="${index}" data-landmark-index="${landmarkIndex}"><span>${landmarkIndex + 1}</span>${escapeHtml(landmark)}</li>`).join("")}
-          </ol>
-        </div>
         <div class="day-map-section">
           <div class="day-map-heading">景點地圖</div>
           <div id="dayMap-${index}" class="day-map-container" data-expanded="true"></div>
         </div>
         ${backups.length ? `<div class="backup-landmarks"><h4>備案景點</h4><div class="backup-tags">${backups.map(b => `<span class="backup-tag">${escapeHtml(b)}</span>`).join("")}</div></div>` : ""}
-        <ul class="timeline">
-          ${items.map((item) => `<li draggable="${item.sourceIndex >= 0 ? "true" : "false"}" data-timeline-order="${index}" data-timeline-index="${item.sourceIndex}"><time>${escapeHtml(item.label)}</time><span>${escapeHtml(item.text)}</span></li>`).join("")}
+        <ul class="landmark-detail-list" aria-label="景點清單">
+          ${landmarks.length
+            ? landmarks.map((landmark, landmarkIndex) => `
+                <li draggable="true" data-landmark-order="${index}" data-landmark-index="${landmarkIndex}">
+                  <div class="landmark-photo-wrap">
+                    <img data-landmark-photo="${escapeHtml(landmark)}" data-landmark-place="${escapeHtml(day.place || trip.baseCity)}" alt="${escapeHtml(landmark)} 景點照片" loading="lazy" />
+                  </div>
+                  <span class="landmark-step">${landmarkIndex + 1}</span>
+                  <strong>景點</strong>
+                  <span>${escapeHtml(landmark)}</span>
+                  <a href="${landmarkDirectionsUrl(landmark, day)}" target="_blank" rel="noreferrer">導航</a>
+                </li>
+              `).join("")
+            : `<li class="landmark-empty">尚未新增景點</li>`}
         </ul>
         <div class="cost-row">
           <span>${escapeHtml(day.transportMode || "尚未填移動方式")}</span>
@@ -1438,6 +1441,52 @@ function updateLandmarkMap(select) {
   const landmark = select.value;
   const directionsLink = document.querySelector(`[data-landmark-directions="${dayIndex}"]`);
   if (directionsLink) directionsLink.href = landmarkDirectionsUrl(landmark, day);
+}
+
+const LANDMARK_PHOTO_CACHE_KEY = "trip-landmark-photo-cache-v1";
+let landmarkPhotoCache;
+try { landmarkPhotoCache = JSON.parse(localStorage.getItem(LANDMARK_PHOTO_CACHE_KEY)) || {}; } catch { landmarkPhotoCache = {}; }
+
+function saveLandmarkPhotoCache() {
+  try { localStorage.setItem(LANDMARK_PHOTO_CACHE_KEY, JSON.stringify(landmarkPhotoCache)); } catch {}
+}
+
+async function fetchLandmarkPhoto(landmark, place) {
+  const key = `${landmark}|${place}`.toLowerCase();
+  if (key in landmarkPhotoCache) return landmarkPhotoCache[key];
+  const query = [landmark, place, trip.country].filter(Boolean).join(" ");
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    origin: "*",
+    generator: "search",
+    gsrsearch: query,
+    gsrlimit: "1",
+    prop: "pageimages",
+    piprop: "thumbnail",
+    pithumbsize: "480"
+  });
+  try {
+    const resp = await fetch(`https://zh.wikipedia.org/w/api.php?${params}`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const page = Object.values(data.query?.pages || {})[0];
+    const photo = page?.thumbnail?.source || null;
+    landmarkPhotoCache[key] = photo;
+    saveLandmarkPhotoCache();
+    return photo;
+  } catch {
+    return null;
+  }
+}
+
+function loadLandmarkPhotos() {
+  document.querySelectorAll("[data-landmark-photo]").forEach(async (image) => {
+    const photo = await fetchLandmarkPhoto(image.dataset.landmarkPhoto, image.dataset.landmarkPlace);
+    if (!photo || !image.isConnected) return;
+    image.src = photo;
+    image.classList.add("is-loaded");
+  });
 }
 
 function normalizeTimelineText(item) {
@@ -2981,10 +3030,10 @@ async function renderTripMap() {
   const points = [];
   for (let i = 0; i < trip.days.length; i++) {
     const day = trip.days[i];
-    const query = dayLandmarks(day)[0]
-      ? landmarkQuery(dayLandmarks(day)[0], day)
-      : [day.place, trip.baseCity, trip.country].filter(Boolean).join(", ");
-    const geo = await geocode(query);
+    const firstLandmark = dayLandmarks(day)[0];
+    const geo = firstLandmark
+      ? await geocodeLandmark(firstLandmark, day)
+      : await geocode([day.place, trip.baseCity, trip.country].filter(Boolean).join(", "));
     if (geo) points.push({ ...geo, index: i });
   }
 
@@ -3033,9 +3082,12 @@ async function renderTripMap() {
 // ========== Day Detail Maps ==========
 const dayMapInstances = {};
 let dayMapRenderGeneration = 0;
+let dayMapObserver = null;
 
 function clearDayMaps() {
   dayMapRenderGeneration += 1;
+  dayMapObserver?.disconnect();
+  dayMapObserver = null;
   Object.keys(dayMapInstances).forEach((index) => {
     dayMapInstances[index].remove();
     delete dayMapInstances[index];
@@ -3043,9 +3095,36 @@ function clearDayMaps() {
 }
 
 function renderOpenDayMaps() {
-  trip.days.forEach((day, index) => {
-    if (editingDayIndex !== index) renderDayMap(index);
+  const containers = [...document.querySelectorAll(".day-map-container")];
+  if (!("IntersectionObserver" in window)) {
+    containers.forEach((container) => renderDayMap(Number(container.id.replace("dayMap-", ""))));
+    return;
+  }
+  dayMapObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      dayMapObserver?.unobserve(entry.target);
+      renderDayMap(Number(entry.target.id.replace("dayMap-", "")));
+    });
+  }, { rootMargin: "360px 0px" });
+  containers.forEach((container) => {
+    container.innerHTML = '<div class="map-loading">正在準備景點地圖...</div>';
+    dayMapObserver.observe(container);
   });
+}
+
+async function geocodeLandmark(landmark, day) {
+  const queries = uniqueList([
+    landmarkQuery(landmark, day),
+    [landmark, day.place, trip.country].filter(Boolean).join(", "),
+    [landmark, trip.country].filter(Boolean).join(", "),
+    landmark
+  ]);
+  for (const query of queries) {
+    const geo = await geocode(query);
+    if (geo) return geo;
+  }
+  return null;
 }
 
 async function renderDayMap(index) {
@@ -3062,8 +3141,7 @@ async function renderDayMap(index) {
   const points = [];
 
   for (const lm of landmarks) {
-    const query = landmarkQuery(lm, day);
-    const geo = await geocode(query);
+    const geo = await geocodeLandmark(lm, day);
     if (generation !== dayMapRenderGeneration || !container.isConnected) return;
     if (geo) points.push({ ...geo, name: lm });
   }

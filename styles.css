@@ -1661,6 +1661,92 @@ h1 {
   background: #242018;
 }
 
+.landmark-detail-list {
+  display: grid;
+  gap: 0;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landmark-detail-list li {
+  display: grid;
+  grid-template-columns: 72px 28px 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 74px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: grab;
+}
+
+.landmark-photo-wrap {
+  width: 72px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.landmark-photo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.landmark-photo-wrap img.is-loaded {
+  opacity: 1;
+}
+
+.landmark-step {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.landmark-detail-list strong {
+  color: var(--accent);
+}
+
+.landmark-detail-list a {
+  color: var(--teal);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.landmark-detail-list .landmark-empty {
+  display: block;
+  min-height: auto;
+  color: var(--muted);
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .landmark-detail-list li {
+    grid-template-columns: 58px 24px 38px minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .landmark-photo-wrap {
+    width: 58px;
+    height: 48px;
+  }
+
+  .landmark-detail-list a {
+    grid-column: 4;
+  }
+}
+
 .field-link {
   display: inline-flex;
   margin-top: 6px;
@@ -1693,78 +1779,13 @@ h1 {
   display: none;
 }
 
-/* ========== Within Day Ordering ========== */
-.order-panel {
-  margin: 12px 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.order-panel__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.order-panel__head strong {
-  color: var(--accent);
-}
-
-.order-panel__head span {
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
-.landmark-order-list {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.landmark-order-list li,
 .timeline li[draggable="true"] {
   cursor: grab;
-}
-
-.landmark-order-list li {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid rgba(0, 109, 113, 0.14);
-  border-radius: 8px;
-  padding: 8px 10px;
-  color: var(--ink);
-  background: var(--paper);
-  font-weight: 800;
-}
-
-.landmark-order-list li span {
-  display: inline-flex;
-  width: 24px;
-  height: 24px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--accent);
-  font-size: 0.78rem;
 }
 
 .order-drag-over {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-}
-
-:root[data-theme="dark"] .order-panel,
-:root[data-theme="dark"] .landmark-order-list li {
-  background: rgba(18, 28, 34, 0.78);
 }
 
 /* ========== Drag and Drop ========== */
