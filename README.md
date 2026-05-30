@@ -81,7 +81,7 @@ window.SUPABASE_CONFIG = {
 };
 ```
 
-部署到正式 Supabase 專案時，請把 `supabase-config.js` 的正式環境設定改成正式專案的 `url` 與 `publishableKey`；不要把 secret key 或 service_role key 放進前端檔案。
+GitHub Pages 目前會連到正式 Supabase Cloud 專案 `lmvbzbttpelygnhjjckf`，使用 `supabase-config.js` 內的 publishable key。不要把 secret key 或 service_role key 放進前端檔案。
 
 ## GitHub Pages
 
