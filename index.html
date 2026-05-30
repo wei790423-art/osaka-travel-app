@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260530-import-fixes" />
+    <link rel="stylesheet" href="styles.css?v=20260531-map-flights" />
   </head>
   <body>
     <main class="app-shell">
@@ -160,6 +160,7 @@
           <div class="field">
             <label for="flightNo">航班號</label>
             <input id="flightNo" type="text" placeholder="例如：BR132 / JL816" />
+            <a class="field-link" id="flightLookup" href="https://www.flightaware.com/live/" target="_blank" rel="noreferrer">查詢航班時刻</a>
           </div>
           <div class="field">
             <label for="flightDeparture">起飛時間</label>
@@ -231,10 +232,19 @@
               <input id="dayMapQuery" type="text" placeholder="地圖搜尋，例如：大阪城 或 飯店到大阪城" />
               <input id="dayPhotoUrl" type="url" placeholder="照片網址，例如：https://..." />
               <textarea id="dayLandmarks" rows="3" placeholder="景點地標，每行一個，例如：大阪城&#10;梅田藍天大廈&#10;道頓堀"></textarea>
+              <label class="optional-flight-toggle">
+                <input id="dayHasFlight" type="checkbox" />
+                <span>當日有轉機或額外班機</span>
+              </label>
+              <div class="optional-flight-fields is-hidden" id="dayFlightFields">
+                <input id="dayFlightNo" type="text" placeholder="當日班機號，例如：MU581" />
+                <input id="dayFlightDeparture" type="text" placeholder="起飛時間，例如：14:30 PVG" />
+                <input id="dayFlightArrival" type="text" placeholder="抵達時間，例如：17:10 KMG" />
+              </div>
               <textarea id="dayBackupLandmarks" rows="2" placeholder="備案景點（雨天或臨時替換），每行一個"></textarea>
               <textarea id="dayNotes" rows="3" placeholder="每日備註，例如：訂位 18:30、門票編號、集合地點、雨天備案"></textarea>
-              <textarea id="dayItems" rows="3" placeholder="每行一個行程，例如：09:00 早餐&#10;11:00 博物館&#10;18:00 晚餐"></textarea>
-              <button type="submit">新增行程</button>
+              <textarea id="dayItems" rows="3" placeholder="每行一個景點或活動，例如：11:00 博物館&#10;15:00 外灘夜景"></textarea>
+              <button type="submit">新增一天</button>
             </form>
           </article>
         </section>
@@ -522,6 +532,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260531-cloud-default"></script>
-    <script src="app.js?v=20260530-import-fixes"></script>
+    <script src="app.js?v=20260531-map-flights"></script>
   </body>
 </html>

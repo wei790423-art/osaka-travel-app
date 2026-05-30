@@ -198,6 +198,10 @@ const fields = {
   dayMapQuery: document.querySelector("#dayMapQuery"),
   dayPhotoUrl: document.querySelector("#dayPhotoUrl"),
   dayLandmarks: document.querySelector("#dayLandmarks"),
+  dayHasFlight: document.querySelector("#dayHasFlight"),
+  dayFlightNo: document.querySelector("#dayFlightNo"),
+  dayFlightDeparture: document.querySelector("#dayFlightDeparture"),
+  dayFlightArrival: document.querySelector("#dayFlightArrival"),
   dayNotes: document.querySelector("#dayNotes"),
   dayItems: document.querySelector("#dayItems"),
   dayBackupLandmarks: document.querySelector("#dayBackupLandmarks"),
@@ -226,6 +230,8 @@ const nodes = {
   openCurrentTrip: document.querySelector("#openCurrentTrip"),
   backToPlannerHome: document.querySelector("#backToPlannerHome"),
   homeNavButton: document.querySelector("#homeNavButton"),
+  flightLookup: document.querySelector("#flightLookup"),
+  dayFlightFields: document.querySelector("#dayFlightFields"),
   createTrip: document.querySelector("#createTrip"),
   renameTrip: document.querySelector("#renameTrip"),
   deleteTrip: document.querySelector("#deleteTrip"),
@@ -584,6 +590,9 @@ function normalizeDay(day) {
     title: day.title || "未命名行程",
     place: day.place || "",
     hotelName: day.hotelName || day.accommodation || "",
+    flightNo: day.flightNo || "",
+    flightDeparture: day.flightDeparture || "",
+    flightArrival: day.flightArrival || "",
     route: day.route || "",
     transportMode: day.transportMode || "",
     mealPlan,
@@ -695,6 +704,41 @@ function normalizeCurrency(value) {
 
 function defaultRateForCurrency(currency) {
   return DEFAULT_TWD_RATES[normalizeCurrency(currency)] || 1;
+}
+
+function currencyForDestination(country = "", city = "") {
+  const destination = `${country} ${city}`.toLowerCase();
+  const matches = [
+    { pattern: /中國|大陸|上海|北京|雲南|昆明|大理|麗江|香格里拉|哈爾濱|深圳|廣州|成都|重慶|china/, currency: "CNY" },
+    { pattern: /日本|東京|大阪|京都|奈良|神戶|北海道|沖繩|japan/, currency: "JPY" },
+    { pattern: /台灣|臺灣|taiwan/, currency: "TWD" },
+    { pattern: /韓國|首爾|釜山|korea/, currency: "KRW" },
+    { pattern: /香港|hong kong/, currency: "HKD" },
+    { pattern: /泰國|曼谷|清邁|thailand/, currency: "THB" },
+    { pattern: /新加坡|singapore/, currency: "SGD" },
+    { pattern: /越南|河內|胡志明|峴港|vietnam/, currency: "VND" },
+    { pattern: /馬來西亞|吉隆坡|malaysia/, currency: "MYR" },
+    { pattern: /英國|倫敦|united kingdom|england|london/, currency: "GBP" },
+    { pattern: /歐元區|法國|巴黎|德國|義大利|西班牙|荷蘭|奧地利|euro|france|germany|italy|spain/, currency: "EUR" },
+    { pattern: /澳洲|澳大利亞|雪梨|墨爾本|australia/, currency: "AUD" },
+    { pattern: /加拿大|canada/, currency: "CAD" },
+    { pattern: /美國|紐約|洛杉磯|夏威夷|usa|united states/, currency: "USD" }
+  ];
+  return matches.find((entry) => entry.pattern.test(destination))?.currency || "";
+}
+
+function applyDestinationCurrency() {
+  const currency = currencyForDestination(fields.country.value, fields.baseCity.value);
+  if (!currency) return;
+  fields.currency.value = currency;
+  fields.rate.value = defaultRateForCurrency(currency);
+}
+
+function flightLookupUrl(flightNo = "") {
+  const normalized = String(flightNo).replace(/\s+/g, "").toUpperCase();
+  return normalized
+    ? `https://www.flightaware.com/live/flight/${encodeURIComponent(normalized)}`
+    : "https://www.flightaware.com/live/";
 }
 
 function formatLocal(value, currencyOverride = trip.currency) {
@@ -948,6 +992,7 @@ function syncFields() {
   fields.flightNo.value = trip.flightNo || "";
   fields.flightDeparture.value = trip.flightDeparture || "";
   fields.flightArrival.value = trip.flightArrival || "";
+  if (nodes.flightLookup) nodes.flightLookup.href = flightLookupUrl(trip.flightNo);
   fields.currency.value = normalizeCurrency(trip.currency);
   fields.rate.value = trip.rate;
   fields.pace.value = trip.pace;
@@ -1187,7 +1232,13 @@ function renderAgencyBook() {
   const flightRows = [
     { label: "航班號", value: trip.flightNo || "未填" },
     { label: "起飛時間", value: trip.flightDeparture || "未填" },
-    { label: "抵達時間", value: trip.flightArrival || "未填" }
+    { label: "抵達時間", value: trip.flightArrival || "未填" },
+    ...trip.days
+      .map((day, index) => day.flightNo ? {
+        label: `Day ${index + 1} 轉機`,
+        value: [day.flightNo, day.flightDeparture && `起飛 ${day.flightDeparture}`, day.flightArrival && `抵達 ${day.flightArrival}`].filter(Boolean).join("｜")
+      } : null)
+      .filter(Boolean)
   ];
   nodes.agencyFlightList.innerHTML = flightRows.map((row) => `
     <div class="agency-list-row">
@@ -1213,12 +1264,14 @@ function updateTripFromFields() {
   trip.pace = fields.pace.value;
   fields.currency.value = nextCurrency;
   fields.rate.value = trip.rate;
+  if (nodes.flightLookup) nodes.flightLookup.href = flightLookupUrl(trip.flightNo);
   saveTrip();
   render();
 }
 
 function render() {
   const total = totalBudget();
+  clearDayMaps();
   renderHero();
   nodes.visibleDays.textContent = trip.days.length;
   nodes.totalLocal.textContent = formatLocal(total);
@@ -1273,18 +1326,15 @@ function render() {
     select.addEventListener("change", () => updateLandmarkMap(select));
   });
 
-  document.querySelectorAll("[data-toggle-daymap]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      const idx = Number(button.dataset.toggleDaymap);
-      const container = document.getElementById(`dayMap-${idx}`);
-      const willExpand = container?.dataset.expanded !== "true";
-      button.textContent = willExpand ? "載入中..." : "展開景點地圖";
-      await toggleDayMap(idx);
-      button.textContent = container?.dataset.expanded === "true" ? "收合地圖" : "展開景點地圖";
+  document.querySelectorAll("[data-toggle-edit-flight]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const fieldsContainer = document.querySelector(`[data-edit-flight-fields="${checkbox.dataset.toggleEditFlight}"]`);
+      fieldsContainer?.classList.toggle("is-hidden", !checkbox.checked);
     });
   });
 
   renderTripMap();
+  renderOpenDayMaps();
   setupDragAndDrop();
   setupWithinDayOrdering();
   updateCountdown();
@@ -1340,6 +1390,7 @@ function renderDay(day, index) {
           <div><dt>移動方式</dt><dd>${escapeHtml(day.transportMode || "尚未選擇")}</dd></div>
           <div><dt>移動路線</dt><dd>${escapeHtml(day.route || "尚未填移動路線")}</dd></div>
         </dl>
+        ${day.flightNo ? `<div class="note-box"><span>當日轉機 / 額外班機</span><p>${escapeHtml(day.flightNo)}${day.flightDeparture ? `｜起飛 ${escapeHtml(day.flightDeparture)}` : ""}${day.flightArrival ? `｜抵達 ${escapeHtml(day.flightArrival)}` : ""}｜<a href="${flightLookupUrl(day.flightNo)}" target="_blank" rel="noreferrer">查詢航班時刻</a></p></div>` : ""}
         ${day.notes ? `<div class="note-box"><span>每日備註</span><p>${escapeHtml(day.notes)}</p></div>` : ""}
         <div class="map-card">
           <div class="map-toolbar" aria-label="景點導航選單">
@@ -1364,8 +1415,8 @@ function renderDay(day, index) {
           </ol>
         </div>
         <div class="day-map-section">
-          <button class="day-map-toggle" type="button" data-toggle-daymap="${index}">展開景點地圖</button>
-          <div id="dayMap-${index}" class="day-map-container" data-expanded="false" style="display:none;"></div>
+          <div class="day-map-heading">景點地圖</div>
+          <div id="dayMap-${index}" class="day-map-container" data-expanded="true"></div>
         </div>
         ${backups.length ? `<div class="backup-landmarks"><h4>備案景點</h4><div class="backup-tags">${backups.map(b => `<span class="backup-tag">${escapeHtml(b)}</span>`).join("")}</div></div>` : ""}
         <ul class="timeline">
@@ -1414,7 +1465,7 @@ function normalizeTimelineText(item) {
 function timelineItemLabel(text) {
   if (LANDMARK_HINT_PATTERN.test(text)) return "景點";
   if (looksLikeTransport(text)) return "交通";
-  return "行程";
+  return "景點";
 }
 
 function displayTimelineItems(day) {
@@ -1427,7 +1478,7 @@ function displayTimelineItems(day) {
   if (day.landmarks?.length) {
     return day.landmarks.map((landmark) => ({ label: "景點", text: landmark, sourceIndex: -1 }));
   }
-  return [{ label: "行程", text: "尚未填入細節", sourceIndex: -1 }];
+  return [{ label: "景點", text: "尚未填入細節", sourceIndex: -1 }];
 }
 
 function renderDayEditor(day, index) {
@@ -1456,9 +1507,18 @@ function renderDayEditor(day, index) {
         <input name="mapQuery" type="text" value="${escapeHtml(day.mapQuery || "")}" placeholder="地圖搜尋，例如：大阪城 或 飯店到大阪城" />
         <input name="photoUrl" type="url" value="${escapeHtml(day.photoUrl || "")}" placeholder="照片網址，例如：https://..." />
         <textarea name="landmarks" rows="4" placeholder="景點地標，每行一個">${escapeHtml((day.landmarks || []).join("\n"))}</textarea>
+        <label class="optional-flight-toggle">
+          <input name="hasFlight" type="checkbox" data-toggle-edit-flight="${index}" ${day.flightNo ? "checked" : ""} />
+          <span>當日有轉機或額外班機</span>
+        </label>
+        <div class="optional-flight-fields ${day.flightNo ? "" : "is-hidden"}" data-edit-flight-fields="${index}">
+          <input name="flightNo" type="text" value="${escapeHtml(day.flightNo || "")}" placeholder="當日班機號，例如：MU581" />
+          <input name="flightDeparture" type="text" value="${escapeHtml(day.flightDeparture || "")}" placeholder="起飛時間，例如：14:30 PVG" />
+          <input name="flightArrival" type="text" value="${escapeHtml(day.flightArrival || "")}" placeholder="抵達時間，例如：17:10 KMG" />
+        </div>
         <textarea name="backupLandmarks" rows="2" placeholder="備案景點（雨天或臨時替換），每行一個">${escapeHtml((day.backupLandmarks || []).join("\n"))}</textarea>
         <textarea name="notes" rows="4" placeholder="每日備註，例如：訂位時間、票券編號、集合地點、注意事項">${escapeHtml(day.notes || "")}</textarea>
-        <textarea name="items" rows="5" placeholder="每行一個行程">${escapeHtml((day.items || []).join("\n"))}</textarea>
+        <textarea name="items" rows="5" placeholder="每行一個景點或活動">${escapeHtml((day.items || []).join("\n"))}</textarea>
         <button type="submit">完成編輯</button>
       </form>
     </article>
@@ -1590,11 +1650,15 @@ function addDay(event) {
     mapQuery: fields.dayMapQuery.value.trim(),
     photoUrl: fields.dayPhotoUrl.value.trim(),
     landmarks: splitLines(fields.dayLandmarks.value),
+    flightNo: fields.dayHasFlight.checked ? fields.dayFlightNo.value.trim() : "",
+    flightDeparture: fields.dayHasFlight.checked ? fields.dayFlightDeparture.value.trim() : "",
+    flightArrival: fields.dayHasFlight.checked ? fields.dayFlightArrival.value.trim() : "",
     backupLandmarks: splitLines(fields.dayBackupLandmarks.value),
     notes: fields.dayNotes.value.trim(),
     items
   }));
   nodes.dayForm.reset();
+  nodes.dayFlightFields?.classList.add("is-hidden");
   saveTrip();
   render();
 }
@@ -1619,6 +1683,9 @@ function dayFromEditForm(form) {
     mapQuery: data.get("mapQuery"),
     photoUrl: data.get("photoUrl"),
     landmarks: splitLines(data.get("landmarks")),
+    flightNo: data.get("hasFlight") ? data.get("flightNo") : "",
+    flightDeparture: data.get("hasFlight") ? data.get("flightDeparture") : "",
+    flightArrival: data.get("hasFlight") ? data.get("flightArrival") : "",
     backupLandmarks: splitLines(data.get("backupLandmarks") || ""),
     notes: data.get("notes"),
     items: splitLines(data.get("items"))
@@ -2035,14 +2102,15 @@ function createTripFromImport() {
   const typedName = typedNameRaw && typedNameRaw !== trip.name ? typedNameRaw : "";
   const meta = inferImportedTripMeta(text, days);
   const importedDays = applyImportedTripMetaToDays(days, meta);
+  const importedCurrency = currencyForDestination(meta.country, meta.baseCity) || trip.currency || "TWD";
   const inferredName = meta.name || (days[0]?.title && !/^第\s*\d+\s*天$/.test(days[0].title) ? `${days[0].title} 行程` : `匯入旅行 ${trips.length + 1}`);
   const newTrip = {
     ...blankTrip(typedName || inferredName),
     country: meta.country || trip.country || "自選國家",
     baseCity: meta.baseCity || trip.baseCity || "自選城市",
     startDate: trip.startDate || todayDateValue(),
-    currency: trip.currency || "TWD",
-    rate: Number(trip.rate || defaultRateForCurrency(trip.currency)),
+    currency: importedCurrency,
+    rate: defaultRateForCurrency(importedCurrency),
     pace: trip.pace || "balanced",
     days: importedDays
   };
@@ -2519,6 +2587,21 @@ function parseImportedTrip(text) {
       return;
     }
 
+    if (/^(航班號|班機號|flight)\s*[:：]/i.test(line)) {
+      current.flightNo = line.replace(/^(航班號|班機號|flight)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(起飛時間|departure)\s*[:：]/i.test(line)) {
+      current.flightDeparture = line.replace(/^(起飛時間|departure)\s*[:：]\s*/i, "");
+      return;
+    }
+
+    if (/^(抵達時間|arrival)\s*[:：]/i.test(line)) {
+      current.flightArrival = line.replace(/^(抵達時間|arrival)\s*[:：]\s*/i, "");
+      return;
+    }
+
     if (/^(移動方式|交通方式|transport|交通工具)\s*[:：]/i.test(line)) {
       current.transportMode = line.replace(/^(移動方式|交通方式|transport|交通工具)\s*[:：]\s*/i, "");
       return;
@@ -2632,6 +2715,11 @@ function applyImport() {
   if (meta.name) trip.name = meta.name;
   if (meta.country) trip.country = meta.country;
   if (meta.baseCity) trip.baseCity = meta.baseCity;
+  const importedCurrency = currencyForDestination(trip.country, trip.baseCity);
+  if (importedCurrency) {
+    trip.currency = importedCurrency;
+    trip.rate = defaultRateForCurrency(importedCurrency);
+  }
   trip.days = applyImportedTripMetaToDays(days, meta);
   saveTrip();
   syncFields();
@@ -2660,11 +2748,20 @@ document.querySelectorAll("[data-tab-target]").forEach((button) => {
   button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
 });
 
-[fields.tripName, fields.country, fields.baseCity, fields.startDate, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.rate, fields.pace].forEach((field) => {
+[fields.tripName, fields.startDate, fields.flightNo, fields.flightDeparture, fields.flightArrival, fields.rate, fields.pace].forEach((field) => {
   field.addEventListener("input", updateTripFromFields);
+});
+[fields.country, fields.baseCity].forEach((field) => {
+  field.addEventListener("input", () => {
+    applyDestinationCurrency();
+    updateTripFromFields();
+  });
 });
 fields.currency.addEventListener("change", updateTripFromFields);
 fields.currency.addEventListener("blur", updateTripFromFields);
+fields.dayHasFlight.addEventListener("change", () => {
+  nodes.dayFlightFields?.classList.toggle("is-hidden", !fields.dayHasFlight.checked);
+});
 
 function applyTheme() {
   document.documentElement.dataset.theme = theme;
@@ -2736,17 +2833,21 @@ function saveGeoCache() {
 }
 
 let lastGeoTime = 0;
-async function geocode(query) {
-  if (!query?.trim()) return null;
-  const key = query.trim().toLowerCase();
-  if (geoCache[key]) return geoCache[key];
+let geoQueue = Promise.resolve();
+const geoInFlight = new Map();
 
-  const wait = Math.max(0, 1100 - (Date.now() - lastGeoTime));
+async function fetchGeocode(query, key, attempt = 0) {
+  const wait = Math.max(0, 1500 - (Date.now() - lastGeoTime));
   if (wait > 0) await new Promise(r => setTimeout(r, wait));
   lastGeoTime = Date.now();
 
   try {
     const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=zh-TW`);
+    if (resp.status === 429 && attempt < 2) {
+      await new Promise(r => setTimeout(r, 3500));
+      return fetchGeocode(query, key, attempt + 1);
+    }
+    if (!resp.ok) return null;
     const data = await resp.json();
     if (data.length) {
       const result = { lat: +data[0].lat, lng: +data[0].lon, display: data[0].display_name };
@@ -2756,6 +2857,21 @@ async function geocode(query) {
     }
   } catch {}
   return null;
+}
+
+function geocode(query) {
+  if (!query?.trim()) return null;
+  const key = query.trim().toLowerCase();
+  if (geoCache[key]) return Promise.resolve(geoCache[key]);
+  if (geoInFlight.has(key)) return geoInFlight.get(key);
+
+  const request = geoQueue
+    .catch(() => null)
+    .then(() => fetchGeocode(query, key))
+    .finally(() => geoInFlight.delete(key));
+  geoQueue = request;
+  geoInFlight.set(key, request);
+  return request;
 }
 
 async function optimizePlacePool() {
@@ -2916,22 +3032,26 @@ async function renderTripMap() {
 
 // ========== Day Detail Maps ==========
 const dayMapInstances = {};
+let dayMapRenderGeneration = 0;
 
-async function toggleDayMap(index) {
+function clearDayMaps() {
+  dayMapRenderGeneration += 1;
+  Object.keys(dayMapInstances).forEach((index) => {
+    dayMapInstances[index].remove();
+    delete dayMapInstances[index];
+  });
+}
+
+function renderOpenDayMaps() {
+  trip.days.forEach((day, index) => {
+    if (editingDayIndex !== index) renderDayMap(index);
+  });
+}
+
+async function renderDayMap(index) {
   const container = document.getElementById(`dayMap-${index}`);
   if (!container || typeof L === "undefined") return;
-
-  if (container.dataset.expanded === "true") {
-    container.style.display = "none";
-    container.dataset.expanded = "false";
-    if (dayMapInstances[index]) {
-      dayMapInstances[index].remove();
-      delete dayMapInstances[index];
-    }
-    return;
-  }
-
-  container.style.display = "block";
+  const generation = dayMapRenderGeneration;
   container.dataset.expanded = "true";
   container.innerHTML = '<div class="map-loading">正在載入景點地圖...</div>';
 
@@ -2944,12 +3064,14 @@ async function toggleDayMap(index) {
   for (const lm of landmarks) {
     const query = landmarkQuery(lm, day);
     const geo = await geocode(query);
+    if (generation !== dayMapRenderGeneration || !container.isConnected) return;
     if (geo) points.push({ ...geo, name: lm });
   }
 
   if (!points.length) {
     const fallbackQuery = [day.place, trip.baseCity, trip.country].filter(Boolean).join(", ");
     const fallback = await geocode(fallbackQuery);
+    if (generation !== dayMapRenderGeneration || !container.isConnected) return;
     if (fallback) points.push({ ...fallback, name: day.place });
   }
 

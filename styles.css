@@ -1401,25 +1401,15 @@ h1 {
   margin: 12px 0;
 }
 
-.day-map-toggle {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #eef5f3;
+.day-map-heading {
+  margin-bottom: 8px;
   color: var(--teal);
   font-weight: 800;
   font-size: 0.86rem;
-  cursor: pointer;
-}
-
-:root[data-theme="dark"] .day-map-toggle {
-  background: #102c2e;
 }
 
 .day-map-container {
   height: 280px;
-  margin-top: 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
   overflow: hidden;
@@ -1669,6 +1659,38 @@ h1 {
 
 :root[data-theme="dark"] .backup-landmarks {
   background: #242018;
+}
+
+.field-link {
+  display: inline-flex;
+  margin-top: 6px;
+  color: var(--teal);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.optional-flight-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.optional-flight-toggle input {
+  width: 16px;
+  height: 16px;
+}
+
+.optional-flight-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.optional-flight-fields.is-hidden {
+  display: none;
 }
 
 /* ========== Within Day Ordering ========== */
