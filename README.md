@@ -1,5 +1,11 @@
 # Global Trip Planner App
 
+## Itinerary Generation Spec
+
+請另一個旅行生成 Agent 產生可匯入行程時，請使用這份規格：
+
+- [旅行行程生成規格書](docs/itinerary-generation-spec.md)
+
 一個靜態單頁旅遊 App，可規劃任何國家與城市的自由行。
 
 ## 功能
