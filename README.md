@@ -74,6 +74,8 @@ npm run supabase:stop
 
 目前 App 已接上 Supabase Email/Password Auth、`trips` 雲端同步與 Realtime 即時更新。前端只使用 publishable key，資料保護依靠 Supabase Auth JWT 與資料表 RLS。
 
+登入後會自動載入最近一筆雲端行程；載入前先把瀏覽器目前的行程備份到歷史行程。後續每次編輯會先寫入瀏覽器儲存空間，再延遲約 1.5 秒同步到 Supabase。
+
 本機開發與 GitHub Pages 預設都連到正式 Supabase Cloud，方便直接測試登入與跨裝置同步。需要測試 Docker 裡的本機 Supabase 時，在網址加上 `?supabase=local`，例如 `http://127.0.0.1:4177/?supabase=local`：
 
 ```js

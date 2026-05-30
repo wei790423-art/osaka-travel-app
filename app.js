@@ -1847,7 +1847,10 @@ function queueInitialCloudSync() {
   if (cloudTripMap[activeTripId] || cloudTrips.length === 0) {
     queueCloudAutoSync();
   } else {
-    setCloudStatus("已登入，請先載入雲端行程；之後編輯會自動同步。");
+    applyCloudTrip(cloudTrips[0], {
+      backup: true,
+      status: `已自動載入最近的雲端行程「${cloudTrips[0].name || "未命名旅行"}」，之後編輯會自動同步。`
+    });
   }
 }
 

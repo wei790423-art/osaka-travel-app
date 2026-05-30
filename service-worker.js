@@ -1,10 +1,10 @@
-const CACHE_NAME = "global-trip-planner-v34";
+const CACHE_NAME = "global-trip-planner-v35";
 const APP_ASSETS = [
   "./",
   "./index.html",
   "./styles.css?v=20260531-landmark-gallery",
   "./supabase-config.js?v=20260531-cloud-default",
-  "./app.js?v=20260531-landmark-gallery",
+  "./app.js?v=20260531-cloud-restore",
   "./manifest.webmanifest",
   "./assets/app-icon.svg",
   "./assets/global-travel-hero.png",
