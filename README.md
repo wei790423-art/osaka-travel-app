@@ -53,6 +53,10 @@ http://127.0.0.1:4177
 
 本專案已安裝 Supabase CLI 作為 npm dev dependency，並已執行 `supabase init`。
 
+資料庫 schema 說明：
+
+- [Supabase 資料庫規格](docs/supabase-schema.md)
+
 常用指令：
 
 ```powershell
