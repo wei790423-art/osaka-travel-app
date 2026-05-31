@@ -213,6 +213,41 @@ h1 {
   font-weight: 700;
 }
 
+.rate-fetch-button {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.rate-fetch-button:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.rate-fetch-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.rate-status {
+  font-size: 0.78rem;
+  color: var(--muted);
+  min-height: 1em;
+}
+
+.rate-status[data-state="ok"] {
+  color: var(--teal);
+}
+
+.rate-status[data-state="error"] {
+  color: var(--accent);
+}
+
 .field select,
 .field input,
 .day-form input,

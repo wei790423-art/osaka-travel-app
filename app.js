@@ -200,7 +200,9 @@ const nodes = {
   calcTwd: document.querySelector("#calcTwd"),
   calcLocalLabel: document.querySelector("#calcLocalLabel"),
   calcRateDisplay: document.querySelector("#calcRateDisplay"),
-  calcPresets: document.querySelector("#calcPresets")
+  calcPresets: document.querySelector("#calcPresets"),
+  fetchRate: document.querySelector("#fetchRate"),
+  rateStatus: document.querySelector("#rateStatus")
 };
 
 const guidePlatforms = [
@@ -1528,6 +1530,45 @@ function updateCalcDisplay() {
   renderCalcPresets();
 }
 
+function setRateStatus(message, state = "") {
+  if (!nodes.rateStatus) return;
+  nodes.rateStatus.textContent = message;
+  nodes.rateStatus.dataset.state = state;
+}
+
+async function fetchExchangeRate() {
+  const base = normalizeCurrency(fields.currency.value);
+  if (!base || base.length !== 3 || !/^[A-Z]{3}$/.test(base)) {
+    setRateStatus("請先填寫 3 碼幣別代碼，例如 JPY、USD", "error");
+    return;
+  }
+  if (base === "TWD") {
+    fields.rate.value = 1;
+    updateTripFromFields();
+    setRateStatus("台幣對台幣，匯率為 1", "ok");
+    return;
+  }
+  setRateStatus("匯率更新中…");
+  if (nodes.fetchRate) nodes.fetchRate.disabled = true;
+  try {
+    const resp = await fetch(`https://open.er-api.com/v6/latest/${base}`);
+    const data = await resp.json();
+    const rate = data?.rates?.TWD;
+    if (data?.result !== "success" || typeof rate !== "number" || !(rate > 0)) {
+      throw new Error("invalid rate response");
+    }
+    const rounded = Number(rate.toFixed(4));
+    fields.rate.value = rounded;
+    updateTripFromFields();
+    const updated = data.time_last_update_utc ? new Date(data.time_last_update_utc).toLocaleDateString("zh-TW") : "";
+    setRateStatus(`已更新：1 ${base} = ${rounded} TWD${updated ? `（${updated} 匯率）` : ""}`, "ok");
+  } catch {
+    setRateStatus("目前無法取得匯率，請稍後再試或手動輸入", "error");
+  } finally {
+    if (nodes.fetchRate) nodes.fetchRate.disabled = false;
+  }
+}
+
 function calcLocalToTwd() {
   const val = parseFloat(nodes.calcLocal.value);
   if (!isNaN(val)) {
@@ -1680,6 +1721,7 @@ nodes.guideForm.addEventListener("submit", renderGuideLinks);
 nodes.foodForm.addEventListener("submit", renderFoodSearch);
 if (nodes.calcLocal) nodes.calcLocal.addEventListener("input", calcLocalToTwd);
 if (nodes.calcTwd) nodes.calcTwd.addEventListener("input", calcTwdToLocal);
+if (nodes.fetchRate) nodes.fetchRate.addEventListener("click", fetchExchangeRate);
 
 applyTheme();
 applySharedTripFromUrl();
