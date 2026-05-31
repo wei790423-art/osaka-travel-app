@@ -173,7 +173,6 @@ const cloudClientId = getCloudClientId();
 const fields = {
   tripSelector: document.querySelector("#tripSelector"),
   newTripName: document.querySelector("#newTripName"),
-  newTripImportText: document.querySelector("#newTripImportText"),
   authEmail: document.querySelector("#authEmail"),
   authPassword: document.querySelector("#authPassword"),
   tripName: document.querySelector("#tripName"),
@@ -226,7 +225,6 @@ const nodes = {
   homeDayCount: document.querySelector("#homeDayCount"),
   homeNextTrip: document.querySelector("#homeNextTrip"),
   createTripFromHome: document.querySelector("#createTripFromHome"),
-  createTripFromImport: document.querySelector("#createTripFromImport"),
   openCurrentTrip: document.querySelector("#openCurrentTrip"),
   backToPlannerHome: document.querySelector("#backToPlannerHome"),
   homeNavButton: document.querySelector("#homeNavButton"),
@@ -236,7 +234,6 @@ const nodes = {
   createTrip: document.querySelector("#createTrip"),
   renameTrip: document.querySelector("#renameTrip"),
   deleteTrip: document.querySelector("#deleteTrip"),
-  newTripImportStatus: document.querySelector("#newTripImportStatus"),
   cloudDialog: document.querySelector("#cloudDialog"),
   openCloudPanel: document.querySelector("#openCloudPanel"),
   closeCloudPanel: document.querySelector("#closeCloudPanel"),
@@ -352,6 +349,12 @@ const guidePlatforms = [
     type: "住宿",
     note: "比較住宿區域、價格、評分與交通便利性。",
     buildUrl: (q) => `https://www.booking.com/searchresults.zh-tw.html?ss=${encodeURIComponent(q)}`
+  },
+  {
+    name: "Trip.com",
+    type: "機票 / 住宿 / 攻略",
+    note: "查機票、住宿、景點排行與目的地旅遊指南。",
+    buildUrl: (q) => `https://tw.trip.com/search/${encodeURIComponent(q)}`
   },
   {
     name: "官方旅遊網站",
@@ -1160,6 +1163,7 @@ function renderTripHome() {
 }
 
 function showPlannerHome() {
+  persistPlannerBeforeLeave();
   plannerView = "home";
   switchTab("planner");
   nodes.plannerHome?.classList.add("is-active");
@@ -1846,7 +1850,8 @@ function loadOsakaTrip() {
 }
 
 function saveCurrentToHistory() {
-  addTripToHistory(trip, "手動儲存");
+  persistPlannerBeforeLeave();
+  addTripToHistory(trip, "完成規劃");
   renderHistory();
   switchTab("history");
 }
@@ -2201,59 +2206,6 @@ function createNewTrip(openDetail = true) {
   editingDayIndex = null;
   syncFields();
   if (openDetail) showPlannerDetail();
-  render();
-}
-
-function createTripFromImport() {
-  const text = fields.newTripImportText?.value.trim() || "";
-  if (!text) {
-    if (nodes.newTripImportStatus) nodes.newTripImportStatus.textContent = "請先貼上 ChatGPT 或旅行社格式的行程文字。";
-    return;
-  }
-
-  const days = parseImportedTrip(text);
-  if (!days.length) {
-    if (nodes.newTripImportStatus) nodes.newTripImportStatus.textContent = "沒有解析到每日行程，請確認文字有第 1 天 / Day 1 或至少一段行程內容。";
-    return;
-  }
-
-  saveTrip();
-  const typedNameRaw = fields.newTripName?.value.trim() || "";
-  const typedName = typedNameRaw && typedNameRaw !== trip.name ? typedNameRaw : "";
-  const meta = inferImportedTripMeta(text, days);
-  const importedDays = applyImportedTripMetaToDays(days, meta);
-  const importedCurrency = currencyForDestination(meta.country, meta.baseCity) || trip.currency || "TWD";
-  const inferredName = meta.name || (days[0]?.title && !/^第\s*\d+\s*天$/.test(days[0].title) ? `${days[0].title} 行程` : `匯入旅行 ${trips.length + 1}`);
-  const newTrip = {
-    ...blankTrip(typedName || inferredName),
-    country: meta.country || trip.country || "自選國家",
-    baseCity: meta.baseCity || trip.baseCity || "自選城市",
-    startDate: trip.startDate || todayDateValue(),
-    currency: importedCurrency,
-    rate: defaultRateForCurrency(importedCurrency),
-    pace: trip.pace || "balanced",
-    days: importedDays
-  };
-  const newEntry = {
-    id: makeTripId(),
-    updatedAt: new Date().toISOString(),
-    trip: normalizeTrip(newTrip)
-  };
-
-  trips = [newEntry, ...trips];
-  activeTripId = newEntry.id;
-  trip = normalizeTrip(clone(newEntry.trip));
-  fields.newTripImportText.value = "";
-  if (nodes.newTripImportStatus) {
-    const landmarkCount = importedDays.reduce((sum, day) => sum + (day.landmarks?.length || 0), 0);
-    nodes.newTripImportStatus.textContent = `已建立「${trip.name}」：${importedDays.length} 天，${landmarkCount} 個導航景點。`;
-  }
-  saveTripLibrary();
-  localStorage.setItem(ACTIVE_TRIP_ID_KEY, activeTripId);
-  localStorage.setItem(TRIP_KEY, JSON.stringify(trip));
-  editingDayIndex = null;
-  syncFields();
-  showPlannerDetail();
   render();
 }
 
@@ -2850,6 +2802,9 @@ function applyImport() {
 }
 
 function switchTab(targetId, options = {}) {
+  if (plannerView === "detail" && (targetId !== "planner" || !options.preservePlannerView)) {
+    persistPlannerBeforeLeave();
+  }
   document.querySelectorAll(".tab-button").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tabTarget === targetId);
   });
@@ -2861,6 +2816,16 @@ function switchTab(targetId, options = {}) {
     nodes.plannerDetail?.classList.remove("is-active");
     plannerView = "home";
     renderHero();
+  }
+}
+
+function persistPlannerBeforeLeave() {
+  if (plannerView !== "detail") return;
+  const editingForm = document.querySelector("[data-save-day]");
+  if (editingForm) {
+    saveEditedDayForm(editingForm);
+  } else {
+    saveTrip();
   }
 }
 
@@ -3628,7 +3593,6 @@ nodes.openCurrentTrip.addEventListener("click", showPlannerDetail);
 nodes.backToPlannerHome.addEventListener("click", showPlannerHome);
 nodes.homeNavButton.addEventListener("click", showPlannerHome);
 nodes.createTrip.addEventListener("click", createNewTrip);
-nodes.createTripFromImport.addEventListener("click", createTripFromImport);
 nodes.renameTrip.addEventListener("click", renameActiveTrip);
 nodes.deleteTrip.addEventListener("click", deleteActiveTrip);
 nodes.signIn.addEventListener("click", signInWithEmail);
@@ -3657,6 +3621,10 @@ nodes.guideForm.addEventListener("submit", renderGuideLinks);
 nodes.foodForm.addEventListener("submit", renderFoodSearch);
 if (nodes.calcLocal) nodes.calcLocal.addEventListener("input", calcLocalToTwd);
 if (nodes.calcTwd) nodes.calcTwd.addEventListener("input", calcTwdToLocal);
+window.addEventListener("pagehide", persistPlannerBeforeLeave);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") persistPlannerBeforeLeave();
+});
 
 applyTheme();
 applySharedTripFromUrl();
