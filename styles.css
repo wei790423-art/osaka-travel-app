@@ -2792,6 +2792,39 @@ h1 {
   display: block;
 }
 
+.planner-detail.is-active {
+  display: flex;
+  flex-direction: column;
+}
+
+.planner-detail .agency-book {
+  order: 1;
+}
+
+.planner-detail .map-overview-wrap {
+  order: 2;
+}
+
+.planner-detail .content-grid {
+  order: 3;
+}
+
+.planner-detail .trip-library-panel {
+  order: 10;
+}
+
+.planner-detail .toolbar {
+  order: 11;
+}
+
+.planner-detail .dashboard {
+  order: 12;
+}
+
+.planner-detail .route-studio {
+  order: 13;
+}
+
 .planner-home {
   width: min(1180px, calc(100% - 40px));
   margin: 24px auto 0;
