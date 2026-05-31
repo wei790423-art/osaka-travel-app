@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260531-book-first" />
+    <link rel="stylesheet" href="styles.css?v=20260531-dashboard-home" />
   </head>
   <body>
     <main class="app-shell">
@@ -30,8 +30,8 @@
       </section>
 
       <nav class="tab-nav" aria-label="功能選單">
-        <button class="tab-button" id="homeNavButton" type="button"><i data-lucide="house"></i><span>首頁</span></button>
-        <button class="tab-button is-active" type="button" data-tab-target="planner"><i data-lucide="map"></i><span>行程規劃</span></button>
+        <button class="tab-button is-active" id="homeNavButton" type="button" data-tab-target="home"><i data-lucide="house"></i><span>首頁</span></button>
+        <button class="tab-button" type="button" data-tab-target="planner"><i data-lucide="map"></i><span>行程規劃</span></button>
         <button class="tab-button" type="button" data-tab-target="guides"><i data-lucide="compass"></i><span>攻略平台</span></button>
         <button class="tab-button" type="button" data-tab-target="food"><i data-lucide="utensils"></i><span>美食探索</span></button>
         <button class="tab-button" type="button" data-tab-target="history"><i data-lucide="clock-3"></i><span>歷史行程</span></button>
@@ -43,7 +43,59 @@
         </button>
       </nav>
 
-      <section class="tab-panel is-active" id="planner" aria-label="行程規劃">
+      <section class="tab-panel is-active" id="home" aria-label="旅行首頁">
+        <section class="app-home">
+          <div class="app-home__top">
+            <div>
+              <p class="eyebrow">Trip Studio</p>
+              <h2>今天想去哪裡？</h2>
+              <p>從目前旅行繼續規劃，或開啟一份新的旅程。</p>
+            </div>
+            <div class="app-home__mobile-actions">
+              <button id="homeThemeToggle" type="button" aria-label="切換深色模式"><i data-lucide="moon"></i></button>
+              <button id="homeCloudButton" type="button" aria-label="登入雲端同步"><i data-lucide="cloud"></i></button>
+            </div>
+          </div>
+
+          <div class="app-home__quick" aria-label="首頁快捷入口">
+            <button type="button" data-home-action="planner"><i data-lucide="route"></i><span>規劃行程</span></button>
+            <button type="button" data-home-action="guides"><i data-lucide="map-pin"></i><span>找景點</span></button>
+            <button type="button" data-home-action="food"><i data-lucide="utensils"></i><span>找美食</span></button>
+            <button type="button" data-home-action="history"><i data-lucide="clock-3"></i><span>歷史行程</span></button>
+            <button type="button" data-home-action="tools"><i data-lucide="ticket"></i><span>旅行工具</span></button>
+          </div>
+
+          <section class="app-home__feature">
+            <img id="dashboardTripCover" src="assets/global-travel-hero.png" alt="目前旅行封面" />
+            <div class="app-home__feature-overlay"></div>
+            <div class="app-home__feature-content">
+              <p class="eyebrow">Current Journey</p>
+              <h2 id="dashboardTripTitle">我的旅行</h2>
+              <p id="dashboardTripMeta">尚未設定旅行資料</p>
+              <div class="app-home__feature-actions">
+                <button id="dashboardOpenTrip" type="button">查看行程書</button>
+                <button id="dashboardNewTrip" type="button">新增旅行</button>
+              </div>
+            </div>
+          </section>
+
+          <div class="app-home__metrics" aria-label="旅行摘要">
+            <article><span id="dashboardTripCount">0</span><p>旅行計畫</p></article>
+            <article><span id="dashboardDayCount">0</span><p>已規劃天數</p></article>
+            <article><span id="dashboardNextTrip">尚未設定</span><p>下一趟旅行</p></article>
+          </div>
+
+          <section class="app-home__notice">
+            <i data-lucide="cloud-check"></i>
+            <div>
+              <h3>旅行資料自動儲存</h3>
+              <p id="dashboardCloudStatus">登入雲端後，手機與電腦會自動同步目前行程。</p>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section class="tab-panel" id="planner" aria-label="行程規劃">
         <section class="planner-home is-active" id="plannerHome" aria-label="旅行規劃首頁">
           <div class="mobile-top-actions" aria-label="手機快捷操作">
             <strong>Trip Studio</strong>
@@ -549,6 +601,6 @@
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260531-cloud-default"></script>
-    <script src="app.js?v=20260531-persistent-cloud-session"></script>
+    <script src="app.js?v=20260531-dashboard-home"></script>
   </body>
 </html>

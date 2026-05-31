@@ -2787,6 +2787,188 @@ h1 {
   display: none;
 }
 
+.app-home {
+  width: min(1180px, calc(100% - 40px));
+  margin: 24px auto 0;
+}
+
+.app-home__top {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.app-home__top h2 {
+  margin: 0 0 6px;
+  color: var(--brand-ink);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1;
+}
+
+.app-home__top p:last-child {
+  margin: 0;
+  color: var(--muted);
+}
+
+.app-home__mobile-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.app-home__mobile-actions button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--teal);
+  background: var(--panel);
+}
+
+.app-home__mobile-actions button.is-synced {
+  color: #fff;
+  border-color: var(--teal);
+  background: var(--teal);
+}
+
+.app-home__quick {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.app-home__quick button {
+  display: flex;
+  min-height: 58px;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--brand-ink);
+  background: var(--panel);
+  font-weight: 850;
+}
+
+.app-home__quick svg,
+.app-home__notice svg {
+  width: 20px;
+  height: 20px;
+  color: var(--teal);
+}
+
+.app-home__feature {
+  position: relative;
+  display: grid;
+  min-height: 360px;
+  overflow: hidden;
+  align-items: end;
+  border-radius: 8px;
+  color: #fff;
+  box-shadow: var(--shadow);
+}
+
+.app-home__feature > img,
+.app-home__feature-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.app-home__feature > img {
+  object-fit: cover;
+}
+
+.app-home__feature-overlay {
+  background: linear-gradient(90deg, rgba(5, 20, 22, 0.92), rgba(5, 20, 22, 0.45) 68%, rgba(5, 20, 22, 0.12));
+}
+
+.app-home__feature-content {
+  position: relative;
+  padding: clamp(22px, 4vw, 42px);
+}
+
+.app-home__feature-content h2 {
+  max-width: 700px;
+  margin: 0 0 10px;
+  color: #fff;
+  font-size: clamp(2.2rem, 5vw, 4.6rem);
+  line-height: 0.98;
+}
+
+.app-home__feature-content > p:last-of-type {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.app-home__feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.app-home__feature-actions button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  font-weight: 900;
+}
+
+.app-home__feature-actions button:first-child {
+  color: #112326;
+  border-color: #ffd36a;
+  background: #ffd36a;
+}
+
+.app-home__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.app-home__metrics article,
+.app-home__notice {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.app-home__metrics span {
+  display: block;
+  color: var(--teal);
+  font-size: 1.45rem;
+  font-weight: 950;
+}
+
+.app-home__metrics p,
+.app-home__notice p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.app-home__notice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0 28px;
+}
+
+.app-home__notice h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .planner-home.is-active,
 .planner-detail.is-active {
   display: block;
@@ -3980,6 +4162,69 @@ h1 {
   .planner-home {
     width: min(calc(100% - 20px), 1180px);
     margin-top: 10px;
+  }
+
+  .app-home {
+    width: min(calc(100% - 20px), 1180px);
+    margin-top: 14px;
+  }
+
+  .app-home__top {
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .app-home__top h2 {
+    font-size: 1.8rem;
+  }
+
+  .app-home__top p:last-child {
+    font-size: 0.84rem;
+  }
+
+  .app-home__quick {
+    gap: 7px;
+  }
+
+  .app-home__quick button {
+    display: grid;
+    min-width: 0;
+    min-height: 68px;
+    gap: 5px;
+    padding: 7px 2px;
+    font-size: 0.7rem;
+  }
+
+  .app-home__quick svg {
+    margin: 0 auto;
+  }
+
+  .app-home__feature {
+    min-height: 300px;
+  }
+
+  .app-home__feature-content h2 {
+    font-size: 2.35rem;
+  }
+
+  .app-home__feature-content > p:last-of-type {
+    font-size: 0.82rem;
+  }
+
+  .app-home__metrics {
+    gap: 8px;
+  }
+
+  .app-home__metrics article {
+    padding: 12px 10px;
+  }
+
+  .app-home__metrics span {
+    font-size: 1.05rem;
+  }
+
+  .app-home__metrics p {
+    font-size: 0.7rem;
   }
 
   .mobile-top-actions {

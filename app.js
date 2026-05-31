@@ -228,6 +228,17 @@ const nodes = {
   mobileTripSearch: document.querySelector("#mobileTripSearch"),
   mobileThemeToggle: document.querySelector("#mobileThemeToggle"),
   mobileCloudButton: document.querySelector("#mobileCloudButton"),
+  homeThemeToggle: document.querySelector("#homeThemeToggle"),
+  homeCloudButton: document.querySelector("#homeCloudButton"),
+  dashboardTripCover: document.querySelector("#dashboardTripCover"),
+  dashboardTripTitle: document.querySelector("#dashboardTripTitle"),
+  dashboardTripMeta: document.querySelector("#dashboardTripMeta"),
+  dashboardOpenTrip: document.querySelector("#dashboardOpenTrip"),
+  dashboardNewTrip: document.querySelector("#dashboardNewTrip"),
+  dashboardTripCount: document.querySelector("#dashboardTripCount"),
+  dashboardDayCount: document.querySelector("#dashboardDayCount"),
+  dashboardNextTrip: document.querySelector("#dashboardNextTrip"),
+  dashboardCloudStatus: document.querySelector("#dashboardCloudStatus"),
   createTripFromHome: document.querySelector("#createTripFromHome"),
   openCurrentTrip: document.querySelector("#openCurrentTrip"),
   backToPlannerHome: document.querySelector("#backToPlannerHome"),
@@ -1178,6 +1189,37 @@ function renderTripHome() {
   });
 }
 
+function renderAppHome() {
+  const stats = aggregateTripStats();
+  const cover = trip.days.find((day) => day.photoUrl)?.photoUrl || "assets/global-travel-hero.png";
+  const tripMeta = [
+    [trip.country, trip.baseCity].filter(Boolean).join("・") || "尚未設定目的地",
+    historyDateRange(trip),
+    `${trip.days.length || 0} 天`
+  ].join("｜");
+  if (nodes.dashboardTripCover) nodes.dashboardTripCover.src = cover;
+  if (nodes.dashboardTripTitle) nodes.dashboardTripTitle.textContent = trip.name || "我的旅行";
+  if (nodes.dashboardTripMeta) nodes.dashboardTripMeta.textContent = tripMeta;
+  if (nodes.dashboardTripCount) nodes.dashboardTripCount.textContent = trips.length;
+  if (nodes.dashboardDayCount) nodes.dashboardDayCount.textContent = stats.totalDays;
+  if (nodes.dashboardNextTrip) nodes.dashboardNextTrip.textContent = stats.upcomingLabel;
+  if (nodes.dashboardCloudStatus) {
+    nodes.dashboardCloudStatus.textContent = supabaseSession?.user
+      ? `已登入 ${cloudUserEmail()}，目前行程會自動同步。`
+      : "登入雲端後，手機與電腦會自動同步目前行程。";
+  }
+}
+
+function showAppHome() {
+  persistPlannerBeforeLeave();
+  plannerView = "home";
+  switchTab("home");
+  nodes.plannerHome?.classList.add("is-active");
+  nodes.plannerDetail?.classList.remove("is-active");
+  updatePlannerNavState();
+  renderAppHome();
+}
+
 function showPlannerHome() {
   persistPlannerBeforeLeave();
   plannerView = "home";
@@ -1199,8 +1241,6 @@ function showPlannerDetail() {
 
 function updatePlannerNavState() {
   document.body.dataset.plannerView = plannerView;
-  nodes.homeNavButton?.classList.toggle("is-active", plannerView === "home");
-  document.querySelector('[data-tab-target="planner"]')?.classList.toggle("is-active", plannerView === "detail");
 }
 
 function renderHero() {
@@ -1383,6 +1423,7 @@ function render() {
   nodes.paceHint.textContent = paceText[trip.pace];
   nodes.dayList.innerHTML = trip.days.length ? trip.days.map(renderDay).join("") : `<div class="empty-state">目前沒有行程。你可以新增一天、貼上行程匯入，或載入大阪範例。</div>`;
   renderAgencyBook();
+  renderAppHome();
   renderTripHome();
   renderTripLibrary();
   renderHistory();
@@ -1912,6 +1953,11 @@ function renderCloudAuthState() {
     nodes.mobileCloudButton.classList.toggle("is-synced", signedIn);
     nodes.mobileCloudButton.setAttribute("aria-label", signedIn ? `雲端同步已開啟：${cloudUserEmail()}` : "登入雲端同步");
   }
+  if (nodes.homeCloudButton) {
+    nodes.homeCloudButton.classList.toggle("is-synced", signedIn);
+    nodes.homeCloudButton.setAttribute("aria-label", signedIn ? `雲端同步已開啟：${cloudUserEmail()}` : "登入雲端同步");
+  }
+  renderAppHome();
   document.querySelectorAll(".auth-credential").forEach((field) => field.classList.toggle("is-hidden", signedIn));
   if (nodes.signIn) nodes.signIn.classList.toggle("is-hidden", signedIn);
   if (nodes.signUp) nodes.signUp.classList.toggle("is-hidden", signedIn);
@@ -2898,6 +2944,10 @@ function applyTheme() {
     nodes.mobileThemeToggle.setAttribute("aria-label", isDark ? "切換淺色模式" : "切換深色模式");
     nodes.mobileThemeToggle.innerHTML = `<i data-lucide="${isDark ? "sun" : "moon"}"></i>`;
   }
+  if (nodes.homeThemeToggle) {
+    nodes.homeThemeToggle.setAttribute("aria-label", isDark ? "切換淺色模式" : "切換深色模式");
+    nodes.homeThemeToggle.innerHTML = `<i data-lucide="${isDark ? "sun" : "moon"}"></i>`;
+  }
   refreshIcons();
 }
 
@@ -3635,7 +3685,9 @@ fields.tripSelector.addEventListener("change", () => switchActiveTrip(fields.tri
 nodes.createTripFromHome.addEventListener("click", () => createNewTrip(true));
 nodes.openCurrentTrip.addEventListener("click", showPlannerDetail);
 nodes.backToPlannerHome.addEventListener("click", showPlannerHome);
-nodes.homeNavButton.addEventListener("click", showPlannerHome);
+nodes.homeNavButton.addEventListener("click", showAppHome);
+nodes.dashboardOpenTrip?.addEventListener("click", showPlannerDetail);
+nodes.dashboardNewTrip?.addEventListener("click", () => createNewTrip(true));
 nodes.createTrip.addEventListener("click", createNewTrip);
 nodes.renameTrip.addEventListener("click", renameActiveTrip);
 nodes.deleteTrip.addEventListener("click", deleteActiveTrip);
@@ -3663,6 +3715,8 @@ nodes.applyImport.addEventListener("click", applyImport);
 nodes.themeToggle.addEventListener("click", toggleTheme);
 nodes.mobileThemeToggle?.addEventListener("click", toggleTheme);
 nodes.mobileCloudButton?.addEventListener("click", openCloudPanel);
+nodes.homeThemeToggle?.addEventListener("click", toggleTheme);
+nodes.homeCloudButton?.addEventListener("click", openCloudPanel);
 nodes.mobileTripSearch?.addEventListener("input", () => {
   mobileTripSearchTerm = nodes.mobileTripSearch.value;
   renderTripHome();
@@ -3672,6 +3726,13 @@ document.querySelectorAll("[data-mobile-action]").forEach((button) => {
   button.addEventListener("click", () => {
     const target = button.dataset.mobileAction;
     if (target === "planner") showPlannerDetail();
+    else switchTab(target);
+  });
+});
+document.querySelectorAll("[data-home-action]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const target = button.dataset.homeAction;
+    if (target === "planner") showPlannerHome();
     else switchTab(target);
   });
 });
