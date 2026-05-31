@@ -104,6 +104,17 @@ npx supabase functions deploy flight-lookup --no-verify-jwt
 
 尚未設定 API key 時，App 仍可手動輸入時間，並可使用 FlightAware 連結開啟查詢頁。
 
+## YouTube 攻略影片預覽
+
+攻略平台會透過 Supabase Edge Function `youtube-guide-search` 自動搜尋目的地近期影片，並在 App 內顯示最多兩支可直接播放的預覽。YouTube Data API key 只能放在 Supabase Secret，不可寫入前端：
+
+```powershell
+npx supabase secrets set YOUTUBE_DATA_API_KEY=你的金鑰 --project-ref pxbqalvbgbyybhlnqvvy
+npx supabase functions deploy youtube-guide-search --no-verify-jwt --project-ref pxbqalvbgbyybhlnqvvy --use-api
+```
+
+尚未設定 API key 時，App 會顯示直接前往 YouTube 搜尋近期影片的按鈕。
+
 ## GitHub Pages
 
 這是純 HTML/CSS/JavaScript 專案，已包含 GitHub Pages Actions workflow。

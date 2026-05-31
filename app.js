@@ -407,6 +407,7 @@ const guideRecommendationTemplates = [
     category: "現場感",
     reason: "影片能看到實際街景、人潮、交通轉乘難度與餐廳排隊狀況。",
     action: "把影片中出現的景點、餐廳和交通方式填進每日卡片。",
+    source: "youtube",
     query: (q) => `${q} 自由行 行程 交通 美食`
   },
   {
@@ -3009,9 +3010,36 @@ function guidePreviewTopics(destination, intent) {
 
 let guidePreviewMapInstance = null;
 
-function youtubeVideoId(value) {
-  const match = String(value || "").trim().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
-  return match?.[1] || "";
+function youtubeGuideSearchQuery(destination, intent) {
+  return `${destination} ${intentKeyword(intent)} 自由行 景點 行程`;
+}
+
+function youtubeGuideSearchUrl(query) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+}
+
+function youtubeGuideSearchEndpoint() {
+  const url = String(globalThis.SUPABASE_CONFIG?.url || "").replace(/\/$/, "");
+  return url ? `${url}/functions/v1/youtube-guide-search` : "";
+}
+
+async function fetchYoutubeGuideVideos(destination, intent) {
+  const endpoint = youtubeGuideSearchEndpoint();
+  const query = youtubeGuideSearchQuery(destination, intent);
+  if (!endpoint) return { query, videos: [], error: "尚未設定雲端影片搜尋。" };
+  try {
+    const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
+      headers: {
+        apikey: globalThis.SUPABASE_CONFIG?.publishableKey || "",
+        Authorization: `Bearer ${globalThis.SUPABASE_CONFIG?.publishableKey || ""}`
+      }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { query, videos: [], error: data.error || "暫時無法取得 YouTube 影片。" };
+    return { query, videos: Array.isArray(data.videos) ? data.videos.slice(0, 2) : [] };
+  } catch {
+    return { query, videos: [], error: "網路連線異常，請直接前往 YouTube 搜尋。" };
+  }
 }
 
 async function renderGuideVisualPreview(platform, destination, intent) {
@@ -3040,22 +3068,45 @@ async function renderGuideVisualPreview(platform, destination, intent) {
   }
 
   if (platform.name === "YouTube") {
+    const requestKey = `${platform.name}|${destination}|${intent}|${Date.now()}`;
+    viewport.dataset.previewRequest = requestKey;
     viewport.innerHTML = `
-      <div class="guide-preview__video-form">
+      <div class="guide-preview__empty">
         <i data-lucide="youtube"></i>
-        <h4>貼上 YouTube 攻略影片網址</h4>
-        <p>選擇一支想看的影片，即可直接在 App 內預覽播放。</p>
-        <input id="youtubePreviewUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." />
-        <button id="loadYoutubePreview" type="button">載入影片預覽</button>
+        <strong>正在搜尋近期 YouTube 行程影片</strong>
+        <span>整理 ${escapeHtml(destination)} 的景點與路線影片中...</span>
       </div>
     `;
     refreshIcons();
-    document.querySelector("#loadYoutubePreview")?.addEventListener("click", () => {
-      const videoId = youtubeVideoId(document.querySelector("#youtubePreviewUrl")?.value);
-      viewport.innerHTML = videoId
-        ? `<iframe class="guide-preview__iframe" src="https://www.youtube-nocookie.com/embed/${videoId}" title="YouTube 攻略影片預覽" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
-        : '<div class="guide-preview__empty">請貼上有效的 YouTube 影片網址。</div>';
-    });
+    const result = await fetchYoutubeGuideVideos(destination, intent);
+    if (!viewport.isConnected || viewport.dataset.previewRequest !== requestKey) return;
+    const directUrl = youtubeGuideSearchUrl(result.query);
+    if (!result.videos.length) {
+      viewport.innerHTML = `
+        <div class="guide-preview__empty">
+          <i data-lucide="youtube"></i>
+          <strong>暫時無法自動載入影片</strong>
+          <span>${escapeHtml(result.error || "目前沒有找到可嵌入的影片。")}</span>
+          <a class="guide-preview__youtube-link" href="${directUrl}" target="_blank" rel="noreferrer">前往 YouTube 搜尋近期影片</a>
+        </div>
+      `;
+      refreshIcons();
+      return;
+    }
+    viewport.innerHTML = `
+      <div class="guide-preview__videos">
+        ${result.videos.map((video) => `
+          <article class="guide-preview__video">
+            <iframe src="${escapeHtml(video.embedUrl)}" title="${escapeHtml(video.title)}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div>
+              <h4>${escapeHtml(video.title)}</h4>
+              <p>${escapeHtml(video.channel)}${video.publishedAt ? ` · ${escapeHtml(new Date(video.publishedAt).toLocaleDateString("zh-TW"))}` : ""}</p>
+              <a href="${escapeHtml(video.watchUrl)}" target="_blank" rel="noreferrer">在 YouTube 開啟</a>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    `;
     return;
   }
 
@@ -3121,7 +3172,10 @@ function renderGuideLinks(event) {
     <div class="recommendation-list">
       ${guideRecommendationTemplates
         .map((item, index) => {
-          const url = `https://www.google.com/search?q=${encodeURIComponent(item.query(destination))}`;
+          const query = item.query(destination);
+          const url = item.source === "youtube"
+            ? youtubeGuideSearchUrl(query)
+            : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
           return `
             <article class="recommendation-card">
               <div class="recommendation-rank">${index + 1}</div>
@@ -3131,7 +3185,7 @@ function renderGuideLinks(event) {
                 <p>${item.reason}</p>
                 <strong>${item.action}</strong>
               </div>
-              <a href="${url}" target="_blank" rel="noreferrer">查攻略</a>
+              <a href="${url}" target="_blank" rel="noreferrer">${item.source === "youtube" ? "看影片" : "查攻略"}</a>
             </article>
           `;
         })

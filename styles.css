@@ -693,6 +693,58 @@ h1 {
   font-weight: 850;
 }
 
+.guide-preview__youtube-link,
+.guide-preview__video a {
+  color: var(--teal);
+  font-weight: 850;
+}
+
+.guide-preview__videos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-height: 250px;
+  padding: 10px;
+  background: var(--soft);
+}
+
+.guide-preview__video {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.guide-preview__video iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+
+.guide-preview__video div {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+}
+
+.guide-preview__video h4,
+.guide-preview__video p {
+  margin: 0;
+}
+
+.guide-preview__video h4 {
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.guide-preview__video p {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
 .guide-preview__source {
   display: flex;
   gap: 14px;
@@ -2919,6 +2971,10 @@ h1 {
 
   .guide-preview__source > a {
     justify-self: start;
+  }
+
+  .guide-preview__videos {
+    grid-template-columns: 1fr;
   }
 
   .hero__content,
