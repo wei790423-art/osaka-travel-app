@@ -3007,6 +3007,68 @@ function guidePreviewTopics(destination, intent) {
   return [...new Set([...(focused[intent] || []), ...common])].slice(0, 5);
 }
 
+let guidePreviewMapInstance = null;
+
+function youtubeVideoId(value) {
+  const match = String(value || "").trim().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return match?.[1] || "";
+}
+
+async function renderGuideVisualPreview(platform, destination, intent) {
+  const viewport = document.querySelector("#guideEmbedViewport");
+  if (!viewport) return;
+  if (guidePreviewMapInstance) {
+    guidePreviewMapInstance.remove();
+    guidePreviewMapInstance = null;
+  }
+
+  if (platform.name === "Google Maps" && typeof L !== "undefined") {
+    viewport.innerHTML = '<div class="guide-preview__map" id="guidePreviewMap"></div>';
+    const geo = await geocode(`${destination} ${intentKeyword(intent)}`);
+    const mapNode = document.querySelector("#guidePreviewMap");
+    if (!mapNode) return;
+    if (!geo) {
+      mapNode.innerHTML = '<div class="guide-preview__empty">暫時無法定位，請按「開啟來源」查看地圖。</div>';
+      return;
+    }
+    guidePreviewMapInstance = L.map(mapNode, { scrollWheelZoom: false, tap: true }).setView([geo.lat, geo.lng], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap"
+    }).addTo(guidePreviewMapInstance);
+    L.marker([geo.lat, geo.lng]).addTo(guidePreviewMapInstance).bindPopup(destination).openPopup();
+    return;
+  }
+
+  if (platform.name === "YouTube") {
+    viewport.innerHTML = `
+      <div class="guide-preview__video-form">
+        <i data-lucide="youtube"></i>
+        <h4>貼上 YouTube 攻略影片網址</h4>
+        <p>選擇一支想看的影片，即可直接在 App 內預覽播放。</p>
+        <input id="youtubePreviewUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." />
+        <button id="loadYoutubePreview" type="button">載入影片預覽</button>
+      </div>
+    `;
+    refreshIcons();
+    document.querySelector("#loadYoutubePreview")?.addEventListener("click", () => {
+      const videoId = youtubeVideoId(document.querySelector("#youtubePreviewUrl")?.value);
+      viewport.innerHTML = videoId
+        ? `<iframe class="guide-preview__iframe" src="https://www.youtube-nocookie.com/embed/${videoId}" title="YouTube 攻略影片預覽" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+        : '<div class="guide-preview__empty">請貼上有效的 YouTube 影片網址。</div>';
+    });
+    return;
+  }
+
+  viewport.innerHTML = `
+    <div class="guide-preview__empty">
+      <i data-lucide="external-link"></i>
+      <strong>${escapeHtml(platform.name)} 不開放站內嵌入</strong>
+      <span>已保留整理過的摘要。需要最新內容時，請按下方「開啟來源」。</span>
+    </div>
+  `;
+  refreshIcons();
+}
+
 function renderGuidePreview(platform, destination, intent) {
   if (!nodes.guidePreview || !platform) return;
   const sourceUrl = platform.buildUrl(destination, intent);
@@ -3019,6 +3081,13 @@ function renderGuidePreview(platform, destination, intent) {
       <p>先在 App 內快速確認規劃方向，再開啟 ${escapeHtml(platform.name)} 查看最新內容。</p>
     </div>
     <div class="guide-preview__body">
+      <div class="guide-preview__window">
+        <div class="guide-preview__window-bar">
+          <i></i><i></i><i></i>
+          <span>${escapeHtml(platform.name)} 預覽</span>
+        </div>
+        <div class="guide-preview__viewport" id="guideEmbedViewport"></div>
+      </div>
       <div class="guide-preview__source">
         <div>
           <span>目前預覽來源</span>
@@ -3036,6 +3105,7 @@ function renderGuidePreview(platform, destination, intent) {
       <p class="guide-preview__note">預覽內容為規劃摘要。營業時間、票價與交通異動請以來源網站最新資訊為準。</p>
     </div>
   `;
+  renderGuideVisualPreview(platform, destination, intent);
 }
 
 function renderGuideLinks(event) {
