@@ -2435,11 +2435,28 @@ function registerServiceWorker() {
 
   window.addEventListener("load", async () => {
     try {
-      const registration = await navigator.serviceWorker.register("service-worker.js");
+      const reloadKey = "global-trip-sw-reload-v53";
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (sessionStorage.getItem(reloadKey)) return;
+        sessionStorage.setItem(reloadKey, "1");
+        window.location.reload();
+      });
+      const registration = await navigator.serviceWorker.register("service-worker.js?v=53", {
+        updateViaCache: "none"
+      });
       await registration.update();
       if (registration.waiting) {
         registration.waiting.postMessage({ type: "SKIP_WAITING" });
       }
+      registration.addEventListener("updatefound", () => {
+        const installingWorker = registration.installing;
+        if (!installingWorker) return;
+        installingWorker.addEventListener("statechange", () => {
+          if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+            installingWorker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
       updateOfflineStatus(registration.active ? "離線功能已啟用，可安裝到手機主畫面。" : "離線功能正在準備中，重新開啟後即可使用。");
     } catch {
       updateOfflineStatus("離線功能暫時無法啟用，線上使用不受影響。");
