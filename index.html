@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260601-departure-board" />
+    <link rel="stylesheet" href="styles.css?v=20260601-guide-preview" />
   </head>
   <body>
     <main class="app-shell">
@@ -479,6 +479,7 @@
             </select>
             <button type="submit">產生攻略連結</button>
           </form>
+          <section class="guide-preview" id="guidePreview" aria-live="polite"></section>
           <div class="guide-recommendations" id="guideRecommendations"></div>
           <div class="guide-grid" id="guideGrid"></div>
         </section>
@@ -619,6 +620,6 @@
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260531-cloud-default"></script>
-    <script src="app.js?v=20260601-departure-board"></script>
+    <script src="app.js?v=20260601-guide-preview"></script>
   </body>
 </html>

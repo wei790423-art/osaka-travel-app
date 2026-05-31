@@ -547,6 +547,110 @@ h1 {
   padding: 0 16px;
 }
 
+.guide-preview {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid rgba(0, 109, 113, 0.2);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.guide-preview__cover {
+  padding: 22px;
+  color: #fff;
+  background:
+    linear-gradient(145deg, rgba(0, 78, 82, 0.96), rgba(16, 52, 62, 0.96)),
+    url("assets/global-travel-hero.png") center / cover;
+}
+
+.guide-preview__cover span {
+  color: #ffd36a;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.guide-preview__cover h3 {
+  margin: 10px 0;
+  font-size: clamp(1.55rem, 3vw, 2.3rem);
+  line-height: 1.06;
+}
+
+.guide-preview__cover p:last-child {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+}
+
+.guide-preview__body {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.guide-preview__source {
+  display: flex;
+  gap: 14px;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.guide-preview__source span {
+  color: var(--teal);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.guide-preview__source h4,
+.guide-preview__topics h4 {
+  margin: 5px 0 7px;
+}
+
+.guide-preview__source p,
+.guide-preview__note {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.guide-preview__source > a,
+.guide-preview__topics a {
+  text-decoration: none;
+}
+
+.guide-preview__source > a {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.guide-preview__topics > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.guide-preview__topics a {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--teal);
+  background: var(--soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.guide-preview__note {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.76rem;
+}
+
 .guide-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -652,6 +756,11 @@ h1 {
   background: #f9faf8;
 }
 
+.guide-card.is-previewing {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(0, 109, 113, 0.12);
+}
+
 .guide-card span {
   display: block;
   margin-bottom: 8px;
@@ -670,17 +779,34 @@ h1 {
   line-height: 1.55;
 }
 
-.guide-card a {
+.guide-card__actions {
+  display: grid;
+  gap: 7px;
+  align-content: start;
+}
+
+.guide-card a,
+.guide-card__actions button {
   align-self: start;
   min-height: 38px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 0 12px;
   border-radius: 8px;
-  background: var(--teal);
-  color: #fff;
   font-weight: 850;
   text-decoration: none;
+}
+
+.guide-card a {
+  color: #fff;
+  background: var(--teal);
+}
+
+.guide-card__actions button {
+  border: 1px solid var(--line);
+  color: var(--teal);
+  background: var(--soft);
 }
 
 .import-actions {
@@ -2672,6 +2798,23 @@ h1 {
 @media (max-width: 640px) {
   .hero {
     min-height: 520px;
+  }
+
+  .guide-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-preview__cover,
+  .guide-preview__body {
+    padding: 16px;
+  }
+
+  .guide-preview__source {
+    display: grid;
+  }
+
+  .guide-preview__source > a {
+    justify-self: start;
   }
 
   .hero__content,

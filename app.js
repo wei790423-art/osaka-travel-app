@@ -310,6 +310,7 @@ const nodes = {
   guideForm: document.querySelector("#guideForm"),
   guideDestination: document.querySelector("#guideDestination"),
   guideIntent: document.querySelector("#guideIntent"),
+  guidePreview: document.querySelector("#guidePreview"),
   guideRecommendations: document.querySelector("#guideRecommendations"),
   guideGrid: document.querySelector("#guideGrid"),
   tripMap: document.querySelector("#tripMap"),
@@ -2982,6 +2983,61 @@ function toggleTheme() {
   applyTheme();
 }
 
+function guideIntentLabel(intent) {
+  return {
+    full: "完整自由行",
+    attractions: "景點安排",
+    food: "在地美食",
+    transport: "交通移動",
+    tickets: "票券活動",
+    hotel: "住宿選擇"
+  }[intent] || "旅行攻略";
+}
+
+function guidePreviewTopics(destination, intent) {
+  const common = [`${destination} 必去景點`, `${destination} 行程路線`, `${destination} 交通方式`];
+  const focused = {
+    full: [`${destination} 自由行懶人包`, `${destination} 建議天數`, `${destination} 順遊路線`],
+    attractions: [`${destination} 景點排行`, `${destination} 雨天備案`, `${destination} 親子景點`],
+    food: [`${destination} 必吃美食`, `${destination} 在地餐廳`, `${destination} 早餐與宵夜`],
+    transport: [`${destination} 大眾運輸`, `${destination} 機場交通`, `${destination} 交通票券`],
+    tickets: [`${destination} 熱門門票`, `${destination} 預約活動`, `${destination} 城市通票`],
+    hotel: [`${destination} 住宿區域`, `${destination} 飯店推薦`, `${destination} 車站附近住宿`]
+  };
+  return [...new Set([...(focused[intent] || []), ...common])].slice(0, 5);
+}
+
+function renderGuidePreview(platform, destination, intent) {
+  if (!nodes.guidePreview || !platform) return;
+  const sourceUrl = platform.buildUrl(destination, intent);
+  const topics = guidePreviewTopics(destination, intent);
+  nodes.guidePreview.innerHTML = `
+    <div class="guide-preview__cover">
+      <p class="eyebrow">Guide Preview</p>
+      <span>${escapeHtml(platform.type)}</span>
+      <h3>${escapeHtml(destination)} · ${escapeHtml(guideIntentLabel(intent))}</h3>
+      <p>先在 App 內快速確認規劃方向，再開啟 ${escapeHtml(platform.name)} 查看最新內容。</p>
+    </div>
+    <div class="guide-preview__body">
+      <div class="guide-preview__source">
+        <div>
+          <span>目前預覽來源</span>
+          <h4>${escapeHtml(platform.name)}</h4>
+          <p>${escapeHtml(platform.note)}</p>
+        </div>
+        <a href="${sourceUrl}" target="_blank" rel="noreferrer">開啟來源</a>
+      </div>
+      <div class="guide-preview__topics">
+        <h4>建議先查看</h4>
+        <div>
+          ${topics.map((topic) => `<a href="https://www.google.com/search?q=${encodeURIComponent(topic)}" target="_blank" rel="noreferrer">${escapeHtml(topic)}</a>`).join("")}
+        </div>
+      </div>
+      <p class="guide-preview__note">預覽內容為規劃摘要。營業時間、票價與交通異動請以來源網站最新資訊為準。</p>
+    </div>
+  `;
+}
+
 function renderGuideLinks(event) {
   if (event) event.preventDefault();
   const destination = nodes.guideDestination.value.trim() || trip.baseCity || trip.country || "大阪";
@@ -3013,20 +3069,34 @@ function renderGuideLinks(event) {
     </div>
   `;
   nodes.guideGrid.innerHTML = guidePlatforms
-    .map((platform) => {
+    .map((platform, index) => {
       const url = platform.buildUrl(destination, intent);
       return `
-        <article class="guide-card">
+        <article class="guide-card${index === 0 ? " is-previewing" : ""}" data-guide-platform="${escapeHtml(platform.name)}">
           <div>
             <span>${platform.type}</span>
             <h3>${platform.name}</h3>
             <p>${platform.note}</p>
           </div>
-          <a href="${url}" target="_blank" rel="noreferrer">開啟</a>
+          <div class="guide-card__actions">
+            <button type="button" data-preview-guide="${escapeHtml(platform.name)}">預覽</button>
+            <a href="${url}" target="_blank" rel="noreferrer">開啟</a>
+          </div>
         </article>
       `;
     })
     .join("");
+  renderGuidePreview(guidePlatforms[0], destination, intent);
+  nodes.guideGrid.querySelectorAll("[data-preview-guide]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const platform = guidePlatforms.find((item) => item.name === button.dataset.previewGuide);
+      nodes.guideGrid.querySelectorAll(".guide-card").forEach((card) => {
+        card.classList.toggle("is-previewing", card.dataset.guidePlatform === button.dataset.previewGuide);
+      });
+      renderGuidePreview(platform, destination, intent);
+      nodes.guidePreview.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 }
 
 // ========== Geocoding ==========
