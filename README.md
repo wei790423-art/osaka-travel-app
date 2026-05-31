@@ -91,6 +91,8 @@ window.SUPABASE_CONFIG = {
 
 GitHub Pages 目前會連到正式 Supabase Cloud 專案 `pxbqalvbgbyybhlnqvvy`，使用 `supabase-config.js` 內的 publishable key。不要把 secret key 或 service_role key 放進前端檔案。
 
+雲端登入會在同一台裝置保留 Supabase session 並自動更新權杖。第一次登入後，重新開啟 App 會自動恢復同步；使用者主動登出、清除瀏覽器網站資料或更換裝置時，才需要再次登入。
+
 ## 航班自動查詢
 
 前端輸入航班號後，會呼叫 Supabase Edge Function `flight-lookup` 查詢 FlightAware AeroAPI，並自動帶入預定起飛與抵達時間。第三方 API key 只能放在 Supabase Secret，不可寫入前端：

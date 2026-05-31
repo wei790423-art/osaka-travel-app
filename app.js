@@ -1883,7 +1883,13 @@ function saveCurrentToHistory() {
 function createSupabaseClient() {
   const config = globalThis.SUPABASE_CONFIG || {};
   if (!globalThis.supabase?.createClient || !config.url || !config.publishableKey) return null;
-  return globalThis.supabase.createClient(config.url, config.publishableKey);
+  return globalThis.supabase.createClient(config.url, config.publishableKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
 }
 
 function setCloudStatus(message) {
@@ -2021,7 +2027,7 @@ async function initSupabaseAuth() {
     setCloudStatus(`讀取登入狀態失敗：${error.message}`);
   } else {
     supabaseSession = data.session;
-    setCloudStatus(supabaseSession ? `已登入：${cloudUserEmail()}` : "尚未登入，資料目前只存在這台瀏覽器。");
+    setCloudStatus(supabaseSession ? `已自動恢復登入：${cloudUserEmail()}，雲端同步已開啟。` : "尚未登入，第一次登入後這台裝置會自動保持雲端同步。");
   }
   renderCloudAuthState();
   if (supabaseSession) {
