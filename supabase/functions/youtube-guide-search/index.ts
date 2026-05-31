@@ -31,8 +31,12 @@ Deno.serve(async (request) => {
   providerUrl.searchParams.set("part", "snippet");
   providerUrl.searchParams.set("type", "video");
   providerUrl.searchParams.set("maxResults", "2");
-  providerUrl.searchParams.set("order", "date");
+  const publishedAfter = new Date();
+  publishedAfter.setFullYear(publishedAfter.getFullYear() - 1);
+  providerUrl.searchParams.set("order", "relevance");
+  providerUrl.searchParams.set("publishedAfter", publishedAfter.toISOString());
   providerUrl.searchParams.set("videoEmbeddable", "true");
+  providerUrl.searchParams.set("videoDuration", "medium");
   providerUrl.searchParams.set("safeSearch", "moderate");
   providerUrl.searchParams.set("relevanceLanguage", "zh");
   providerUrl.searchParams.set("q", query);
@@ -46,7 +50,11 @@ Deno.serve(async (request) => {
   }
   const providerData = await providerResponse.json().catch(() => ({}));
   if (!providerResponse.ok) {
-    return json({ error: "YouTube 影片服務暫時無法查詢，請稍後再試。" }, 502);
+    const providerError = Array.isArray(providerData.error?.errors) ? providerData.error.errors[0] : null;
+    return json({
+      code: String(providerError?.reason || "youtube_provider_error"),
+      error: String(providerData.error?.message || "YouTube 影片服務暫時無法查詢，請稍後再試。"),
+    }, 502);
   }
 
   const items = Array.isArray(providerData.items) ? providerData.items : [];
