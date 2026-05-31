@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260531-planner-autosave" />
+    <link rel="stylesheet" href="styles.css?v=20260531-inline-import" />
   </head>
   <body>
     <main class="app-shell">
@@ -34,7 +34,6 @@
         <button class="tab-button is-active" type="button" data-tab-target="planner">行程規劃</button>
         <button class="tab-button" type="button" data-tab-target="guides">攻略平台</button>
         <button class="tab-button" type="button" data-tab-target="food">美食探索</button>
-        <button class="tab-button" type="button" data-tab-target="import">匯入行程</button>
         <button class="tab-button" type="button" data-tab-target="history">歷史行程</button>
         <button class="tab-button" type="button" data-tab-target="tools">工具清單</button>
         <button class="tab-button theme-toggle" id="themeToggle" type="button" aria-pressed="false">深色模式</button>
@@ -105,6 +104,20 @@
               <button id="deleteTrip" type="button">刪除行程</button>
             </div>
           </div>
+          <section class="planner-import" aria-label="匯入行程">
+            <div class="planner-import__heading">
+              <div>
+                <h3>匯入行程</h3>
+                <p>貼上 ChatGPT 或旅行社格式文字，自動整理每日景點、餐食、住宿、交通與預算。</p>
+              </div>
+            </div>
+            <textarea id="importText" class="import-box" rows="9" placeholder="範例：&#10;第 1 天：抵達大阪，難波暖身&#10;住宿：難波飯店&#10;09:00 早餐：飯店早餐&#10;10:30 大阪城公園&#10;12:30 午餐：京橋商店街餐廳&#10;14:00 梅田藍天大廈空中庭園&#10;交通：地鐵 + 步行&#10;預算：9200"></textarea>
+            <div class="import-actions">
+              <button id="previewImport" type="button">預覽解析</button>
+              <button id="applyImport" type="button">導入成目前行程</button>
+            </div>
+            <div class="import-preview" id="importPreview"></div>
+          </section>
         </section>
 
         <section class="toolbar planner-form" aria-label="旅行設定">
@@ -409,23 +422,6 @@
         </section>
       </section>
 
-      <section class="tab-panel" id="import" aria-label="匯入行程">
-        <section class="wide-panel">
-          <div class="section-heading">
-            <div>
-              <h2>AI 行程自動整理</h2>
-              <p>直接貼上 ChatGPT 生成的完整行程，系統會自動辨識每日景點、早餐午餐晚餐、住宿、交通與預算；餐食不會被放進快速導航景點。</p>
-            </div>
-          </div>
-          <textarea id="importText" class="import-box" rows="14" placeholder="範例：&#10;第 1 天：抵達大阪，難波暖身&#10;住宿：難波飯店&#10;09:00 早餐：飯店早餐&#10;10:30 大阪城公園&#10;12:30 午餐：京橋商店街餐廳&#10;14:00 梅田藍天大廈空中庭園&#10;交通：地鐵 + 步行&#10;預算：9200&#10;&#10;第 2 天 / Day 2：京都一日遊&#10;08:30 搭乘 JR 前往京都&#10;10:00 伏見稻荷大社&#10;12:00 午餐：祇園周邊餐廳&#10;15:00 清水寺、二年坂、三年坂&#10;晚餐：大阪車站便餐"></textarea>
-          <div class="import-actions">
-            <button id="previewImport" type="button">預覽解析</button>
-            <button id="applyImport" type="button">導入成目前行程</button>
-          </div>
-          <div class="import-preview" id="importPreview"></div>
-        </section>
-      </section>
-
       <section class="tab-panel" id="history" aria-label="歷史行程">
         <section class="wide-panel">
           <div class="section-heading">
@@ -532,6 +528,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260531-cloud-default"></script>
-    <script src="app.js?v=20260531-planner-autosave"></script>
+    <script src="app.js?v=20260531-inline-import"></script>
   </body>
 </html>
