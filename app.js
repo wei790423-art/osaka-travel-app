@@ -168,6 +168,7 @@ let cloudAutoSyncTimer = null;
 let cloudSyncInFlight = false;
 let cloudSyncQueued = false;
 let cloudApplyingRemote = false;
+let mobileTripSearchTerm = "";
 const cloudClientId = getCloudClientId();
 
 const fields = {
@@ -224,6 +225,9 @@ const nodes = {
   homeTripCount: document.querySelector("#homeTripCount"),
   homeDayCount: document.querySelector("#homeDayCount"),
   homeNextTrip: document.querySelector("#homeNextTrip"),
+  mobileTripSearch: document.querySelector("#mobileTripSearch"),
+  mobileThemeToggle: document.querySelector("#mobileThemeToggle"),
+  mobileCloudButton: document.querySelector("#mobileCloudButton"),
   createTripFromHome: document.querySelector("#createTripFromHome"),
   openCurrentTrip: document.querySelector("#openCurrentTrip"),
   backToPlannerHome: document.querySelector("#backToPlannerHome"),
@@ -1148,10 +1152,22 @@ function plannerHomeCard(entry) {
 function renderTripHome() {
   if (!nodes.tripHomeGrid) return;
   const stats = aggregateTripStats();
+  const searchTerm = mobileTripSearchTerm.trim().toLowerCase();
+  const visibleTrips = searchTerm
+    ? trips.filter((entry) => {
+        const savedTrip = normalizeTrip(entry.trip);
+        return [savedTrip.name, savedTrip.country, savedTrip.baseCity]
+          .join(" ")
+          .toLowerCase()
+          .includes(searchTerm);
+      })
+    : trips;
   nodes.homeTripCount.textContent = trips.length;
   nodes.homeDayCount.textContent = stats.totalDays;
   nodes.homeNextTrip.textContent = stats.upcomingLabel;
-  nodes.tripHomeGrid.innerHTML = trips.map(plannerHomeCard).join("");
+  nodes.tripHomeGrid.innerHTML = visibleTrips.length
+    ? visibleTrips.map(plannerHomeCard).join("")
+    : `<div class="empty-state">找不到符合「${escapeHtml(mobileTripSearchTerm)}」的旅行。</div>`;
 
   document.querySelectorAll("[data-open-trip]").forEach((button) => {
     button.addEventListener("click", () => switchActiveTrip(button.dataset.openTrip, true));
@@ -1168,6 +1184,7 @@ function showPlannerHome() {
   switchTab("planner");
   nodes.plannerHome?.classList.add("is-active");
   nodes.plannerDetail?.classList.remove("is-active");
+  updatePlannerNavState();
   renderHero();
 }
 
@@ -1176,7 +1193,13 @@ function showPlannerDetail() {
   switchTab("planner", { preservePlannerView: true });
   nodes.plannerHome?.classList.remove("is-active");
   nodes.plannerDetail?.classList.add("is-active");
+  updatePlannerNavState();
   renderHero();
+}
+
+function updatePlannerNavState() {
+  nodes.homeNavButton?.classList.toggle("is-active", plannerView === "home");
+  document.querySelector('[data-tab-target="planner"]')?.classList.toggle("is-active", plannerView === "detail");
 }
 
 function renderHero() {
@@ -2817,6 +2840,7 @@ function switchTab(targetId, options = {}) {
     plannerView = "home";
     renderHero();
   }
+  if (targetId === "planner") updatePlannerNavState();
 }
 
 function persistPlannerBeforeLeave() {
@@ -2859,6 +2883,11 @@ function applyTheme() {
   const isDark = theme === "dark";
   nodes.themeToggle.textContent = isDark ? "淺色模式" : "深色模式";
   nodes.themeToggle.setAttribute("aria-pressed", String(isDark));
+  if (nodes.mobileThemeToggle) {
+    nodes.mobileThemeToggle.setAttribute("aria-label", isDark ? "切換淺色模式" : "切換深色模式");
+    nodes.mobileThemeToggle.innerHTML = `<i data-lucide="${isDark ? "sun" : "moon"}"></i>`;
+  }
+  refreshIcons();
 }
 
 function toggleTheme() {
@@ -2948,6 +2977,10 @@ async function fetchGeocode(query, key, attempt = 0) {
     }
   } catch {}
   return null;
+}
+
+function refreshIcons() {
+  globalThis.lucide?.createIcons?.();
 }
 
 function geocode(query) {
@@ -3617,6 +3650,20 @@ nodes.createShareLink.addEventListener("click", createShareLink);
 nodes.previewImport.addEventListener("click", previewImport);
 nodes.applyImport.addEventListener("click", applyImport);
 nodes.themeToggle.addEventListener("click", toggleTheme);
+nodes.mobileThemeToggle?.addEventListener("click", toggleTheme);
+nodes.mobileCloudButton?.addEventListener("click", openCloudPanel);
+nodes.mobileTripSearch?.addEventListener("input", () => {
+  mobileTripSearchTerm = nodes.mobileTripSearch.value;
+  renderTripHome();
+  refreshIcons();
+});
+document.querySelectorAll("[data-mobile-action]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const target = button.dataset.mobileAction;
+    if (target === "planner") showPlannerDetail();
+    else switchTab(target);
+  });
+});
 nodes.guideForm.addEventListener("submit", renderGuideLinks);
 nodes.foodForm.addEventListener("submit", renderFoodSearch);
 if (nodes.calcLocal) nodes.calcLocal.addEventListener("input", calcLocalToTwd);
@@ -3632,6 +3679,8 @@ syncFields();
 renderChecklist();
 renderGuideLinks();
 renderFoodSearch();
+updatePlannerNavState();
 render();
+refreshIcons();
 registerServiceWorker();
 initSupabaseAuth();

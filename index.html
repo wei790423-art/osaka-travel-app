@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260531-inline-import" />
+    <link rel="stylesheet" href="styles.css?v=20260531-mobile-studio" />
   </head>
   <body>
     <main class="app-shell">
@@ -30,12 +30,12 @@
       </section>
 
       <nav class="tab-nav" aria-label="功能選單">
-        <button class="tab-button" id="homeNavButton" type="button">首頁</button>
-        <button class="tab-button is-active" type="button" data-tab-target="planner">行程規劃</button>
-        <button class="tab-button" type="button" data-tab-target="guides">攻略平台</button>
-        <button class="tab-button" type="button" data-tab-target="food">美食探索</button>
-        <button class="tab-button" type="button" data-tab-target="history">歷史行程</button>
-        <button class="tab-button" type="button" data-tab-target="tools">工具清單</button>
+        <button class="tab-button" id="homeNavButton" type="button"><i data-lucide="house"></i><span>首頁</span></button>
+        <button class="tab-button is-active" type="button" data-tab-target="planner"><i data-lucide="map"></i><span>行程規劃</span></button>
+        <button class="tab-button" type="button" data-tab-target="guides"><i data-lucide="compass"></i><span>攻略平台</span></button>
+        <button class="tab-button" type="button" data-tab-target="food"><i data-lucide="utensils"></i><span>美食探索</span></button>
+        <button class="tab-button" type="button" data-tab-target="history"><i data-lucide="clock-3"></i><span>歷史行程</span></button>
+        <button class="tab-button" type="button" data-tab-target="tools"><i data-lucide="briefcase-business"></i><span>工具清單</span></button>
         <button class="tab-button theme-toggle" id="themeToggle" type="button" aria-pressed="false">深色模式</button>
         <button class="cloud-nav-button" id="openCloudPanel" type="button" aria-haspopup="dialog">
           <span class="cloud-nav-button__dot" aria-hidden="true"></span>
@@ -45,6 +45,26 @@
 
       <section class="tab-panel is-active" id="planner" aria-label="行程規劃">
         <section class="planner-home is-active" id="plannerHome" aria-label="旅行規劃首頁">
+          <div class="mobile-top-actions" aria-label="手機快捷操作">
+            <strong>Trip Studio</strong>
+            <div>
+              <button id="mobileThemeToggle" type="button" aria-label="切換深色模式"><i data-lucide="moon"></i></button>
+              <button id="mobileCloudButton" type="button" aria-label="登入雲端同步"><i data-lucide="cloud"></i></button>
+            </div>
+          </div>
+          <div class="mobile-discovery">
+            <label class="mobile-search">
+              <i data-lucide="search"></i>
+              <input id="mobileTripSearch" type="search" placeholder="搜尋旅行、國家或城市" />
+            </label>
+            <div class="mobile-shortcuts" aria-label="旅行快捷入口">
+              <button type="button" data-mobile-action="guides"><i data-lucide="map-pin"></i><span>找景點</span></button>
+              <button type="button" data-mobile-action="planner"><i data-lucide="route"></i><span>排行程</span></button>
+              <button type="button" data-mobile-action="food"><i data-lucide="utensils"></i><span>找美食</span></button>
+              <button type="button" data-mobile-action="tools"><i data-lucide="ticket"></i><span>票券</span></button>
+              <button type="button" data-mobile-action="history"><i data-lucide="clock-3"></i><span>紀錄</span></button>
+            </div>
+          </div>
           <div class="home-cover">
             <div>
               <p class="eyebrow">Travel Studio</p>
@@ -526,8 +546,9 @@
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260531-cloud-default"></script>
-    <script src="app.js?v=20260531-inline-import"></script>
+    <script src="app.js?v=20260531-mobile-studio"></script>
   </body>
 </html>

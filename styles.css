@@ -3818,6 +3818,316 @@ h1 {
 }
 
 /* ========== Print / PDF Itinerary ========== */
+.mobile-top-actions,
+.mobile-discovery {
+  display: none;
+}
+
+.tab-button svg,
+.cloud-nav-button svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 2.4;
+}
+
+.tab-button {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 720px) {
+  body {
+    padding-bottom: 78px;
+  }
+
+  .hero {
+    min-height: 270px;
+  }
+
+  .hero__content {
+    width: calc(100% - 28px);
+    padding: 54px 0 72px;
+  }
+
+  h1 {
+    max-width: 310px;
+    margin-bottom: 12px;
+    font-size: 3rem;
+    line-height: 0.98;
+  }
+
+  .hero__copy {
+    max-width: 330px;
+    margin-bottom: 0;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .hero__stats {
+    display: none;
+  }
+
+  .tab-nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    width: 100%;
+    margin: 0;
+    padding: 7px 5px max(7px, env(safe-area-inset-bottom));
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 -10px 28px rgba(19, 36, 39, 0.12);
+    backdrop-filter: blur(18px);
+  }
+
+  :root[data-theme="dark"] .tab-nav {
+    border-color: var(--line);
+    background: rgba(25, 29, 32, 0.96);
+  }
+
+  .tab-button {
+    display: grid;
+    min-height: 52px;
+    gap: 3px;
+    padding: 4px 2px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    line-height: 1;
+  }
+
+  .tab-button svg {
+    width: 19px;
+    height: 19px;
+    margin: 0 auto;
+  }
+
+  .tab-button.is-active {
+    color: var(--teal);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  #homeNavButton,
+  .tab-button[data-tab-target="planner"],
+  .tab-button[data-tab-target="guides"],
+  .tab-button[data-tab-target="history"],
+  .tab-button[data-tab-target="tools"] {
+    display: grid;
+  }
+
+  .tab-button[data-tab-target="food"],
+  .tab-nav > .theme-toggle,
+  .tab-nav > .cloud-nav-button {
+    display: none;
+  }
+
+  .planner-home {
+    width: min(100% - 20px, 1180px);
+    margin-top: 10px;
+  }
+
+  .mobile-top-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 48px;
+    margin-bottom: 8px;
+  }
+
+  .mobile-top-actions strong {
+    color: var(--brand-ink);
+    font-size: 1.08rem;
+  }
+
+  .mobile-top-actions div {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mobile-top-actions button {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--teal);
+    background: var(--panel);
+  }
+
+  .mobile-top-actions svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-discovery {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 16px;
+  }
+
+  .mobile-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 46px;
+    padding: 0 13px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--muted);
+    background: var(--panel);
+    box-shadow: 0 8px 20px rgba(21, 39, 39, 0.06);
+  }
+
+  .mobile-search svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .mobile-search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    background: transparent;
+    font: inherit;
+  }
+
+  .mobile-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .mobile-shortcuts button {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .mobile-shortcuts svg {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 8px;
+    color: var(--teal);
+    background: #e5f4f2;
+  }
+
+  .mobile-shortcuts button:nth-child(2) svg {
+    color: #a96517;
+    background: #fff0d7;
+  }
+
+  .mobile-shortcuts button:nth-child(3) svg {
+    color: #28764e;
+    background: #e3f5e9;
+  }
+
+  .mobile-shortcuts button:nth-child(4) svg {
+    color: #8754a4;
+    background: #f2e9f8;
+  }
+
+  .mobile-shortcuts button:nth-child(5) svg {
+    color: #24749a;
+    background: #e4f3fa;
+  }
+
+  .home-cover {
+    min-height: 248px;
+    padding: 20px;
+    border-radius: 8px;
+    background:
+      linear-gradient(180deg, rgba(0, 45, 50, 0.08), rgba(0, 32, 38, 0.92)),
+      url("assets/global-travel-hero.png") center / cover;
+  }
+
+  .home-cover .eyebrow {
+    margin-bottom: 8px;
+  }
+
+  .home-cover h2 {
+    max-width: 280px;
+    margin-bottom: 8px;
+    font-size: 2.25rem;
+    line-height: 0.98;
+  }
+
+  .home-cover p {
+    display: none;
+  }
+
+  .home-actions {
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .home-actions button {
+    min-height: 40px;
+    width: auto;
+    padding: 0 12px;
+    font-size: 0.78rem;
+  }
+
+  .home-metrics {
+    display: none;
+  }
+
+  .home-section-head {
+    margin: 22px 0 12px;
+  }
+
+  .home-section-head h2 {
+    font-size: 1.35rem;
+  }
+
+  .home-section-head p {
+    font-size: 0.86rem;
+  }
+
+  .trip-home-grid {
+    gap: 12px;
+  }
+
+  .trip-card-body {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .trip-card-media {
+    aspect-ratio: 1.7 / 1;
+  }
+
+  .trip-library-panel,
+  .toolbar,
+  .dashboard,
+  .route-studio,
+  .agency-book,
+  .map-overview-wrap,
+  .content-grid,
+  .wide-panel {
+    width: min(100% - 20px, 1180px);
+  }
+}
+
 @media print {
   @page {
     size: A4;
