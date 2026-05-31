@@ -233,6 +233,13 @@ const nodes = {
   dashboardTripCover: document.querySelector("#dashboardTripCover"),
   dashboardTripTitle: document.querySelector("#dashboardTripTitle"),
   dashboardTripMeta: document.querySelector("#dashboardTripMeta"),
+  dashboardCountdownLabel: document.querySelector("#dashboardCountdownLabel"),
+  dashboardCountdownValue: document.querySelector("#dashboardCountdownValue"),
+  dashboardCountdownUnit: document.querySelector("#dashboardCountdownUnit"),
+  dashboardProgressText: document.querySelector("#dashboardProgressText"),
+  dashboardProgressFill: document.querySelector("#dashboardProgressFill"),
+  dashboardJourneyDates: document.querySelector("#dashboardJourneyDates"),
+  dashboardJourneyStops: document.querySelector("#dashboardJourneyStops"),
   dashboardOpenTrip: document.querySelector("#dashboardOpenTrip"),
   dashboardNewTrip: document.querySelector("#dashboardNewTrip"),
   dashboardTripCount: document.querySelector("#dashboardTripCount"),
@@ -1192,14 +1199,32 @@ function renderTripHome() {
 function renderAppHome() {
   const stats = aggregateTripStats();
   const cover = trip.days.find((day) => day.photoUrl)?.photoUrl || "assets/global-travel-hero.png";
+  const start = parseDateValue(trip.startDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = start ? Math.ceil((start - today) / (1000 * 60 * 60 * 24)) : null;
+  const plannedDays = trip.days.filter((day) => day.title || day.place || dayLandmarks(day).length).length;
+  const progress = trip.days.length ? Math.round((plannedDays / trip.days.length) * 100) : 0;
+  const allStops = [...new Set(trip.days.flatMap((day) => dayLandmarks(day)).filter(Boolean))];
+  const stops = allStops.slice(0, 3);
   const tripMeta = [
     [trip.country, trip.baseCity].filter(Boolean).join("・") || "尚未設定目的地",
-    historyDateRange(trip),
     `${trip.days.length || 0} 天`
   ].join("｜");
   if (nodes.dashboardTripCover) nodes.dashboardTripCover.src = cover;
   if (nodes.dashboardTripTitle) nodes.dashboardTripTitle.textContent = trip.name || "我的旅行";
   if (nodes.dashboardTripMeta) nodes.dashboardTripMeta.textContent = tripMeta;
+  if (nodes.dashboardCountdownLabel) nodes.dashboardCountdownLabel.textContent = diff === null ? "等待設定" : diff > 0 ? "距離出發" : diff === 0 ? "今天出發" : "旅行紀錄";
+  if (nodes.dashboardCountdownValue) nodes.dashboardCountdownValue.textContent = diff === null ? "--" : diff > 0 ? diff : diff === 0 ? "GO" : Math.abs(diff);
+  if (nodes.dashboardCountdownUnit) nodes.dashboardCountdownUnit.textContent = diff === null || diff > 0 ? "天" : diff === 0 ? "出發" : "天前";
+  if (nodes.dashboardProgressText) nodes.dashboardProgressText.textContent = `${progress}%`;
+  if (nodes.dashboardProgressFill) nodes.dashboardProgressFill.style.width = `${progress}%`;
+  if (nodes.dashboardJourneyDates) nodes.dashboardJourneyDates.textContent = historyDateRange(trip);
+  if (nodes.dashboardJourneyStops) {
+    nodes.dashboardJourneyStops.textContent = stops.length
+      ? `${stops.join("・")}${allStops.length > stops.length ? ` 等 ${allStops.length} 個景點` : ""}`
+      : "尚未加入景點";
+  }
   if (nodes.dashboardTripCount) nodes.dashboardTripCount.textContent = trips.length;
   if (nodes.dashboardDayCount) nodes.dashboardDayCount.textContent = stats.totalDays;
   if (nodes.dashboardNextTrip) nodes.dashboardNextTrip.textContent = stats.upcomingLabel;

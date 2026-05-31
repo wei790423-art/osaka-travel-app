@@ -8,7 +8,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="assets/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="styles.css?v=20260531-dashboard-home" />
+    <link rel="stylesheet" href="styles.css?v=20260601-departure-board" />
   </head>
   <body>
     <main class="app-shell">
@@ -69,12 +69,30 @@
             <img id="dashboardTripCover" src="assets/global-travel-hero.png" alt="目前旅行封面" />
             <div class="app-home__feature-overlay"></div>
             <div class="app-home__feature-content">
-              <p class="eyebrow">Current Journey</p>
-              <h2 id="dashboardTripTitle">我的旅行</h2>
-              <p id="dashboardTripMeta">尚未設定旅行資料</p>
-              <div class="app-home__feature-actions">
-                <button id="dashboardOpenTrip" type="button">查看行程書</button>
-                <button id="dashboardNewTrip" type="button">新增旅行</button>
+              <div class="app-home__journey-copy">
+                <p class="eyebrow">Next Departure</p>
+                <h2 id="dashboardTripTitle">準備下一趟旅行</h2>
+                <p id="dashboardTripMeta">尚未設定旅行資料</p>
+                <div class="app-home__feature-actions">
+                  <button id="dashboardOpenTrip" type="button">打開行程書</button>
+                  <button id="dashboardNewTrip" type="button">規劃新旅行</button>
+                </div>
+              </div>
+              <aside class="app-home__departure">
+                <span id="dashboardCountdownLabel">距離出發</span>
+                <strong id="dashboardCountdownValue">--</strong>
+                <small id="dashboardCountdownUnit">天</small>
+                <div class="app-home__progress">
+                  <div>
+                    <span>行程準備度</span>
+                    <b id="dashboardProgressText">0%</b>
+                  </div>
+                  <div class="app-home__progress-track"><i id="dashboardProgressFill"></i></div>
+                </div>
+              </aside>
+              <div class="app-home__journey-bar">
+                <span><i data-lucide="calendar-days"></i><b id="dashboardJourneyDates">尚未設定日期</b></span>
+                <span><i data-lucide="map-pin"></i><b id="dashboardJourneyStops">尚未加入景點</b></span>
               </div>
             </div>
           </section>
@@ -601,6 +619,6 @@
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=20260531-cloud-default"></script>
-    <script src="app.js?v=20260531-dashboard-home"></script>
+    <script src="app.js?v=20260601-departure-board"></script>
   </body>
 </html>
