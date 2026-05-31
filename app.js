@@ -3010,6 +3010,11 @@ function guidePreviewTopics(destination, intent) {
 
 let guidePreviewMapInstance = null;
 
+function youtubeVideoId(value) {
+  const match = String(value || "").trim().match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return match?.[1] || "";
+}
+
 function youtubeGuideSearchQuery(destination, intent) {
   return `${destination} ${intentKeyword(intent)} 自由行 景點 行程`;
 }
@@ -3045,6 +3050,7 @@ async function fetchYoutubeGuideVideos(destination, intent) {
 async function renderGuideVisualPreview(platform, destination, intent) {
   const viewport = document.querySelector("#guideEmbedViewport");
   if (!viewport) return;
+  viewport.className = "guide-preview__viewport";
   if (guidePreviewMapInstance) {
     guidePreviewMapInstance.remove();
     guidePreviewMapInstance = null;
@@ -3082,17 +3088,27 @@ async function renderGuideVisualPreview(platform, destination, intent) {
     if (!viewport.isConnected || viewport.dataset.previewRequest !== requestKey) return;
     const directUrl = youtubeGuideSearchUrl(result.query);
     if (!result.videos.length) {
+      viewport.classList.add("has-video-form");
       viewport.innerHTML = `
-        <div class="guide-preview__empty">
+        <div class="guide-preview__video-form">
           <i data-lucide="youtube"></i>
-          <strong>暫時無法自動載入影片</strong>
-          <span>${escapeHtml(result.error || "目前沒有找到可嵌入的影片。")}</span>
+          <h4>貼上 YouTube 影片網址立即預覽</h4>
+          <p>${escapeHtml(result.error || "目前沒有找到可嵌入的影片。")} 也可以直接貼上想看的 YouTube 影片網址。</p>
+          <input id="youtubePreviewUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." />
+          <button id="loadYoutubePreview" type="button">載入影片預覽</button>
           <a class="guide-preview__youtube-link" href="${directUrl}" target="_blank" rel="noreferrer">前往 YouTube 搜尋近期影片</a>
         </div>
       `;
       refreshIcons();
+      document.querySelector("#loadYoutubePreview")?.addEventListener("click", () => {
+        const videoId = youtubeVideoId(document.querySelector("#youtubePreviewUrl")?.value);
+        viewport.innerHTML = videoId
+          ? `<iframe class="guide-preview__iframe" src="https://www.youtube-nocookie.com/embed/${videoId}" title="YouTube 攻略影片預覽" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+          : '<div class="guide-preview__empty">請貼上有效的 YouTube 影片網址。</div>';
+      });
       return;
     }
+    viewport.classList.add("has-videos");
     viewport.innerHTML = `
       <div class="guide-preview__videos">
         ${result.videos.map((video) => `

@@ -640,6 +640,11 @@ h1 {
   border: 0;
 }
 
+.guide-preview__viewport.has-video-form,
+.guide-preview__viewport.has-videos {
+  height: auto;
+}
+
 .guide-preview__empty,
 .guide-preview__video-form {
   display: grid;
