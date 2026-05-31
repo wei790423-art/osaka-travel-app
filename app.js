@@ -3179,6 +3179,7 @@ function renderGuideLinks(event) {
   if (event) event.preventDefault();
   const destination = nodes.guideDestination.value.trim() || trip.baseCity || trip.country || "大阪";
   const intent = nodes.guideIntent.value;
+  const defaultGuidePlatform = guidePlatforms.find((platform) => platform.name === "YouTube") || guidePlatforms[0];
   nodes.guideDestination.value = destination;
   nodes.guideRecommendations.innerHTML = `
     <div class="guide-heading">
@@ -3209,10 +3210,10 @@ function renderGuideLinks(event) {
     </div>
   `;
   nodes.guideGrid.innerHTML = guidePlatforms
-    .map((platform, index) => {
+    .map((platform) => {
       const url = platform.buildUrl(destination, intent);
       return `
-        <article class="guide-card${index === 0 ? " is-previewing" : ""}" data-guide-platform="${escapeHtml(platform.name)}">
+        <article class="guide-card${platform === defaultGuidePlatform ? " is-previewing" : ""}" data-guide-platform="${escapeHtml(platform.name)}">
           <div>
             <span>${platform.type}</span>
             <h3>${platform.name}</h3>
@@ -3226,7 +3227,7 @@ function renderGuideLinks(event) {
       `;
     })
     .join("");
-  renderGuidePreview(guidePlatforms[0], destination, intent);
+  renderGuidePreview(defaultGuidePlatform, destination, intent);
   nodes.guideGrid.querySelectorAll("[data-preview-guide]").forEach((button) => {
     button.addEventListener("click", () => {
       const platform = guidePlatforms.find((item) => item.name === button.dataset.previewGuide);
