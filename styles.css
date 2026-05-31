@@ -3846,6 +3846,14 @@ h1 {
     min-height: 270px;
   }
 
+  body[data-planner-view="home"] .hero {
+    display: none;
+  }
+
+  body[data-planner-view="detail"] .hero {
+    min-height: 208px;
+  }
+
   .hero__content {
     width: calc(100% - 28px);
     padding: 54px 0 72px;
@@ -3962,6 +3970,13 @@ h1 {
     border-radius: 50%;
     color: var(--teal);
     background: var(--panel);
+  }
+
+  .mobile-top-actions button.is-synced {
+    color: #fff;
+    border-color: var(--teal);
+    background: var(--teal);
+    box-shadow: 0 7px 16px rgba(0, 109, 113, 0.22);
   }
 
   .mobile-top-actions svg {
@@ -4107,13 +4122,48 @@ h1 {
     gap: 12px;
   }
 
-  .trip-card-body {
-    gap: 12px;
-    padding: 14px;
+  .trip-home-card {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
   }
 
   .trip-card-media {
-    aspect-ratio: 1.7 / 1;
+    height: 100%;
+    min-height: 172px;
+    aspect-ratio: auto;
+  }
+
+  .trip-card-body {
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .trip-card-body h3 {
+    font-size: 1rem;
+  }
+
+  .trip-card-body p {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .trip-card-meta {
+    gap: 5px;
+  }
+
+  .trip-card-meta span {
+    padding: 5px 7px;
+    font-size: 0.68rem;
+  }
+
+  .trip-card-actions {
+    gap: 6px;
+  }
+
+  .trip-card-actions button {
+    min-height: 36px;
+    padding: 0 9px;
+    font-size: 0.75rem;
   }
 
   .trip-library-panel,

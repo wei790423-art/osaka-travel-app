@@ -1198,6 +1198,7 @@ function showPlannerDetail() {
 }
 
 function updatePlannerNavState() {
+  document.body.dataset.plannerView = plannerView;
   nodes.homeNavButton?.classList.toggle("is-active", plannerView === "home");
   document.querySelector('[data-tab-target="planner"]')?.classList.toggle("is-active", plannerView === "detail");
 }
@@ -1900,6 +1901,10 @@ function renderCloudAuthState() {
   if (nodes.openCloudPanel) {
     nodes.openCloudPanel.classList.toggle("is-synced", signedIn);
     nodes.openCloudPanel.setAttribute("aria-label", signedIn ? `雲端同步已開啟：${cloudUserEmail()}` : "登入並開啟雲端同步");
+  }
+  if (nodes.mobileCloudButton) {
+    nodes.mobileCloudButton.classList.toggle("is-synced", signedIn);
+    nodes.mobileCloudButton.setAttribute("aria-label", signedIn ? `雲端同步已開啟：${cloudUserEmail()}` : "登入雲端同步");
   }
   document.querySelectorAll(".auth-credential").forEach((field) => field.classList.toggle("is-hidden", signedIn));
   if (nodes.signIn) nodes.signIn.classList.toggle("is-hidden", signedIn);
