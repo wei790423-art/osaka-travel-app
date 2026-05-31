@@ -1319,7 +1319,7 @@ h1 {
   .content-grid,
   .tab-nav,
   .wide-panel {
-    width: min(100% - 24px, 1120px);
+    width: min(calc(100% - 24px), 1120px);
   }
 
   .toolbar,
@@ -2681,7 +2681,7 @@ h1 {
   .tab-nav,
   .wide-panel,
   .map-overview-wrap {
-    width: min(100% - 24px, 1180px);
+    width: min(calc(100% - 24px), 1180px);
   }
 
   .hero__content {
@@ -3766,17 +3766,17 @@ h1 {
 
 @media (max-width: 640px) {
   .planner-home {
-    width: min(100% - 24px, 1180px);
+    width: min(calc(100% - 24px), 1180px);
     margin-top: 18px;
   }
 
   .agency-book {
-    width: min(100% - 24px, 1180px);
+    width: min(calc(100% - 24px), 1180px);
     margin-top: 18px;
   }
 
   .route-studio {
-    width: min(100% - 24px, 1180px);
+    width: min(calc(100% - 24px), 1180px);
     padding: 18px;
   }
 
@@ -3939,7 +3939,7 @@ h1 {
   }
 
   .planner-home {
-    width: min(100% - 20px, 1180px);
+    width: min(calc(100% - 20px), 1180px);
     margin-top: 10px;
   }
 
@@ -4174,7 +4174,22 @@ h1 {
   .map-overview-wrap,
   .content-grid,
   .wide-panel {
-    width: min(100% - 20px, 1180px);
+    width: min(calc(100% - 20px), 1180px);
+  }
+
+  .app-shell,
+  .planner-detail {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .planner-detail {
+    overflow-x: clip;
+  }
+
+  .trip-library-panel {
+    margin-right: auto;
+    margin-left: auto;
   }
 }
 
